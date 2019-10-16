@@ -2,7 +2,7 @@
 
 # readlink -f doesn't work with macOS's implementation
 # so, if we can't get readlink -f to work, try python with a realpath implementation
-ABS_PATH=$(readlink -f "$0" || python -c "import sys, os; print(os.path.realpath('$0'))")
+ABS_PATH=$(readlink -f "$0" || python -c "import os; print(os.path.realpath('$0'))")
 
 # wrapper around ./emul/zasm/zasm that prepares includes CFS prior to call
 DIR=$(dirname "${ABS_PATH}")
