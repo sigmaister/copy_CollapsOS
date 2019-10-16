@@ -40,7 +40,7 @@
 #define FS_ADDR_PORT 0x02
 
 static Z80Context cpu;
-static uint8_t mem[0xffff] = {0};
+static uint8_t mem[0x10000] = {0};
 static uint8_t fsdev[MAX_FSDEV_SIZE] = {0};
 static uint32_t fsdev_size = 0;
 static uint32_t fsdev_ptr = 0;
