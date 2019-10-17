@@ -109,7 +109,7 @@ getInstID:
 	ret
 
 ; Parse the string at (HL) and check if it starts with IX+, IY+, IX- or IY-.
-; Sets Z if yes, unset if no.
+; Sets Z if yes, unset if no. On success, A contains either '+' or '-'.
 parseIXY:
 	push	hl
 	ld	a, (hl)
@@ -180,13 +180,15 @@ parseArg:
 	ld	a, 'N'
 	jr	.end
 .withParens:
+	ld	b, 0		; make sure it doesn't hold '-'
 	ld	c, 'M'		; C holds the argspec type until we reach
 				; .numberInParens
 	; We have parens. First, let's see if we have a (IX+d) type of arg.
 	call	parseIXY
 	jr	nz, .parseNumberInParens	; not I{X,Y}. just parse number.
 	; We have IX+/IY+/IX-/IY-.
-	; note: the "-" part isn't supported yet.
+	; A contains either '+' or '-'. Save it for later, in B.
+	ld	b, a
 	inc	hl	; (HL) now points to X or Y
 	ld	a, (hl)
 	call	upcase
@@ -202,6 +204,22 @@ parseArg:
 	call	.maybeParseExpr
 	jr	nz, .nomatch
 	; We have a proper number in parens. Number in IX
+	; is '-' in B? if yes, we need to negate the low part of IX
+	ld	a, b
+	cp	'-'
+	jr	nz, .dontNegateIX
+	; we need to negate the low part of IX
+	; TODO: when parsing routines properly support unary negative numbers,
+	; We could replace this complicated scheme below with a nice hack where
+	; we start parsing our displacement number at the '+' and '-' char.
+
+	; HL isn't needed anymore and can be destroyed.
+	push	ix \ pop hl
+	ld	a, l
+	neg
+	ld	l, a
+	push	hl \ pop ix
+.dontNegateIX:
 	ld	a, c	; M, x, or y
 	jr	.end
 .nomatch:

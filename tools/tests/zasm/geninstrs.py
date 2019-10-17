@@ -103,7 +103,7 @@ def genargs(argspec):
         argspec = argspec.upper()
         for n in [1, 10, 100, 127]:
             result.append(f"(I{argspec}+{n})")
-        # TODO: support minus
+            result.append(f"(I{argspec}-{n})")
         return result
     if argspec in argspecTbl:
         return [argspecTbl[argspec]]

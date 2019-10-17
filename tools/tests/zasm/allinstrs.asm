@@ -48,14 +48,22 @@ ADD IY, IY
 ADD IY, SP
 ADD A, (IX)
 ADD A, (IX+1)
+ADD A, (IX-1)
 ADD A, (IX+10)
+ADD A, (IX-10)
 ADD A, (IX+100)
+ADD A, (IX-100)
 ADD A, (IX+127)
+ADD A, (IX-127)
 ADD A, (IY)
 ADD A, (IY+1)
+ADD A, (IY-1)
 ADD A, (IY+10)
+ADD A, (IY-10)
 ADD A, (IY+100)
+ADD A, (IY-100)
 ADD A, (IY+127)
+ADD A, (IY-127)
 AND (HL)
 AND B
 AND C
@@ -73,46 +81,78 @@ AND 32
 AND 64
 AND 128
 AND (IX+1)
+AND (IX-1)
 AND (IX+10)
+AND (IX-10)
 AND (IX+100)
+AND (IX-100)
 AND (IX+127)
+AND (IX-127)
 AND (IY+1)
+AND (IY-1)
 AND (IY+10)
+AND (IY-10)
 AND (IY+100)
+AND (IY-100)
 AND (IY+127)
+AND (IY-127)
 BIT 1, (HL)
 BIT 2, (HL)
 BIT 4, (HL)
 BIT 1, (IX)
 BIT 1, (IX+1)
+BIT 1, (IX-1)
 BIT 1, (IX+10)
+BIT 1, (IX-10)
 BIT 1, (IX+100)
+BIT 1, (IX-100)
 BIT 1, (IX+127)
+BIT 1, (IX-127)
 BIT 2, (IX)
 BIT 2, (IX+1)
+BIT 2, (IX-1)
 BIT 2, (IX+10)
+BIT 2, (IX-10)
 BIT 2, (IX+100)
+BIT 2, (IX-100)
 BIT 2, (IX+127)
+BIT 2, (IX-127)
 BIT 4, (IX)
 BIT 4, (IX+1)
+BIT 4, (IX-1)
 BIT 4, (IX+10)
+BIT 4, (IX-10)
 BIT 4, (IX+100)
+BIT 4, (IX-100)
 BIT 4, (IX+127)
+BIT 4, (IX-127)
 BIT 1, (IY)
 BIT 1, (IY+1)
+BIT 1, (IY-1)
 BIT 1, (IY+10)
+BIT 1, (IY-10)
 BIT 1, (IY+100)
+BIT 1, (IY-100)
 BIT 1, (IY+127)
+BIT 1, (IY-127)
 BIT 2, (IY)
 BIT 2, (IY+1)
+BIT 2, (IY-1)
 BIT 2, (IY+10)
+BIT 2, (IY-10)
 BIT 2, (IY+100)
+BIT 2, (IY-100)
 BIT 2, (IY+127)
+BIT 2, (IY-127)
 BIT 4, (IY)
 BIT 4, (IY+1)
+BIT 4, (IY-1)
 BIT 4, (IY+10)
+BIT 4, (IY-10)
 BIT 4, (IY+100)
+BIT 4, (IY-100)
 BIT 4, (IY+127)
+BIT 4, (IY-127)
 BIT 1, B
 BIT 1, C
 BIT 1, D
@@ -297,14 +337,22 @@ CP 64
 CP 128
 CP (IX)
 CP (IX+1)
+CP (IX-1)
 CP (IX+10)
+CP (IX-10)
 CP (IX+100)
+CP (IX-100)
 CP (IX+127)
+CP (IX-127)
 CP (IY)
 CP (IY+1)
+CP (IY-1)
 CP (IY+10)
+CP (IY-10)
 CP (IY+100)
+CP (IY-100)
 CP (IY+127)
+CP (IY-127)
 CPD
 CPDR
 CPI
@@ -315,15 +363,23 @@ DEC (HL)
 DEC IX
 DEC (IX)
 DEC (IX+1)
+DEC (IX-1)
 DEC (IX+10)
+DEC (IX-10)
 DEC (IX+100)
+DEC (IX-100)
 DEC (IX+127)
+DEC (IX-127)
 DEC IY
 DEC (IY)
 DEC (IY+1)
+DEC (IY-1)
 DEC (IY+10)
+DEC (IY-10)
 DEC (IY+100)
+DEC (IY-100)
 DEC (IY+127)
+DEC (IY-127)
 DEC B
 DEC C
 DEC D
@@ -380,15 +436,23 @@ INC (HL)
 INC IX
 INC (IX)
 INC (IX+1)
+INC (IX-1)
 INC (IX+10)
+INC (IX-10)
 INC (IX+100)
+INC (IX-100)
 INC (IX+127)
+INC (IX-127)
 INC IY
 INC (IY)
 INC (IY+1)
+INC (IY-1)
 INC (IY+10)
+INC (IY-10)
 INC (IY+100)
+INC (IY-100)
 INC (IY+127)
+INC (IY-127)
 INC B
 INC C
 INC D
@@ -1125,6 +1189,14 @@ LD (IX+1), 16
 LD (IX+1), 32
 LD (IX+1), 64
 LD (IX+1), 128
+LD (IX-1), 1
+LD (IX-1), 2
+LD (IX-1), 4
+LD (IX-1), 8
+LD (IX-1), 16
+LD (IX-1), 32
+LD (IX-1), 64
+LD (IX-1), 128
 LD (IX+10), 1
 LD (IX+10), 2
 LD (IX+10), 4
@@ -1133,6 +1205,14 @@ LD (IX+10), 16
 LD (IX+10), 32
 LD (IX+10), 64
 LD (IX+10), 128
+LD (IX-10), 1
+LD (IX-10), 2
+LD (IX-10), 4
+LD (IX-10), 8
+LD (IX-10), 16
+LD (IX-10), 32
+LD (IX-10), 64
+LD (IX-10), 128
 LD (IX+100), 1
 LD (IX+100), 2
 LD (IX+100), 4
@@ -1141,6 +1221,14 @@ LD (IX+100), 16
 LD (IX+100), 32
 LD (IX+100), 64
 LD (IX+100), 128
+LD (IX-100), 1
+LD (IX-100), 2
+LD (IX-100), 4
+LD (IX-100), 8
+LD (IX-100), 16
+LD (IX-100), 32
+LD (IX-100), 64
+LD (IX-100), 128
 LD (IX+127), 1
 LD (IX+127), 2
 LD (IX+127), 4
@@ -1149,6 +1237,14 @@ LD (IX+127), 16
 LD (IX+127), 32
 LD (IX+127), 64
 LD (IX+127), 128
+LD (IX-127), 1
+LD (IX-127), 2
+LD (IX-127), 4
+LD (IX-127), 8
+LD (IX-127), 16
+LD (IX-127), 32
+LD (IX-127), 64
+LD (IX-127), 128
 LD (IY), 1
 LD (IY), 2
 LD (IY), 4
@@ -1165,6 +1261,14 @@ LD (IY+1), 16
 LD (IY+1), 32
 LD (IY+1), 64
 LD (IY+1), 128
+LD (IY-1), 1
+LD (IY-1), 2
+LD (IY-1), 4
+LD (IY-1), 8
+LD (IY-1), 16
+LD (IY-1), 32
+LD (IY-1), 64
+LD (IY-1), 128
 LD (IY+10), 1
 LD (IY+10), 2
 LD (IY+10), 4
@@ -1173,6 +1277,14 @@ LD (IY+10), 16
 LD (IY+10), 32
 LD (IY+10), 64
 LD (IY+10), 128
+LD (IY-10), 1
+LD (IY-10), 2
+LD (IY-10), 4
+LD (IY-10), 8
+LD (IY-10), 16
+LD (IY-10), 32
+LD (IY-10), 64
+LD (IY-10), 128
 LD (IY+100), 1
 LD (IY+100), 2
 LD (IY+100), 4
@@ -1181,6 +1293,14 @@ LD (IY+100), 16
 LD (IY+100), 32
 LD (IY+100), 64
 LD (IY+100), 128
+LD (IY-100), 1
+LD (IY-100), 2
+LD (IY-100), 4
+LD (IY-100), 8
+LD (IY-100), 16
+LD (IY-100), 32
+LD (IY-100), 64
+LD (IY-100), 128
 LD (IY+127), 1
 LD (IY+127), 2
 LD (IY+127), 4
@@ -1189,6 +1309,14 @@ LD (IY+127), 16
 LD (IY+127), 32
 LD (IY+127), 64
 LD (IY+127), 128
+LD (IY-127), 1
+LD (IY-127), 2
+LD (IY-127), 4
+LD (IY-127), 8
+LD (IY-127), 16
+LD (IY-127), 32
+LD (IY-127), 64
+LD (IY-127), 128
 LD (IX), B
 LD (IX), C
 LD (IX), D
@@ -1203,6 +1331,13 @@ LD (IX+1), E
 LD (IX+1), H
 LD (IX+1), L
 LD (IX+1), A
+LD (IX-1), B
+LD (IX-1), C
+LD (IX-1), D
+LD (IX-1), E
+LD (IX-1), H
+LD (IX-1), L
+LD (IX-1), A
 LD (IX+10), B
 LD (IX+10), C
 LD (IX+10), D
@@ -1210,6 +1345,13 @@ LD (IX+10), E
 LD (IX+10), H
 LD (IX+10), L
 LD (IX+10), A
+LD (IX-10), B
+LD (IX-10), C
+LD (IX-10), D
+LD (IX-10), E
+LD (IX-10), H
+LD (IX-10), L
+LD (IX-10), A
 LD (IX+100), B
 LD (IX+100), C
 LD (IX+100), D
@@ -1217,6 +1359,13 @@ LD (IX+100), E
 LD (IX+100), H
 LD (IX+100), L
 LD (IX+100), A
+LD (IX-100), B
+LD (IX-100), C
+LD (IX-100), D
+LD (IX-100), E
+LD (IX-100), H
+LD (IX-100), L
+LD (IX-100), A
 LD (IX+127), B
 LD (IX+127), C
 LD (IX+127), D
@@ -1224,6 +1373,13 @@ LD (IX+127), E
 LD (IX+127), H
 LD (IX+127), L
 LD (IX+127), A
+LD (IX-127), B
+LD (IX-127), C
+LD (IX-127), D
+LD (IX-127), E
+LD (IX-127), H
+LD (IX-127), L
+LD (IX-127), A
 LD (IY), B
 LD (IY), C
 LD (IY), D
@@ -1238,6 +1394,13 @@ LD (IY+1), E
 LD (IY+1), H
 LD (IY+1), L
 LD (IY+1), A
+LD (IY-1), B
+LD (IY-1), C
+LD (IY-1), D
+LD (IY-1), E
+LD (IY-1), H
+LD (IY-1), L
+LD (IY-1), A
 LD (IY+10), B
 LD (IY+10), C
 LD (IY+10), D
@@ -1245,6 +1408,13 @@ LD (IY+10), E
 LD (IY+10), H
 LD (IY+10), L
 LD (IY+10), A
+LD (IY-10), B
+LD (IY-10), C
+LD (IY-10), D
+LD (IY-10), E
+LD (IY-10), H
+LD (IY-10), L
+LD (IY-10), A
 LD (IY+100), B
 LD (IY+100), C
 LD (IY+100), D
@@ -1252,6 +1422,13 @@ LD (IY+100), E
 LD (IY+100), H
 LD (IY+100), L
 LD (IY+100), A
+LD (IY-100), B
+LD (IY-100), C
+LD (IY-100), D
+LD (IY-100), E
+LD (IY-100), H
+LD (IY-100), L
+LD (IY-100), A
 LD (IY+127), B
 LD (IY+127), C
 LD (IY+127), D
@@ -1259,76 +1436,139 @@ LD (IY+127), E
 LD (IY+127), H
 LD (IY+127), L
 LD (IY+127), A
+LD (IY-127), B
+LD (IY-127), C
+LD (IY-127), D
+LD (IY-127), E
+LD (IY-127), H
+LD (IY-127), L
+LD (IY-127), A
 LD B, (IX)
 LD B, (IX+1)
+LD B, (IX-1)
 LD B, (IX+10)
+LD B, (IX-10)
 LD B, (IX+100)
+LD B, (IX-100)
 LD B, (IX+127)
+LD B, (IX-127)
 LD C, (IX)
 LD C, (IX+1)
+LD C, (IX-1)
 LD C, (IX+10)
+LD C, (IX-10)
 LD C, (IX+100)
+LD C, (IX-100)
 LD C, (IX+127)
+LD C, (IX-127)
 LD D, (IX)
 LD D, (IX+1)
+LD D, (IX-1)
 LD D, (IX+10)
+LD D, (IX-10)
 LD D, (IX+100)
+LD D, (IX-100)
 LD D, (IX+127)
+LD D, (IX-127)
 LD E, (IX)
 LD E, (IX+1)
+LD E, (IX-1)
 LD E, (IX+10)
+LD E, (IX-10)
 LD E, (IX+100)
+LD E, (IX-100)
 LD E, (IX+127)
+LD E, (IX-127)
 LD H, (IX)
 LD H, (IX+1)
+LD H, (IX-1)
 LD H, (IX+10)
+LD H, (IX-10)
 LD H, (IX+100)
+LD H, (IX-100)
 LD H, (IX+127)
+LD H, (IX-127)
 LD L, (IX)
 LD L, (IX+1)
+LD L, (IX-1)
 LD L, (IX+10)
+LD L, (IX-10)
 LD L, (IX+100)
+LD L, (IX-100)
 LD L, (IX+127)
+LD L, (IX-127)
 LD A, (IX)
 LD A, (IX+1)
+LD A, (IX-1)
 LD A, (IX+10)
+LD A, (IX-10)
 LD A, (IX+100)
+LD A, (IX-100)
 LD A, (IX+127)
+LD A, (IX-127)
 LD B, (IY)
 LD B, (IY+1)
+LD B, (IY-1)
 LD B, (IY+10)
+LD B, (IY-10)
 LD B, (IY+100)
+LD B, (IY-100)
 LD B, (IY+127)
+LD B, (IY-127)
 LD C, (IY)
 LD C, (IY+1)
+LD C, (IY-1)
 LD C, (IY+10)
+LD C, (IY-10)
 LD C, (IY+100)
+LD C, (IY-100)
 LD C, (IY+127)
+LD C, (IY-127)
 LD D, (IY)
 LD D, (IY+1)
+LD D, (IY-1)
 LD D, (IY+10)
+LD D, (IY-10)
 LD D, (IY+100)
+LD D, (IY-100)
 LD D, (IY+127)
+LD D, (IY-127)
 LD E, (IY)
 LD E, (IY+1)
+LD E, (IY-1)
 LD E, (IY+10)
+LD E, (IY-10)
 LD E, (IY+100)
+LD E, (IY-100)
 LD E, (IY+127)
+LD E, (IY-127)
 LD H, (IY)
 LD H, (IY+1)
+LD H, (IY-1)
 LD H, (IY+10)
+LD H, (IY-10)
 LD H, (IY+100)
+LD H, (IY-100)
 LD H, (IY+127)
+LD H, (IY-127)
 LD L, (IY)
 LD L, (IY+1)
+LD L, (IY-1)
 LD L, (IY+10)
+LD L, (IY-10)
 LD L, (IY+100)
+LD L, (IY-100)
 LD L, (IY+127)
+LD L, (IY-127)
 LD A, (IY)
 LD A, (IY+1)
+LD A, (IY-1)
 LD A, (IY+10)
+LD A, (IY-10)
 LD A, (IY+100)
+LD A, (IY-100)
 LD A, (IY+127)
+LD A, (IY-127)
 LDD
 LDDR
 LDI
@@ -1353,14 +1593,22 @@ OR 64
 OR 128
 OR (IX)
 OR (IX+1)
+OR (IX-1)
 OR (IX+10)
+OR (IX-10)
 OR (IX+100)
+OR (IX-100)
 OR (IX+127)
+OR (IX-127)
 OR (IY)
 OR (IY+1)
+OR (IY-1)
 OR (IY+10)
+OR (IY-10)
 OR (IY+100)
+OR (IY-100)
 OR (IY+127)
+OR (IY-127)
 OTDR
 OTIR
 OUT (1), A
@@ -1395,34 +1643,58 @@ RES 2, (HL)
 RES 4, (HL)
 RES 1, (IX)
 RES 1, (IX+1)
+RES 1, (IX-1)
 RES 1, (IX+10)
+RES 1, (IX-10)
 RES 1, (IX+100)
+RES 1, (IX-100)
 RES 1, (IX+127)
+RES 1, (IX-127)
 RES 2, (IX)
 RES 2, (IX+1)
+RES 2, (IX-1)
 RES 2, (IX+10)
+RES 2, (IX-10)
 RES 2, (IX+100)
+RES 2, (IX-100)
 RES 2, (IX+127)
+RES 2, (IX-127)
 RES 4, (IX)
 RES 4, (IX+1)
+RES 4, (IX-1)
 RES 4, (IX+10)
+RES 4, (IX-10)
 RES 4, (IX+100)
+RES 4, (IX-100)
 RES 4, (IX+127)
+RES 4, (IX-127)
 RES 1, (IY)
 RES 1, (IY+1)
+RES 1, (IY-1)
 RES 1, (IY+10)
+RES 1, (IY-10)
 RES 1, (IY+100)
+RES 1, (IY-100)
 RES 1, (IY+127)
+RES 1, (IY-127)
 RES 2, (IY)
 RES 2, (IY+1)
+RES 2, (IY-1)
 RES 2, (IY+10)
+RES 2, (IY-10)
 RES 2, (IY+100)
+RES 2, (IY-100)
 RES 2, (IY+127)
+RES 2, (IY-127)
 RES 4, (IY)
 RES 4, (IY+1)
+RES 4, (IY-1)
 RES 4, (IY+10)
+RES 4, (IY-10)
 RES 4, (IY+100)
+RES 4, (IY-100)
 RES 4, (IY+127)
+RES 4, (IY-127)
 RES 1, B
 RES 1, C
 RES 1, D
@@ -1505,34 +1777,58 @@ SET 2, (HL)
 SET 4, (HL)
 SET 1, (IX)
 SET 1, (IX+1)
+SET 1, (IX-1)
 SET 1, (IX+10)
+SET 1, (IX-10)
 SET 1, (IX+100)
+SET 1, (IX-100)
 SET 1, (IX+127)
+SET 1, (IX-127)
 SET 2, (IX)
 SET 2, (IX+1)
+SET 2, (IX-1)
 SET 2, (IX+10)
+SET 2, (IX-10)
 SET 2, (IX+100)
+SET 2, (IX-100)
 SET 2, (IX+127)
+SET 2, (IX-127)
 SET 4, (IX)
 SET 4, (IX+1)
+SET 4, (IX-1)
 SET 4, (IX+10)
+SET 4, (IX-10)
 SET 4, (IX+100)
+SET 4, (IX-100)
 SET 4, (IX+127)
+SET 4, (IX-127)
 SET 1, (IY)
 SET 1, (IY+1)
+SET 1, (IY-1)
 SET 1, (IY+10)
+SET 1, (IY-10)
 SET 1, (IY+100)
+SET 1, (IY-100)
 SET 1, (IY+127)
+SET 1, (IY-127)
 SET 2, (IY)
 SET 2, (IY+1)
+SET 2, (IY-1)
 SET 2, (IY+10)
+SET 2, (IY-10)
 SET 2, (IY+100)
+SET 2, (IY-100)
 SET 2, (IY+127)
+SET 2, (IY-127)
 SET 4, (IY)
 SET 4, (IY+1)
+SET 4, (IY-1)
 SET 4, (IY+10)
+SET 4, (IY-10)
 SET 4, (IY+100)
+SET 4, (IY-100)
 SET 4, (IY+127)
+SET 4, (IY-127)
 SET 1, B
 SET 1, C
 SET 1, D
