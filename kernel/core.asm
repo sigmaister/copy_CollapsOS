@@ -79,33 +79,22 @@ subHL:
 
 ; Compare HL with DE and sets Z and C in the same way as a regular cp X where
 ; HL is A and DE is X.
-; A is preserved through some register hocus pocus: having cpHLDE destroying
-; A bit me too many times.
 cpHLDE:
-	push	bc
-	ld	b, a	; preserve A
-	ld	a, h
-	cp	d
-	jr	nz, .end ; if not equal, flags are correct
-	ld	a, l
-	cp	e
-	; flags are correct
-.end:
-	; restore A but don't touch flags
-	ld	a, b
-	pop	bc
+	push 	hl
+	or 	a		;reset carry flag
+	sbc 	hl, de		;There is no 'sub hl, de', so we must use sbc
+	pop 	hl
 	ret
 
 ; Write the contents of HL in (DE)
+; de and hl are preserved, so no pushing/popping necessary
 writeHLinDE:
-	push	af
-	ld	a, l
-	ld	(de), a
-	inc	de
-	ld	a, h
-	ld	(de), a
-	dec	de
-	pop	af
+	ex	de, hl 
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	dec	hl
+	ex	de, hl
 	ret
 
 ; Call the method (IX) is a pointer to. In other words, call intoIX before
