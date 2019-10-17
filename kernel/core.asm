@@ -53,28 +53,25 @@ intoIX:
 	ret
 
 ; add the value of A into HL
+; affects carry flag according to the 16-bit addition, Z, S and P untouched.
 addHL:
-	push	af
-	add	a, l
-	jr	nc, .end	; no carry? skip inc
-	inc	h
-.end:
-	ld	l, a
-	pop	af
+	push	de
+	ld 	d, 0
+	ld	e, a
+	add	hl, de
+	pop	de
 	ret
 
+
 ; subtract the value of A from HL
+; affects flags according to the 16-bit subtraction.
 subHL:
-	push	af
-	; To avoid having to swap L and A, we sub "backwards", that is, we add
-	; a NEGated value. This means that the carry flag is inverted
-	neg
-	add	a, l
-	jr	c, .end		; if carry, no carry. :)
-	dec	h
-.end:
-	ld	l, a
-	pop	af
+	push	de
+	ld	d, 0
+	ld	e, a
+	or 	a		;reset carry flag
+	sbc	hl, de		;There is no 'sub hl, de', so we must use sbc
+	pop	de
 	ret
 
 ; Compare HL with DE and sets Z and C in the same way as a regular cp X where

@@ -110,12 +110,14 @@ symRegister:
 	; Is our new name going to make us go out of bounds?
 	push	hl		; --> lvl 2
 	push	de		; --> lvl 3
+	ld 	d, 0
+	ld 	e, c
+	add 	hl, de		; if carry set here, sbc will carry too	
 	ld	e, (ix+2)	; DE --> pointer to record list, which is also
 	ld	d, (ix+3)	; the end of names pool
 	; DE --> names end
-	ld	a, c
-	call	addHL
-	call	cpHLDE
+	
+	sbc	hl, de		; compares hl and de destructively
 	pop	de		; <-- lvl 3
 	pop	hl		; <-- lvl 2
 	jr	nc, .outOfMemory	; HL >= DE
@@ -190,9 +192,15 @@ _symFind:
 	jr	z, .end		; match! Z already set, IY and HL placed.
 .skip:
 	; ok, next!
-	ld	a, (iy)		; name len again
-	call	addHL		; advance HL by A chars
-	inc	iy \ inc iy \ inc iy
+	
+	push 	de		; --> lvl 1
+	ld 	de, 0x0003
+	add 	iy, de		; faster and shorter than three inc's
+	ld 	e, (iy-3)	; offset is also compulsory, so no extra bytes used	
+	; (iy-3) holds the name length of the string just processed
+	add 	hl, de	; advance HL by (iy-3) characters
+	pop	de		; <-- lvl 1
+
 	djnz	.loop
 	; end of the chain, nothing found
 .nothing:
