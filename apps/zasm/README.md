@@ -152,4 +152,11 @@ allowed. An included file cannot have an `.inc` directive.
           in the argument in the currently active filesystem and outputs its
           contents directly.
 
+## Undocumented instructions
+
+`zasm` doesn't support undocumented instructions such as the ones that involve
+using `IX` and `IY` as 8-bit registers. We used to support them, but because
+this makes our code incompatible with Z80-compatible CPUs such as the Z180, we
+prefer to avoid these in our code.
+
 [libz80]: https://github.com/ggambetta/libz80
