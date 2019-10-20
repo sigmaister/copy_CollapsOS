@@ -31,6 +31,14 @@ test:
 	ld	hl, 0xffff
 	ld	sp, hl
 
+	call	testLiteral
+	call	testDecimal
+
+	; success
+	xor	a
+	halt
+
+testLiteral:
 	ld	hl, s99
 	call	parseLiteral
 	jp	nz, fail
@@ -90,10 +98,66 @@ test:
 	cp	0x43
 	jp	nz, fail
 	call	nexttest
+	ret
 
-	; success
-	xor	a
-	halt
+; 2b int, 6b str, null-padded
+tblDecimalValid:
+	.dw	99
+	.db	"99", 0, 0, 0, 0
+	.dw	65535
+	.db	"65535", 0
+
+; 7b strings, null-padded
+tblDecimalInvalid:
+	; TODO: make a null string parse as an invalid decimal
+	; null string is invalid
+	;.db	0, 0, 0, 0, 0, 0, 0
+	; too big, 5 chars
+	.db	"65536", 0, 0
+	.db	"99999", 0, 0
+	; too big, 6 chars with rightmost chars being within bound
+	.db	"111111", 0
+
+testDecimal:
+
+; test valid cases. We loop through tblDecimalValid for our cases
+	ld	b, 2
+	ld	hl, tblDecimalValid
+
+.loop1:
+	push	hl	; --> lvl 1
+	; put expected number in DE
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	inc	hl
+	call	parseDecimal
+	jp	nz, fail
+	push	ix \ pop hl
+	ld	a, h
+	cp	d
+	jp	nz, fail
+	ld	a, l
+	cp	e
+	jp	nz, fail
+	pop	hl	; <-- lvl 1
+	ld	de, 8	; row size
+	add	hl, de
+	djnz	.loop1
+	call	nexttest
+
+; test invalid cases. We loop through tblDecimalInvalid for our cases
+	ld	b, 3
+	ld	hl, tblDecimalInvalid
+
+.loop2:
+	call	parseDecimal
+	jp	z, fail
+	ld	de, 7	; row size
+	add	hl, de
+	djnz	.loop2
+	call	nexttest
+	ret
 
 nexttest:
 	ld	a, (testNum)
