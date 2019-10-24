@@ -89,7 +89,11 @@ cmdParse:
 	jr	z, .dot
 	cp	'$'
 	jr	z, .eof
-	call	parseDecimalDigit
+	
+	; inline parseDecimalDigit
+	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
+	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	
 	jr	c, .notHandled
 	; straight number
 	ld	a, ABSOLUTE
@@ -121,7 +125,11 @@ cmdParse:
 	inc	hl		; advance cmd cursor
 	ld	a, (hl)
 	ld	de, 1		; if .pmNoSuffix
-	call	parseDecimalDigit
+	
+	; inline parseDecimalDigit
+	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
+	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	
 	jr	c, .pmNoSuffix
 	call	.parseDecimalM	; --> DE
 .pmNoSuffix:
@@ -149,7 +157,11 @@ cmdParse:
 .loop:
 	inc	hl
 	ld	a, (hl)
-	call	parseDecimalDigit
+		
+	; inline parseDecimalDigit
+	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
+	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	
 	jr	nc, .loop
 	; We're at the first non-digit char. Let's save it because we're going
 	; to temporarily replace it with a null.

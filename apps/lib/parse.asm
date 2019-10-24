@@ -1,5 +1,5 @@
 ; *** Requirements ***
-; unsetZ
+; None
 ;
 ; *** Code ***
 
@@ -7,58 +7,71 @@
 ; result in A.
 ;
 ; On success, the carry flag is reset. On error, it is set.
-parseDecimalDigit:
-	; First, let's see if we have an easy 0-9 case
-	cp	'0'
-	ret	c	; if < '0', we have a problem
-	sub	'0'		; our value now is valid if it's < 10
-	cp	10		; on success, C is set, which is the opposite
-				; of what we want
-	ccf			; invert C flag
-	ret
+; Also, zero flag set if '0'
+; parseDecimalDigit has been replaced with the following code inline:
+;	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
+;	sub	0xff-9		; maps to 0-9 and carries if not a digit
 
 ; Parse string at (HL) as a decimal value and return value in IX under the
 ; same conditions as parseLiteral.
 ; Sets Z on success, unset on error.
+
 parseDecimal:
-	push	hl
-	push	de
+	push 	hl
 
-	ld	ix, 0
+	ld 	a, (hl)
+	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
+	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	exx		; preserve bc, hl, de
+	ld	h, 0
+	ld	l, a	; load first digit in without multiplying
+	ld	b, 3	; Carries can only occur for decimals >=5 in length
+	jr	c, .end
+
 .loop:
-	ld	a, (hl)
-	or	a
-	jr	z, .end	; success!
-	call	parseDecimalDigit
-	jr	c, .error
-
-	; Now, let's add A to IX. First, multiply by 10.
-	push	ix \ pop de
-	add	ix, ix	; x2
-	jr	c, .error
-	add	ix, ix	; x4
-	jr	c, .error
-	add	ix, ix	; x8
-	jr	c, .error
-	add	ix, de	; x9
-	jr	c, .error
-	add	ix, de	; x10
-	jr	c, .error
+	exx
+	inc hl
+	ld a, (hl)
+	exx
+	
+	; inline parseDecimalDigit
+	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
+	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	
+	jr	c, .end
+	
+	add	hl, hl	; x2
+	ld	d, h
+	ld	e, l		; de is x2
+	add	hl, hl	; x4
+	add	hl, hl	; x8
+	add	hl, de	; x10
 	ld	d, 0
 	ld	e, a
-	add	ix, de
-	jr	c, .error
+	add	hl, de
+	jr	c, .end	; if hl was 0x1999, it may carry here
+	djnz	.loop
 
-	inc	hl
-	jr	.loop
 
-	cp	a	; ensure Z
-	jr	.end
-.error:
-	call	unsetZ
+	inc 	b	; so loop only executes once more
+	; only numbers >0x1999 can carry when multiplied by 10.
+	ld	de, 0xE666
+	ex	de, hl
+	add	hl, de
+	ex	de, hl
+	jr	nc, .loop	; if it doesn't carry, it's small enough
+
+	exx
+	inc 	hl
+	ld 	a, (hl)
+	exx
+	add 	a, 0xd0	; the next line expects a null to be mapped to 0xd0
 .end:
-	pop	de
+	; Because of the add and sub in parseDecimalDigit, null is mapped
+	; to 0x00+(0xff-'9')-(0xff-9)=-0x30=0xd0
+	sub 	0xd0	; if a is null, set Z
+			; a is checked for null before any errors
+	push	hl \ pop ix
+	exx	; restore original de and bc
 	pop	hl
 	ret
-
-

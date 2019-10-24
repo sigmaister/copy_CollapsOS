@@ -11,27 +11,19 @@
 ; On success, the carry flag is reset. On error, it is set.
 parseHex:
 	; First, let's see if we have an easy 0-9 case
-	cp	'0'
-	jr	c, .error	; if < '0', we have a problem
-	cp	'9'+1
-	jr	nc, .alpha	; if >= '9'+1, we might have alpha
-	; We are in the 0-9 range
-	sub	'0'		; C is clear
+	
+	add 	a, 0xc6	; maps '0'-'9' onto 0xf6-0xff
+	sub 	0xf6	; maps to 0-9 and carries if not a digit
+	ret	nc
+
+	and 	0xdf		; converts lowercase to uppercase
+	add	a, 0xe9		; map 0x11-x017 onto 0xFA - 0xFF
+	sub 	0xfa		; map onto 0-6
+	ret 	c
+	; we have an A-F digit
+	add	a, 10		; C is clear, map back to 0xA-0xF
 	ret
 
-.alpha:
-	call	upcase
-	cp	'A'
-	jr	c, .error	; if < 'A', we have a problem
-	cp	'F'+1
-	jr	nc, .error	; if >= 'F', we have a problem
-	; We have alpha.
-	sub	'A'-10		; C is clear
-	ret
-
-.error:
-	scf
-	ret
 
 ; Parses 2 characters of the string pointed to by HL and returns the numerical
 ; value in A. If the second character is a "special" character (<0x21) we don't
