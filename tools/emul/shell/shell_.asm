@@ -26,14 +26,14 @@
 	jp	blkSet
 	jp	fsFindFN
 	jp	fsOpen
-	jp	fsGetC
-	jp	fsPutC
+	jp	fsGetB
+	jp	fsPutB
 	jp	fsSetSize
 	jp	cpHLDE
 	jp	parseArgs
 	jp	printstr
-	jp	_blkGetC
-	jp	_blkPutC
+	jp	_blkGetB
+	jp	_blkPutB
 	jp	_blkSeek
 	jp	_blkTell
 	jp	printcrlf
@@ -48,10 +48,10 @@
 .equ	BLOCKDEV_COUNT		4
 .inc "blockdev.asm"
 ; List of devices
-.dw	fsdevGetC, fsdevPutC
-.dw	stdoutGetC, stdoutPutC
-.dw	stdinGetC, stdinPutC
-.dw	mmapGetC, mmapPutC
+.dw	fsdevGetB, fsdevPutB
+.dw	stdoutGetB, stdoutPutB
+.dw	stdinGetB, stdinPutB
+.dw	mmapGetB, mmapPutB
 
 
 .equ	MMAP_START	0xe000
@@ -84,8 +84,8 @@ init:
 	; setup stack
 	ld	hl, KERNEL_RAMEND
 	ld	sp, hl
-	ld	hl, emulGetC
-	ld	de, emulPutC
+	ld	hl, emulGetB
+	ld	de, emulPutB
 	call	stdioInit
 	call	fsInit
 	ld	a, 0	; select fsdev
@@ -97,17 +97,17 @@ init:
 	ld	(SHELL_CMDHOOK), hl
 	jp	shellLoop
 
-emulGetC:
+emulGetB:
 	; Blocks until a char is returned
 	in	a, (STDIO_PORT)
 	cp	a		; ensure Z
 	ret
 
-emulPutC:
+emulPutB:
 	out	(STDIO_PORT), a
 	ret
 
-fsdevGetC:
+fsdevGetB:
 	ld	a, e
 	out	(FS_ADDR_PORT), a
 	ld	a, h
@@ -121,7 +121,7 @@ fsdevGetC:
 	cp	a		; ensure Z
 	ret
 
-fsdevPutC:
+fsdevPutB:
 	push	af
 	ld	a, e
 	out	(FS_ADDR_PORT), a
@@ -142,21 +142,21 @@ fsdevPutC:
 
 .equ	STDOUT_HANDLE	FS_HANDLES
 
-stdoutGetC:
+stdoutGetB:
 	ld	ix, STDOUT_HANDLE
-	jp	fsGetC
+	jp	fsGetB
 
-stdoutPutC:
+stdoutPutB:
 	ld	ix, STDOUT_HANDLE
-	jp	fsPutC
+	jp	fsPutB
 
 .equ	STDIN_HANDLE	FS_HANDLES+FS_HANDLE_SIZE
 
-stdinGetC:
+stdinGetB:
 	ld	ix, STDIN_HANDLE
-	jp	fsGetC
+	jp	fsGetB
 
-stdinPutC:
+stdinPutB:
 	ld	ix, STDIN_HANDLE
-	jp	fsPutC
+	jp	fsPutB
 

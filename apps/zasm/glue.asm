@@ -5,9 +5,9 @@
 ;
 ; We don't buffer the whole source in memory, so we need our input blkdev to
 ; support Seek so we can read the file a second time. So, for input, we need
-; GetC and Seek.
+; GetB and Seek.
 ;
-; For output, we only need PutC. Output doesn't start until the second pass.
+; For output, we only need PutB. Output doesn't start until the second pass.
 ;
 ; The goal of the second pass is to assign values to all symbols so that we
 ; can have forward references (instructions referencing a label that happens
@@ -33,11 +33,11 @@
 ; blkSet
 ; fsFindFN
 ; fsOpen
-; fsGetC
+; fsGetB
 ; cpHLDE
 ; parseArgs
-; _blkGetC
-; _blkPutC
+; _blkGetB
+; _blkPutB
 ; _blkSeek
 ; _blkTell
 ; printstr

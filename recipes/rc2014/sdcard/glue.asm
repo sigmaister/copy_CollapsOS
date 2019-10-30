@@ -29,8 +29,8 @@ jp	aciaInt
 .equ	BLOCKDEV_COUNT		2
 .inc "blockdev.asm"
 ; List of devices
-.dw	sdcGetC, sdcPutC
-.dw	blk2GetC, blk2PutC
+.dw	sdcGetB, sdcPutB
+.dw	blk2GetB, blk2PutB
 
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
@@ -83,10 +83,10 @@ init:
 
 ; *** blkdev 2: file handle 0 ***
 
-blk2GetC:
+blk2GetB:
 	ld	ix, FS_HANDLES
-	jp	fsGetC
+	jp	fsGetB
 
-blk2PutC:
+blk2PutB:
 	ld	ix, FS_HANDLES
-	jp	fsPutC
+	jp	fsPutB

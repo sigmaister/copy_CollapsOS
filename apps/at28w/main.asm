@@ -7,7 +7,7 @@
 
 ; *** Variables ***
 .equ	AT28W_MAXBYTES	AT28W_RAMSTART
-.equ	AT28W_RAMEND	AT28W_MAXBYTES+2
+.equ	AT28W_RAMEND	@+2
 ; *** Code ***
 
 at28wMain:
@@ -33,7 +33,7 @@ at28wInner:
 	; BC is zero, default to 0x2000 (8k, the size of the AT28)
 	ld	bc, 0x2000
 .loop:
-	call	blkGetC
+	call	blkGetB
 	jr	nz, .loopend
 	ld	(hl), a
 	ld	e, a		; save expected data for verification

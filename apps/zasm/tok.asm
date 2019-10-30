@@ -74,12 +74,12 @@ isLabel:
 ; Read I/O as long as it's whitespace. When it's not, stop and return the last
 ; read char in A
 _eatWhitespace:
-	call	ioGetC
+	call	ioGetB
 	call	isSep
 	ret	nz
 	jr	_eatWhitespace
 
-; Read ioGetC until a word starts, then read ioGetC as long as there is no
+; Read ioGetB until a word starts, then read ioGetB as long as there is no
 ; separator and put that contents in (scratchpad), null terminated, for a
 ; maximum of SCRATCHPAD_SIZE-1 characters.
 ; If EOL (\n, \r or comment) or EOF is hit before we could read a word, we stop
@@ -104,7 +104,7 @@ readWord:
 .loop:
 	ld	(hl), a
 	inc	hl
-	call	ioGetC
+	call	ioGetB
 	call	isSepOrLineEnd
 	jr	z, .success
 	cp	','
@@ -130,7 +130,7 @@ readWord:
 	; inside quotes, we accept literal whitespaces, but not line ends.
 	ld	(hl), a
 	inc	hl
-	call	ioGetC
+	call	ioGetB
 	cp	'"'
 	jr	z, .loop	; ending the quote ends the word
 	call	isLineEnd
@@ -143,12 +143,12 @@ readWord:
 	; single quote is more straightforward: we have 3 chars and we put them
 	; right in scratchpad
 	ld	(hl), a
-	call	ioGetC
+	call	ioGetB
 	or	a
 	jr	z, .error
 	inc	hl
 	ld	(hl), a
-	call	ioGetC
+	call	ioGetB
 	cp	0x27		; '
 	jr	nz, .error
 	inc	hl
@@ -165,7 +165,7 @@ readComma:
 	call	unsetZ
 	ret
 
-; Read ioGetC until we reach the beginning of next line, skipping comments if
+; Read ioGetB until we reach the beginning of next line, skipping comments if
 ; necessary. This skips all whitespace, \n, \r, comments until we reach the
 ; first non-comment character. Then, we put it back (ioPutBack) and return.
 ;
@@ -176,7 +176,7 @@ readComma:
 gotoNextLine:
 .loop1:
 	; first loop is "strict", that is: we error out on non-whitespace.
-	call	ioGetC
+	call	ioGetB
 	call	isSepOrLineEnd
 	ret	nz		; error
 	or	a		; cp 0
@@ -189,7 +189,7 @@ gotoNextLine:
 .loop2:
 	; second loop is the "comment loop": anything is valid and we just run
 	; until EOL.
-	call	ioGetC
+	call	ioGetB
 	or	a		; cp 0
 	jr	z, .eof
 	cp	'\'		; special case: '\' doesn't count as a line end
@@ -201,7 +201,7 @@ gotoNextLine:
 .loop3:
 	; Loop 3 happens after we reach our first line sep. This means that we
 	; wade through whitespace until we reach a non-whitespace character.
-	call	ioGetC
+	call	ioGetB
 	or	a		; cp 0
 	jr	z, .eof
 	cp	0x3b		; ';'

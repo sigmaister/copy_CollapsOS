@@ -54,7 +54,7 @@ handleDB:
 	or	a		; cp 0
 	jr	nz, .overflow	; not zero? overflow
 	ld	a, l
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .ioError
 .stopStrLit:
 	call	readComma
@@ -84,7 +84,7 @@ handleDB:
 	or	a		; when we encounter 0, that was what used to
 	jr	z, .stopStrLit	; be our closing quote. Stop.
 	; Normal character, output
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .ioError
 	jr	.stringLiteral
 
@@ -98,10 +98,10 @@ handleDW:
 	jr	nz, .badarg
 	push	ix \ pop hl
 	ld	a, l
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .ioError
 	ld	a, h
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .ioError
 	call	readComma
 	jr	z, .loop
@@ -208,7 +208,7 @@ handleFIL:
 	or	c
 	jr	z, .loopend
 	xor	a
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .ioError
 	dec	bc
 	jr	.loop
@@ -314,7 +314,7 @@ getDirectiveID:
 
 ; Parse directive specified in A (D_* const) with args in I/O and act in
 ; an appropriate manner. If the directive results in writing data at its
-; current location, that data is directly written through ioPutC.
+; current location, that data is directly written through ioPutB.
 ; Each directive has the same return value pattern: Z on success, not-Z on
 ; error, A contains the error number (ERR_*).
 parseDirective:

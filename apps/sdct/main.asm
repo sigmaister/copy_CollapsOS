@@ -9,7 +9,7 @@ sdctMain:
 	; we set DE to 12 instead of zero
 	push	de		; <|
 	ld	de, 12		;  |
-	call	sdcPutC		;  |
+	call	sdcPutB		;  |
 	pop	de		; <|
 	jr	nz, .error
 	inc	hl
@@ -30,7 +30,7 @@ sdctMain:
 .rLoop:
 	push	de		; <|
 	ld	de, 12		;  |
-	call	sdcGetC		;  |
+	call	sdcGetB		;  |
 	pop	de		; <|
 	jr	nz, .error
 	ex	de, hl

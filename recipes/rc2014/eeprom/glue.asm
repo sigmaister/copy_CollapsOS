@@ -24,7 +24,7 @@ jp	aciaInt
 .equ	BLOCKDEV_COUNT		1
 .inc "blockdev.asm"
 ; List of devices
-.dw	mmapGetC, mmapPutC
+.dw	mmapGetB, mmapPutB
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
 .inc "stdio.asm"

@@ -22,14 +22,14 @@
 	jp	blkSet
 	jp	fsFindFN
 	jp	fsOpen
-	jp	fsGetC
-	jp	fsPutC
+	jp	fsGetB
+	jp	fsPutB
 	jp	fsSetSize
 	jp	cpHLDE
 	jp	parseArgs
 	jp	printstr
-	jp	_blkGetC
-	jp	_blkPutC
+	jp	_blkGetB
+	jp	_blkPutB
 	jp	_blkSeek
 	jp	_blkTell
 	jp	printcrlf
@@ -63,9 +63,9 @@
 .equ	BLOCKDEV_COUNT		3
 .inc "blockdev.asm"
 ; List of devices
-.dw	mmapGetC, mmapPutC
-.dw	f0GetC, f0PutC
-.dw	f1GetC, f1PutC
+.dw	mmapGetB, mmapPutB
+.dw	f0GetB, f0PutB
+.dw	f1GetB, f1PutB
 
 
 .equ	FS_RAMSTART	BLOCKDEV_RAMEND
@@ -121,21 +121,21 @@ init:
 	ld	(SHELL_CMDHOOK), hl
 	jp	shellLoop
 
-f0GetC:
+f0GetB:
 	ld	ix, FS_HANDLES
-	jp	fsGetC
+	jp	fsGetB
 
-f0PutC:
+f0PutB:
 	ld	ix, FS_HANDLES
-	jp	fsPutC
+	jp	fsPutB
 
-f1GetC:
+f1GetB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
-	jp	fsGetC
+	jp	fsGetB
 
-f1PutC:
+f1PutB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
-	jp	fsPutC
+	jp	fsPutB
 
 edCmd:
 	.db	"ed", 0, 0, 0b1001, 0, 0

@@ -5,30 +5,31 @@
 
 ; *** JUMP TABLE ***
 .equ    strncmp        0x03
-.equ    addDE          0x06
-.equ    addHL          0x09
-.equ    upcase         0x0c
-.equ    unsetZ         0x0f
-.equ    intoDE         0x12
-.equ    intoHL         0x15
-.equ    writeHLinDE    0x18
-.equ    findchar       0x1b
-.equ    parseHex       0x1e
-.equ    parseHexPair   0x21
-.equ    blkSel         0x24
-.equ    blkSet         0x27
-.equ    fsFindFN       0x2a
-.equ    fsOpen         0x2d
-.equ    fsGetC         0x30
-.equ    cpHLDE         0x33
+.equ    addDE          @+3
+.equ    addHL          @+3
+.equ    upcase         @+3
+.equ    unsetZ         @+3
+.equ    intoDE         @+3
+.equ    intoHL         @+3
+.equ    writeHLinDE    @+3
+.equ    findchar       @+3
+.equ    parseHex       @+3
+.equ    parseHexPair   @+3
+.equ    blkSel         @+3
+.equ    blkSet         @+3
+.equ    fsFindFN       @+3
+.equ    fsOpen         @+3
+.equ    fsGetB         @+3
+.equ    cpHLDE         @+3
+; now at 0x36
 
 .equ    parseArgs      0x3b
-.equ    printstr       0x3e
-.equ    _blkGetC       0x41
-.equ    _blkPutC       0x44
-.equ    _blkSeek       0x47
-.equ    _blkTell       0x4a
-.equ    printHexPair   0x4d
-.equ    sdcGetC        0x50
-.equ    sdcPutC        0x53
-.equ    blkGetC        0x56
+.equ    printstr       @+3
+.equ    _blkGetB       @+3
+.equ    _blkPutB       @+3
+.equ    _blkSeek       @+3
+.equ    _blkTell       @+3
+.equ    printHexPair   @+3
+.equ    sdcGetB        @+3
+.equ    sdcPutB        @+3
+.equ    blkGetB        @+3

@@ -50,7 +50,7 @@ blkSeekCmd:
 ; stop loading.
 ;
 ; Returns a SHELL_ERR_IO_ERROR only if we couldn't read any byte (if the first
-; call to GetC failed)
+; call to GetB failed)
 ;
 ; Example: load 42
 blkLoadCmd:
@@ -62,12 +62,12 @@ blkLoad:
 	ld	a, (hl)
 	ld	b, a
 	ld	hl, (SHELL_MEM_PTR)
-	call	blkGetC
+	call	blkGetB
 	jr	nz, .ioError
-	jr	.intoLoop	; we'v already called blkGetC. don't call it
+	jr	.intoLoop	; we'v already called blkGetB. don't call it
 				; again.
 .loop:
-	call	blkGetC
+	call	blkGetB
 .intoLoop:
 	ld	(hl), a
 	inc	hl
@@ -86,7 +86,7 @@ blkLoad:
 
 ; Load the specified number of bytes (max 0x100, 0 means 0x100) from the current
 ; memory pointer and write them to I/O. Memory pointer doesn't move. This puts
-; chars to blkPutC. Raises error if not all bytes could be written.
+; chars to blkPutB. Raises error if not all bytes could be written.
 ;
 ; Example: save 42
 blkSaveCmd:
@@ -101,7 +101,7 @@ blkSave:
 .loop:
 	ld	a, (hl)
 	inc	hl
-	call	blkPutC
+	call	blkPutB
 	jr	nz, .ioError
 	djnz	.loop
 .loopend:

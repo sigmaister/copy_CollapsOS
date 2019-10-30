@@ -888,7 +888,7 @@ parseInstruction:
 	ld	hl, INS_UPCODE
 .loopWrite:
 	ld	a, (hl)
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .ioError
 	inc	hl
 	djnz	.loopWrite

@@ -24,7 +24,7 @@ _mmapAddr:
 	pop	de
 	jp	unsetZ
 
-mmapGetC:
+mmapGetB:
 	push	hl
 	call	_mmapAddr
 	jr	nz, .end
@@ -35,7 +35,7 @@ mmapGetC:
 	ret
 
 
-mmapPutC:
+mmapPutB:
 	push	hl
 	call	_mmapAddr
 	jr	nz, .end

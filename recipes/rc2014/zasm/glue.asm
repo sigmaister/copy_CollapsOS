@@ -27,7 +27,7 @@
 	jp	blkSet
 	jp	fsFindFN
 	jp	fsOpen
-	jp	fsGetC
+	jp	fsGetB
 	jp	cpHLDE		; approaching 0x38...
 
 ; interrupt hook
@@ -37,14 +37,14 @@ jp	aciaInt
 ; *** Jump Table (cont.) ***
 	jp	parseArgs
 	jp	printstr
-	jp	_blkGetC
-	jp	_blkPutC
+	jp	_blkGetB
+	jp	_blkPutB
 	jp	_blkSeek
 	jp	_blkTell
 	jp	printHexPair
-	jp	sdcGetC
-	jp	sdcPutC
-	jp	blkGetC
+	jp	sdcGetB
+	jp	sdcPutB
+	jp	blkGetB
 
 .inc "err.h"
 .inc "core.asm"
@@ -55,10 +55,10 @@ jp	aciaInt
 .equ	BLOCKDEV_COUNT		4
 .inc "blockdev.asm"
 ; List of devices
-.dw	sdcGetC, sdcPutC
-.dw	blk1GetC, blk1PutC
-.dw	blk2GetC, blk2PutC
-.dw	mmapGetC, mmapPutC
+.dw	sdcGetB, sdcPutB
+.dw	blk1GetB, blk1PutB
+.dw	blk2GetB, blk2PutB
+.dw	mmapGetB, mmapPutB
 
 
 .equ	MMAP_START	0xe000
@@ -116,20 +116,20 @@ init:
 
 ; *** blkdev 1: file handle 0 ***
 
-blk1GetC:
+blk1GetB:
 	ld	ix, FS_HANDLES
-	jp	fsGetC
+	jp	fsGetB
 
-blk1PutC:
+blk1PutB:
 	ld	ix, FS_HANDLES
-	jp	fsPutC
+	jp	fsPutB
 
 ; *** blkdev 2: file handle 1 ***
 
-blk2GetC:
+blk2GetB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
-	jp	fsGetC
+	jp	fsGetB
 
-blk2PutC:
+blk2PutB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
-	jp	fsPutC
+	jp	fsPutB

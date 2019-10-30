@@ -9,10 +9,10 @@
 ; Handle of the target file
 .equ	IO_FILE_HDL	IO_RAMSTART
 ; block device targeting IO_FILE_HDL
-.equ	IO_BLK		IO_FILE_HDL+FS_HANDLE_SIZE
+.equ	IO_BLK		@+FS_HANDLE_SIZE
 ; Buffer for lines read from I/O.
-.equ	IO_LINE		IO_BLK+BLOCKDEV_SIZE
-.equ	IO_RAMEND	IO_LINE+IO_MAXLEN+1	; +1 for null
+.equ	IO_LINE		@+BLOCKDEV_SIZE
+.equ	IO_RAMEND	@+IO_MAXLEN+1	; +1 for null
 ; *** Code ***
 
 ; Given a file name in (HL), open that file in (IO_FILE_HDL) and open a blkdev
@@ -25,26 +25,26 @@ ioInit:
 	ld	de, IO_BLK
 	ld	hl, .blkdev
 	jp	blkSet
-.fsGetC:
+.fsGetB:
 	ld	ix, IO_FILE_HDL
-	jp	fsGetC
-.fsPutC:
+	jp	fsGetB
+.fsPutB:
 	ld	ix, IO_FILE_HDL
-	jp	fsPutC
+	jp	fsPutB
 .blkdev:
-	.dw	.fsGetC, .fsPutC
+	.dw	.fsGetB, .fsPutB
 
-ioGetC:
+ioGetB:
 	push	ix
 	ld	ix, IO_BLK
-	call	_blkGetC
+	call	_blkGetB
 	pop	ix
 	ret
 
-ioPutC:
+ioPutB:
 	push	ix
 	ld	ix, IO_BLK
-	call	_blkPutC
+	call	_blkPutB
 	pop	ix
 	ret
 
@@ -76,14 +76,14 @@ ioPutLine:
 	ld	a, (hl)
 	or	a
 	jr	z, .loopend		; null, we're finished
-	call	ioPutC
+	call	ioPutB
 	jr	nz, .error
 	inc	hl
 	jr	.loop
 .loopend:
 	; Wrote the whole line, write ending LF
 	ld	a, 0x0a
-	call	ioPutC
+	call	ioPutB
 	jr	z, .end		; success
 	; continue to error
 .error:

@@ -8,7 +8,7 @@
 ; maintaining IO_PC and of properly disabling output on first pass.
 ;
 ; On top of that, this unit has the responsibility of keeping track of the
-; current lineno. Whenever GetC is called, we check if the fetched char is a
+; current lineno. Whenever GetB is called, we check if the fetched byte is a
 ; newline. If it is, we increase our lineno. This unit is the best place to
 ; keep track of this because we have to handle ioRecallPos.
 ;
@@ -17,7 +17,7 @@
 ; mechanism, that is, a way to say "you see that character I've just read? that
 ; was out of my bounds. Could you make it as if I had never read it?". That
 ; buffer is one character big and is made with the expectation that ioPutBack
-; is always called right after a ioGetC (when it's called).
+; is always called right after a ioGetB (when it's called).
 ;
 ; ioPutBack will mess up seek and tell offsets, so thath "put back" should be
 ; consumed before having to seek and tell.
@@ -25,7 +25,7 @@
 ; That's for the general rules.
 ;
 ; Now, let's enter includes. To simplify processing, we make include mostly
-; transparent to all other units. They always read from ioGetC and a include
+; transparent to all other units. They always read from ioGetB and a include
 ; directive should have the exact same effect as copy/pasting the contents of
 ; the included file in the caller.
 ;
@@ -33,7 +33,7 @@
 ; can include.
 ;
 ; When we include, all we do here is open the file with fsOpen and set a flag
-; indicating that we're inside an include. When that flag is on, GetC, Seek and
+; indicating that we're inside an include. When that flag is on, GetB, Seek and
 ; Tell are transparently redirected to their fs* counterpart.
 ;
 ; When we reach EOF in an included file, we transparently unset the "in include"
@@ -73,7 +73,7 @@ ioInit:
 	call	blkSet
 	jp	ioResetCounters
 
-ioGetC:
+ioGetB:
 	ld	a, (IO_PUTBACK_BUF)
 	or	a		; cp 0
 	jr	nz, .getback
@@ -81,7 +81,7 @@ ioGetC:
 	jr	z, .normalmode
 	; We're in "include mode", read from FS
 	ld	ix, IO_INCLUDE_BLK
-	call	_blkGetC
+	call	_blkGetB
 	jr	nz, .includeEOF
 	cp	0x0a		; newline
 	ret	nz		; not newline? nothing to do
@@ -111,7 +111,7 @@ ioGetC:
 .normalmode:
 	; normal mode, read from IN stream
 	ld	ix, IO_IN_BLK
-	call	_blkGetC
+	call	_blkGetB
 	cp	0x0a		; newline
 	ret	nz		; not newline? return
 	; inc current lineno
@@ -133,14 +133,14 @@ _callIX:
 	jp	(ix)
 	ret
 
-; Put back non-zero character A into the "ioGetC stack". The next ioGetC call,
+; Put back non-zero character A into the "ioGetB stack". The next ioGetB call,
 ; instead of reading from IO_IN_BLK, will return that character. That's the
 ; easiest way I found to handle the readWord/gotoNextLine problem.
 ioPutBack:
 	ld	(IO_PUTBACK_BUF), a
 	ret
 
-ioPutC:
+ioPutB:
 	push	hl
 	ld	hl, (IO_PC)
 	inc	hl
@@ -151,7 +151,7 @@ ioPutC:
 	jr	z, .skip
 	pop	af
 	ld	ix, IO_OUT_BLK
-	jp	_blkPutC
+	jp	_blkPutB
 .skip:
 	pop	af
 	cp	a		; ensure Z
@@ -240,7 +240,7 @@ ioOpenInclude:
 	cp	a		; ensure Z
 	ret
 
-; Open file specified in (HL) and spit its contents through ioPutC
+; Open file specified in (HL) and spit its contents through ioPutB
 ; Sets Z on success.
 ioSpitBin:
 	call	fsFindFN
@@ -251,9 +251,9 @@ ioSpitBin:
 	ld	hl, 0
 .loop:
 	ld	ix, IO_BIN_HDL
-	call	fsGetC
+	call	fsGetB
 	jr	nz, .loopend
-	call	ioPutC
+	call	ioPutB
 	inc	hl
 	jr	.loop
 .loopend:
@@ -274,12 +274,12 @@ ioLineNo:
 	pop	af
 	ret
 
-_ioIncGetC:
+_ioIncGetB:
 	ld	ix, IO_INCLUDE_HDL
-	jp	fsGetC
+	jp	fsGetB
 
 _ioIncBlk:
-	.dw	_ioIncGetC, unsetZ
+	.dw	_ioIncGetB, unsetZ
 
 ; call printstr followed by newline
 ioPrintLN:

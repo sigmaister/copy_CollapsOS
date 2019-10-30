@@ -24,11 +24,11 @@ jp	blkSel
 jp	blkSet
 jp	fsFindFN
 jp	fsOpen
-jp	fsGetC
+jp	fsGetB
 jp	cpHLDE
 jp	parseArgs
-jp	_blkGetC
-jp	_blkPutC
+jp	_blkGetB
+jp	_blkPutB
 jp	_blkSeek
 jp	_blkTell
 jp	printstr
@@ -40,9 +40,9 @@ jp	printstr
 .equ	BLOCKDEV_COUNT		3
 .inc "blockdev.asm"
 ; List of devices
-.dw	emulGetC, unsetZ
-.dw	unsetZ, emulPutC
-.dw	fsdevGetC, fsdevPutC
+.dw	emulGetB, unsetZ
+.dw	unsetZ, emulPutB
+.dw	fsdevGetB, fsdevPutB
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
 .inc "stdio.asm"
@@ -71,7 +71,7 @@ init:
 	.db	"0 1", 0
 
 ; *** I/O ***
-emulGetC:
+emulGetB:
 	; the STDIN_SEEK port works by poking it twice. First poke is for high
 	; byte, second poke is for low one.
 	ld	a, h
@@ -87,7 +87,7 @@ emulGetC:
 	call	unsetZ
 	ret
 
-emulPutC:
+emulPutB:
 	out	(STDIO_PORT), a
 	cp	a		; ensure Z
 	ret
@@ -97,7 +97,7 @@ stderrPutC:
 	cp	a		; ensure Z
 	ret
 
-fsdevGetC:
+fsdevGetB:
 	ld	a, e
 	out	(FS_SEEK_PORT), a
 	ld	a, h
@@ -111,7 +111,7 @@ fsdevGetC:
 	cp	a		; ensure Z
 	ret
 
-fsdevPutC:
+fsdevPutB:
 	push	af
 	ld	a, e
 	out	(FS_SEEK_PORT), a

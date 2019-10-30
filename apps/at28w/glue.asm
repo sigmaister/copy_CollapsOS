@@ -9,7 +9,7 @@
 ; is reached on the block device.
 
 ; *** Requirements ***
-; blkGetC
+; blkGetB
 ; parseArgs
 ;
 ; *** Includes ***

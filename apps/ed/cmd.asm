@@ -13,9 +13,9 @@
 
 ; An address is a one byte type and a two bytes line number (0-indexed)
 .equ	CMD_ADDR1	CMD_RAMSTART
-.equ	CMD_ADDR2	CMD_ADDR1+3
-.equ	CMD_TYPE	CMD_ADDR2+3
-.equ	CMD_RAMEND	CMD_TYPE+1
+.equ	CMD_ADDR2	@+3
+.equ	CMD_TYPE	@+3
+.equ	CMD_RAMEND	@+1
 
 ; *** Code ***
 
@@ -89,11 +89,11 @@ cmdParse:
 	jr	z, .dot
 	cp	'$'
 	jr	z, .eof
-	
+
 	; inline parseDecimalDigit
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 	sub	0xff-9		; maps to 0-9 and carries if not a digit
-	
+
 	jr	c, .notHandled
 	; straight number
 	ld	a, ABSOLUTE
@@ -125,11 +125,11 @@ cmdParse:
 	inc	hl		; advance cmd cursor
 	ld	a, (hl)
 	ld	de, 1		; if .pmNoSuffix
-	
+
 	; inline parseDecimalDigit
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 	sub	0xff-9		; maps to 0-9 and carries if not a digit
-	
+
 	jr	c, .pmNoSuffix
 	call	.parseDecimalM	; --> DE
 .pmNoSuffix:
@@ -157,11 +157,11 @@ cmdParse:
 .loop:
 	inc	hl
 	ld	a, (hl)
-		
+
 	; inline parseDecimalDigit
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 	sub	0xff-9		; maps to 0-9 and carries if not a digit
-	
+
 	jr	nc, .loop
 	; We're at the first non-digit char. Let's save it because we're going
 	; to temporarily replace it with a null.

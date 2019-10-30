@@ -4,15 +4,15 @@
 ; sectors. Collapse OS doesn't have a random number generator, so we'll simply
 ; rely on initial SRAM value, which tend is random enough for our purpose.
 ;
-; How it works is simple. From its designated RAMSTART, it calls PutC until it
+; How it works is simple. From its designated RAMSTART, it calls PutB until it
 ; reaches the end of RAM (0xffff). Then, it starts over and this time it reads
 ; every byte and compares.
 ;
 ; If there's an error, prints out where.
 ;
 ; *** Requirements ***
-; sdcPutC
-; sdcGetC
+; sdcPutB
+; sdcGetB
 ; printstr
 ; printHexPair
 ;

@@ -4,14 +4,14 @@
 ; Number of lines currently in the buffer
 .equ	BUF_LINECNT	BUF_RAMSTART
 ; List of pointers to strings in scratchpad
-.equ	BUF_LINES	BUF_LINECNT+2
+.equ	BUF_LINES	@+2
 ; Points to the end of the scratchpad, that is, one byte after the last written
 ; char in it.
-.equ	BUF_PADEND	BUF_LINES+ED_BUF_MAXLINES*2
+.equ	BUF_PADEND	@+ED_BUF_MAXLINES*2
 ; The in-memory scratchpad
-.equ	BUF_PAD		BUF_PADEND+2
+.equ	BUF_PAD		@+2
 
-.equ	BUF_RAMEND	BUF_PAD+ED_BUF_PADMAXLEN
+.equ	BUF_RAMEND	@+ED_BUF_PADMAXLEN
 
 ; *** Code ***
 
@@ -25,7 +25,7 @@ bufInit:
 	; init pad end in case we have an empty file.
 	ld	(BUF_PADEND), hl
 .loop:
-	call	ioGetC
+	call	ioGetB
 	jr	nz, .loopend
 	or	a		; null? hum, weird. same as LF
 	jr	z, .lineend

@@ -128,7 +128,7 @@ zasmParseFile:
 	ret
 
 ; Parse next token and accompanying args (when relevant) in I/O, write the
-; resulting opcode(s) through ioPutC and increases (IO_PC) by the number of
+; resulting opcode(s) through ioPutB and increases (IO_PC) by the number of
 ; bytes written. BC is set to the result of the call to tokenize.
 ; Sets Z if parse was successful, unset if there was an error. EOF is not an
 ; error. If there is an error, A is set to the corresponding error code (ERR_*).

@@ -3,7 +3,7 @@
 ; Collapse OS filesystem (CFS) is not made to be convenient, but to be simple.
 ; This is little more than "named storage blocks". Characteristics:
 ;
-; * a filesystem sits upon a blockdev. It needs GetC, PutC, Seek.
+; * a filesystem sits upon a blockdev. It needs GetB, PutB, Seek.
 ; * No directory. Use filename prefix to group.
 ; * First block of each file has metadata. Others are raw data.
 ; * No FAT. Files are a chain of blocks of a predefined size. To enumerate
@@ -98,12 +98,12 @@
 ; This pointer is 32 bits. 32 bits pointers are a bit awkward: first two bytes
 ; are high bytes *low byte first*, and then the low two bytes, same order.
 ; When loaded in HL/DE, the four bytes are loaded in this order: E, D, L, H
-.equ	FS_START	FS_BLK+BLOCKDEV_SIZE
+.equ	FS_START	@+BLOCKDEV_SIZE
 ; This variable below contain the metadata of the last block we moved
 ; to. We read this data in memory to avoid constant seek+read operations.
-.equ	FS_META		FS_START+4
-.equ	FS_HANDLES	FS_META+FS_METASIZE
-.equ	FS_RAMEND	FS_HANDLES+FS_HANDLE_COUNT*FS_HANDLE_SIZE
+.equ	FS_META		@+4
+.equ	FS_HANDLES	@+FS_METASIZE
+.equ	FS_RAMEND	@+FS_HANDLE_COUNT*FS_HANDLE_SIZE
 
 ; *** DATA ***
 P_FS_MAGIC:
@@ -333,10 +333,10 @@ fsIsDeleted:
 ; we can still access the FS even if blkdev selection changes. These routines
 ; below mimic blkdev's methods, but for our private mount.
 
-fsblkGetC:
+fsblkGetB:
 	push	ix
 	ld	ix, FS_BLK
-	call	_blkGetC
+	call	_blkGetB
 	pop	ix
 	ret
 
@@ -347,10 +347,10 @@ fsblkRead:
 	pop	ix
 	ret
 
-fsblkPutC:
+fsblkPutB:
 	push	ix
 	ld	ix, FS_BLK
-	call	_blkPutC
+	call	_blkPutB
 	pop	ix
 	ret
 
@@ -458,27 +458,27 @@ fsSetSize:
 	; cache.
 	ld	a, l
 	ld	(ix+4), a
-	call	fsblkPutC
+	call	fsblkPutB
 	ld	a, h
 	ld	(ix+5), a
-	call	fsblkPutC
+	call	fsblkPutB
 	pop	hl		; <-- lvl 1
 	xor	a	; ensure Z
 	ret
 
 ; Read a byte in handle at (IX) at position HL and put it into A.
 ; Z is set on success, unset if handle is at the end of the file.
-fsGetC:
+fsGetB:
 	call	fsWithinBounds
 	jr	z, .proceed
-	; We want to unset Z, but also return 0 to ensure that a GetC that
+	; We want to unset Z, but also return 0 to ensure that a GetB that
 	; doesn't check Z doesn't end up with false data.
 	xor	a
 	jp	unsetZ		; returns
 .proceed:
 	push	hl
 	call	fsPlaceH
-	call	fsblkGetC
+	call	fsblkGetB
 	cp	a		; ensure Z
 	pop	hl
 	ret
@@ -486,10 +486,10 @@ fsGetC:
 ; Write byte A in handle (IX) at position HL.
 ; Z is set on success, unset if handle is at the end of the file.
 ; TODO: detect end of block alloc
-fsPutC:
+fsPutB:
 	push	hl
 	call	fsPlaceH
-	call	fsblkPutC
+	call	fsblkPutB
 	pop	hl
 	; if HL is out of bounds, increase bounds
 	call	fsWithinBounds

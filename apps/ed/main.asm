@@ -25,16 +25,16 @@
 ; *** Requirements ***
 ; BLOCKDEV_SIZE
 ; FS_HANDLE_SIZE
-; _blkGetC
-; _blkPutC
+; _blkGetB
+; _blkPutB
 ; _blkSeek
 ; _blkTell
 ; addHL
 ; cpHLDE
 ; fsFindFN
 ; fsOpen
-; fsGetC
-; fsPutC
+; fsGetB
+; fsPutB
 ; fsSetSize
 ; intoHL
 ; printstr
@@ -46,7 +46,7 @@
 ; *** Variables ***
 ;
 .equ	ED_CURLINE	ED_RAMSTART
-.equ	ED_RAMEND	ED_CURLINE+2
+.equ	ED_RAMEND	@+2
 
 edMain:
 	; because ed only takes a single string arg, we can use HL directly

@@ -16,7 +16,7 @@
 ;
 ; *** Variables ***
 .equ	PGM_HANDLE	PGM_RAMSTART
-.equ	PGM_RAMEND	PGM_HANDLE+FS_HANDLE_SIZE
+.equ	PGM_RAMEND	@+FS_HANDLE_SIZE
 
 ; Routine suitable to plug into SHELL_CMDHOOK. HL points to the full cmdline.
 ; which has been processed to replace the first ' ' with a null char.
@@ -48,7 +48,7 @@ pgmRun:
 	ld	hl, 0		; addr that we read in file handle
 	ld	de, PGM_CODEADDR	; addr in mem we write to
 .loop:
-	call	fsGetC		; we use Z at end of loop
+	call	fsGetB		; we use Z at end of loop
 	ld	(de), a		; Z preserved
 	inc	hl		; Z preserved in 16-bit
 	inc	de		; Z preserved in 16-bit

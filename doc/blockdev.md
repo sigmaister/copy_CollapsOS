@@ -13,11 +13,11 @@ Definition of block devices happen at include time. It would look like:
     BLOCKDEV_COUNT .equ 1
     #include "blockdev.asm"
     ; List of devices
-    .dw	aciaGetC, aciaPutC
+    .dw	sdcGetB, sdcPutB
     [...]
 
-That tells `blockdev` that we're going to set up one device, that its GetC and
-PutC are the ones defined by `acia.asm`.
+That tells `blockdev` that we're going to set up one device, that its GetB and
+PutB are the ones defined by `sdc.asm`.
 
 If your block device is read-only or write-only, use dummy routines. `unsetZ`
 is a good choice since it will return with the `Z` flag unset, indicating an
@@ -28,16 +28,16 @@ seek pointer. This seek pointer is used in shell commands described below.
 
 ## Routine definitions
 
-Parts that implement GetC and PutC do so in a loosely-coupled manner, but
+Parts that implement GetB and PutB do so in a loosely-coupled manner, but
 they should try to adhere to the convention, that is:
 
-**GetC**: Get the character at position specified by `HL`. If it supports 32-bit
+**GetB**: Get the byte at position specified by `HL`. If it supports 32-bit
           addressing, `DE` contains the high-order bytes. Return the result in
           `A`. If there's an error (for example, address out of range), unset
           `Z`. This routine is not expected to block. We expect the result to be
           immediate.
 
-**PutC**: The opposite of GetC. Write the character in `A` at specified
+**PutB**: The opposite of GetB. Write the character in `A` at specified
           position. `Z` unset on error.
           
 ## Shell usage
