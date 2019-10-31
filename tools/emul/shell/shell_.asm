@@ -84,8 +84,8 @@ init:
 	; setup stack
 	ld	hl, KERNEL_RAMEND
 	ld	sp, hl
-	ld	hl, emulGetB
-	ld	de, emulPutB
+	ld	hl, emulGetC
+	ld	de, emulPutC
 	call	stdioInit
 	call	fsInit
 	ld	a, 0	; select fsdev
@@ -97,13 +97,13 @@ init:
 	ld	(SHELL_CMDHOOK), hl
 	jp	shellLoop
 
-emulGetB:
+emulGetC:
 	; Blocks until a char is returned
 	in	a, (STDIO_PORT)
 	cp	a		; ensure Z
 	ret
 
-emulPutB:
+emulPutC:
 	out	(STDIO_PORT), a
 	ret
 
