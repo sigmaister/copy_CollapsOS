@@ -19,6 +19,14 @@ manage to build and install Collapse OS without external resources (i.e.
 internet) on a machine of her design, built from scavenged parts with low-tech
 tools.
 
+## See it in action
+
+Michael Schierl has put together [a set of emulators running in the browser that
+run Collapse OS in different contexts][jsemul].
+
+Using those while following along with the [User Guide](doc/) is your quickest
+path to giving Collapse OS a try.
+
 ## Organisation of this repository
 
 * `kernel`: Pieces of code to be assembled by the user into a kernel.
@@ -39,3 +47,4 @@ for more information.
 
 [libz80]: https://github.com/ggambetta/libz80
 [web]: https://collapseos.org
+[jsemul]: https://schierlm.github.io/CollapseOS-Web-Emulator/
