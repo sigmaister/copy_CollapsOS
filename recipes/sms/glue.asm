@@ -33,15 +33,11 @@ init:
 
 	call	padInit
 	call	vdpInit
-	ld	hl, padUpdateSel
-	ld	(VDP_CHRSELHOOK), hl
 
 	ld	hl, padGetC
 	ld	de, vdpPutC
 	call	stdioInit
 	call	shellInit
-	ld	hl, vdpShellLoopHook
-	ld	(SHELL_LOOPHOOK), hl
 	jp	shellLoop
 
 .fill 0x7ff0-$

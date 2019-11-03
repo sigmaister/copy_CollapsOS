@@ -42,14 +42,12 @@
 
 ; Places where we store arguments specifiers and where resulting values are
 ; written to after parsing.
-.equ	SHELL_CMD_ARGS	SHELL_MEM_PTR+2
+.equ	SHELL_CMD_ARGS	@+2
 
 ; Pointer to a hook to call when a cmd name isn't found
-.equ	SHELL_CMDHOOK	SHELL_CMD_ARGS+PARSE_ARG_MAXCOUNT
+.equ	SHELL_CMDHOOK	@+PARSE_ARG_MAXCOUNT
 
-; Pointer to a routine to call at each shell loop iteration
-.equ	SHELL_LOOPHOOK	SHELL_CMDHOOK+2
-.equ	SHELL_RAMEND	SHELL_LOOPHOOK+2
+.equ	SHELL_RAMEND	@+2
 
 ; *** CODE ***
 shellInit:
@@ -58,7 +56,6 @@ shellInit:
 	ld	(SHELL_MEM_PTR+1), a
 	ld	hl, noop
 	ld	(SHELL_CMDHOOK), hl
-	ld	(SHELL_LOOPHOOK), hl
 
 	; print welcome
 	ld	hl, .welcome
@@ -70,10 +67,7 @@ shellInit:
 ; Inifite loop that processes input. Because it's infinite, you should jump
 ; to it rather than call it. Saves two precious bytes in the stack.
 shellLoop:
-	; First, call the loop hook
-	ld	ix, (SHELL_LOOPHOOK)
-	call	callIX
-	; Then, let's wait until something is typed.
+	; Let's wait until a line is typed.
 	call	stdioReadC
 	jr	nz, shellLoop	; not done? loop
 	; We're done. Process line.

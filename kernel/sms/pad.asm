@@ -11,6 +11,9 @@
 ;   The space character is the first among special chars.
 ; * C confirms letter selection
 ;
+; This module is currently hard-wired to sms/vdp, that is, it calls vdp's
+; routines during padGetC to update character selection.
+;
 ; *** Consts ***
 ;
 .equ	PAD_CTLPORT	0x3f
@@ -29,21 +32,18 @@
 ;
 ; Button status of last padUpdateSel call. Used for debouncing.
 .equ	PAD_SELSTAT	PAD_RAMSTART
-; Button status of last padGetC call.
-.equ	PAD_GETCSTAT	PAD_SELSTAT+1
 ; Current selected character
-.equ	PAD_SELCHR	PAD_GETCSTAT+1
+.equ	PAD_SELCHR	@+1
 ; When non-zero, will be the next char returned in GetC. So far, only used for
 ; LF that is feeded when Start is pressed.
-.equ	PAD_NEXTCHR	PAD_SELCHR+1
-.equ	PAD_RAMEND	PAD_NEXTCHR+1
+.equ	PAD_NEXTCHR	@+1
+.equ	PAD_RAMEND	@+1
 
 ; *** Code ***
 
 padInit:
 	ld	a, 0xff
 	ld	(PAD_SELSTAT), a
-	ld	(PAD_GETCSTAT), a
 	xor	a
 	ld	(PAD_NEXTCHR), a
 	ld	a, 'a'
@@ -78,14 +78,14 @@ padStatus:
 	ret
 
 ; From a pad status in A, update current char selection and return it.
-; Returns the same Z as padStatus: set if unchanged, unset if changed
+; Sets Z if current selection was unchanged, unset if changed.
 padUpdateSel:
 	call	padStatus
-	push	hl
+	push	hl		; --> lvl 1
 	ld	hl, PAD_SELSTAT
 	cp	(hl)
 	ld	(hl), a
-	pop	hl
+	pop	hl		; <-- lvl 1
 	jr	z, .nothing	; nothing changed
 	bit	PAD_UP, a
 	jr	z, .up
@@ -156,45 +156,51 @@ padUpdateSel:
 	ld	(PAD_SELCHR), a
 	jp	unsetZ
 .nothing:
-	cp	a		; ensure Z
+	; Z already set
 	ld	a, (PAD_SELCHR)
 	ret
 
+; Repeatedly poll the pad for input and returns the resulting "input char".
+; This routine takes a long time to return because it waits until C, B or Start
+; was pressed. Until this is done, this routine takes care of updating the
+; "current selection" directly in the VDP.
 padGetC:
 	ld	a, (PAD_NEXTCHR)
 	or	a
 	jr	nz, .nextchr
-	call	padStatus
-	push	hl
-	ld	hl, PAD_GETCSTAT
-	cp	(hl)
-	ld	(hl), a
-	pop	hl
-	jp	z, unsetZ	; nothing changed
+	call	padUpdateSel
+	jp	z, padGetC	; nothing changed, loop
+	; pad status was changed, let's see if an action button was pressed
+	ld	a, (PAD_SELSTAT)
 	bit	PAD_BUTC, a
 	jr	z, .advance
 	bit	PAD_BUTA, a
 	jr	z, .backspace
 	bit	PAD_START, a
 	jr	z, .return
-	jp	unsetZ
+	; no action button pressed, but because our pad status changed, update
+	; VDP before looping.
+	ld	a, (PAD_SELCHR)
+	call	vdpConv
+	call	vdpSpitC
+	jp	padGetC
 .return:
 	ld	a, ASCII_LF
 	ld	(PAD_NEXTCHR), a
 	; continue to .advance
 .advance:
 	ld	a, (PAD_SELCHR)
-	cp	a
+	; Z was already set from previous BIT instruction
 	ret
 .backspace:
 	ld	a, ASCII_BS
-	cp	a
+	; Z was already set from previous BIT instruction
 	ret
 .nextchr:
 	; We have a "next char", return it and clear it.
 	cp	a		; ensure Z
-	push	af
+	ex	af, af'
 	xor	a
 	ld	(PAD_NEXTCHR), a
-	pop	af
+	ex	af, af'
 	ret
