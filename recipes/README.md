@@ -22,16 +22,30 @@ for.
 
 ## Structure
 
-Each top folder represent an architecture. In that top folder, there's a
+Each top folder represents an architecture. In that top folder, there's a
 `README.md` file presenting the architecture as well as instructions to
 minimally get Collapse OS running on it. Then, in the same folder, there are
 auxiliary recipes for nice stuff built around that architecture.
 
-The structure of those recipes follow a regular pattern: pre-collapse recipe
-and post-collapse recipe. That is, instructions to achieve the desired outcome
-from a "modern" system, and then, instructions to achieve the same thing from a
-system running Collapse OS.
+Installation procedures are centered around using a modern system to install
+Collapse OS. This is the most useful instructions to have most pre-collapse and
+post-collapse because even after the collapse, we'll interact mostly with modern
+technology for many years.
 
-Initially, those recipes will only be possible in a "modern" system, but as
-tooling improve, we should be able to have recipes that we can consider
-complete.
+There are, however, recipes to write to different storage media, thus making
+Collapse OS fully reproducible. For example, you can use `rc2014/eeprom` to
+write arbitrary data to a `AT28` EEPROM.
+
+The `rc2014` architecture is considered the "canonical" one. That means that
+if a recipe is considered architecture independent, it's the `rc2014` recipe
+folder that's going to contain it.
+
+For example, `rc2014/eeprom` can be considered architecture independent because
+it's much more about the `AT28` than about a specific z80 architecture. You can
+adapt it to any supported architecture with minimal hassle. Therefore, it's
+not going to be copied in every architecture recipe folder.
+
+`rc2014` installation recipe also contains more "newbie-friendly" instructions
+than other installation recipes, which take this knowledge for granted. It is
+therefore recommended to have a look at it even if you're not planning on using
+a RC2014.

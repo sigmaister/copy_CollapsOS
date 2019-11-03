@@ -28,11 +28,9 @@ are other recipes related to the RC2014:
 * [Assembling binaries](zasm/README.md)
 * [Interfacing a PS/2 keyboard](ps2/README.md)
 
-## Goal
+## Recipe
 
-Have the shell running and accessible through the Serial I/O.
-
-## Pre-collapse
+The goal is to have the shell running and accessible through the Serial I/O.
 
 You'll need specialized tools to write data to the AT28 EEPROM. There seems to
 be many devices around made to write in flash and EEPROM modules, but being in
@@ -99,10 +97,6 @@ identify the tty bound to it (in my case, `/dev/ttyUSB0`). Then:
     screen /dev/ttyUSB0 115200
 
 Press the reset button on the RC2014 and you should see the Collapse OS prompt!
-
-## Post-collapse
-
-TODO
 
 [rc2014]: https://rc2014.co.uk
 [romwrite]: https://github.com/hsoft/romwrite
