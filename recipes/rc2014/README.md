@@ -75,7 +75,9 @@ is decoupled from the ACIA and can get its IO from anything. See
 
 We only have the shell to build, so it's rather straightforward:
 
-    zasm < glue.asm > rom.bin
+    ../../tools/zasm.sh ../../kernel < glue.asm > os.bin
+
+Running `make` will also work.
 
 ### Write to the ROM
 

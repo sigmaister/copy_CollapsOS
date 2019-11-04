@@ -27,7 +27,7 @@ If you're tempted by the idea of hacking your existing RC2014 ROM module by
 wiring `WR` and write directly to the range `0x0000-0x1fff` while running it,
 be aware that it's not that easy. I was also tempted by this idea, tried it,
 but on bootup, it seems that some random `WR` triggers happen and it corrupts
-the EEPROM contents. Theoretically, we could go around that my putting the AT28
+the EEPROM contents. Theoretically, we could go around that by putting the AT28
 in write protection mode, but I preferred building my own module.
 
 I don't think you need a schematic. It's really simple.
