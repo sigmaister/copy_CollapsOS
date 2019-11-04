@@ -98,17 +98,17 @@ aciaInt:
 	reti
 
 
-; *** BLOCKDEV ***
-; These function below follow the blockdev API.
+; *** STDIO ***
+; These function below follow the stdio API.
 
 aciaGetC:
 	push	de
-
+.loop:
 	ld	a, (ACIA_BUFWRIDX)
 	ld	e, a
 	ld	a, (ACIA_BUFRDIDX)
 	cp	e
-	jr	z, .nothingToRead	; equal? nothing to read.
+	jr	z, .loop	; equal? nothing to read. loop
 
 	; Alrighty, buffer not empty. let's read.
 	ld	de, ACIA_BUF
@@ -120,12 +120,6 @@ aciaGetC:
 
 	; And finally, fetch the value.
 	ld	a, (de)
-	cp	a		; ensure Z
-	jr	.end
-
-.nothingToRead:
-	call	unsetZ
-.end:
 	pop	de
 	ret
 
