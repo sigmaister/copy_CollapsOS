@@ -35,6 +35,10 @@
 ; number of entries in shellCmdTbl
 .equ	SHELL_CMD_COUNT		6+SHELL_EXTRA_CMD_COUNT
 
+; maximum length for shell commands. Should be confortably below stdio's
+; readline buffer length.
+.equ	SHELL_MAX_CMD_LEN	0x10
+
 ; *** VARIABLES ***
 ; Memory address that the shell is currently "pointing at" for peek, load, call
 ; operations. Set with mptr.
@@ -67,12 +71,8 @@ shellInit:
 ; Inifite loop that processes input. Because it's infinite, you should jump
 ; to it rather than call it. Saves two precious bytes in the stack.
 shellLoop:
-	; Let's wait until a line is typed.
-	call	stdioReadC
-	jr	nz, shellLoop	; not done? loop
-	; We're done. Process line.
+	call	stdioReadLine
 	call	printcrlf
-	call	stdioGetLine
 	call	shellParse
 	ld	hl, .prompt
 	call	printstr
@@ -86,7 +86,7 @@ shellParse:
 	; first thing: is command empty?
 	ld	a, (hl)
 	or	a
-	ret	z	; empty, nthing to do
+	ret	z	; empty, nothing to do
 
 	push	af
 	push	bc
@@ -104,6 +104,13 @@ shellParse:
 	; no arg, (HL) is zero to facilitate processing later, add a second
 	; null next to that one to indicate unambiguously that we have no args.
 	inc	hl
+	; Oh wait, before we proceed, is our cmd length within limits? cmd len
+	; is currently in A from findchar
+	cp	SHELL_MAX_CMD_LEN
+	jr	c, .hasArgs	; within limits
+	; outside limits
+	ld	a, SHELL_ERR_UNKNOWN_CMD
+	jr	.error
 .hasArgs:
 	xor	a
 	ld	(hl), a
