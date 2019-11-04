@@ -11,6 +11,15 @@
 ;
 ; PutC: Write character specified in A onto the device.
 ;
+; *** Accepted characters ***
+;
+; For now, we're in muddy waters in this regard. We try to stay close to ASCII.
+; Anything over 0x7f is undefined. Both CR and LF are interpreted as "line end".
+; Both BS and DEL mean "delete previous character".
+;
+; When outputting, newlines are marked by CR and LF. Outputting a character
+; deletion is made through BS then space then BS.
+;
 ; *** Defines ***
 ; STDIO_GETC: address of a GetC routine
 ; STDIO_PUTC: address of a PutC routine
