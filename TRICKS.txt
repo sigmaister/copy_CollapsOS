@@ -1,5 +1,5 @@
-This file describe tricks that are used throughout the code and might need
-explanation.
+This file describe tricks and conventions that are used throughout the code and
+might need explanation.
 
 or a: Equivalent to "cp 0", but results in a shorter opcode.
 
@@ -13,3 +13,15 @@ Reset for failure. "xor a" (destroys A) and "cp a" (preserves A) are used to
 ensure Z is set. To ensure that it is reset, it's a bit more complicated and
 "unsetZ" routine exists for that, although that in certain circumstances,
 "inc a \ dec a" or "or a" can work.
+
+z80 is little endian in its 16-bit loading operations. For example, "ld hl, (0)"
+will load the contents of memory address 0 in L and memory address 1 in H. This
+little-endianess is followed by Collapse OS in most situations. When it's not,
+it's specified in comments.
+
+This get a bit awkward with regards to 32-bit. There are no "native" z80 32-bit
+operations, so z80 doesn't mandate an alignment. In Collapse OS, 32-bit numbers
+are stored as "big endian pair of little endian 16-bit numbers". For example,
+if "ld dehl, (0)" existed and if the first 4 bytes of memory were 0x01, 0x02,
+0x03 and 0x04, then DE (being the "high" word) would be 0x0201 and HL would be
+0x0403.
