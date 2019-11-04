@@ -9,7 +9,7 @@
 ; GetC: Blocks until a character is read from the device and return that
 ;       character in A.
 ;
-; PutC: Write character specified onto the device.
+; PutC: Write character specified in A onto the device.
 ;
 ; *** Defines ***
 ; STDIO_GETC: address of a GetC routine
