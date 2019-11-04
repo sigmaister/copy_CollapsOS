@@ -4,13 +4,17 @@
 ; in", that is, the console through which the user is connected in a decoupled
 ; manner.
 ;
-; Those GetC/PutC routines are hooked in during stdioInit and have this API:
+; Those GetC/PutC routines are hooked through defines and have this API:
 ;
 ; GetC: Blocks until a character is read from the device and return that
 ;       character in A.
 ;
 ; PutC: Write character specified onto the device.
 ;
+; *** Defines ***
+; STDIO_GETC: address of a GetC routine
+; STDIO_PUTC: address of a PutC routine
+; 
 ; *** Consts ***
 ; Size of the readline buffer. If a typed line reaches this size, the line is
 ; flushed immediately (same as pressing return).
@@ -19,8 +23,6 @@
 ; *** Variables ***
 ; Used to store formatted hex values just before printing it.
 .equ	STDIO_HEX_FMT	STDIO_RAMSTART
-.equ	STDIO_GETC	@+2
-.equ	STDIO_PUTC	@+2
 
 ; Line buffer. We read types chars into this buffer until return is pressed
 ; This buffer is null-terminated.
@@ -29,19 +31,11 @@
 ; Index where the next char will go in stdioGetC.
 .equ	STDIO_RAMEND	@+STDIO_BUFSIZE
 
-; Sets GetC to the routine where HL points to and PutC to DE.
-stdioInit:
-	ld	(STDIO_GETC), hl
-	ld	(STDIO_PUTC), de
-	ret
-
 stdioGetC:
-	ld	ix, (STDIO_GETC)
-	jp	(ix)
+	jp	STDIO_GETC
 
 stdioPutC:
-	ld	ix, (STDIO_PUTC)
-	jp	(ix)
+	jp	STDIO_PUTC
 
 ; print null-terminated string pointed to by HL
 printstr:
@@ -52,7 +46,7 @@ printstr:
 	ld	a, (hl)		; load character to send
 	or	a		; is it zero?
 	jr	z, .end		; if yes, we're finished
-	call	stdioPutC
+	call	STDIO_PUTC
 	inc	hl
 	jr	.loop
 
@@ -67,7 +61,7 @@ printnstr:
 	push	hl
 .loop:
 	ld	a, (hl)		; load character to send
-	call	stdioPutC
+	call	STDIO_PUTC
 	inc	hl
 	djnz	.loop
 
@@ -79,9 +73,9 @@ printnstr:
 printcrlf:
 	push	af
 	ld	a, ASCII_CR
-	call	stdioPutC
+	call	STDIO_PUTC
 	ld	a, ASCII_LF
-	call	stdioPutC
+	call	STDIO_PUTC
 	pop	af
 	ret
 
@@ -119,7 +113,7 @@ stdioReadLine:
 	ld	b, STDIO_BUFSIZE-1
 .loop:
 	; Let's wait until something is typed.
-	call	stdioGetC
+	call	STDIO_GETC
 	; got it. Now, is it a CR or LF?
 	cp	ASCII_CR
 	jr	z, .complete	; char is CR? buffer complete!
@@ -131,7 +125,7 @@ stdioReadLine:
 	jr	z, .delchr
 
 	; Echo the received character right away so that we see what we type
-	call	stdioPutC
+	call	STDIO_PUTC
 
 	; Ok, gotta add it do the buffer
 	ld	(hl), a
@@ -159,9 +153,9 @@ stdioReadLine:
 	; Char deleted in buffer, now send BS + space + BS for the terminal
 	; to clear its previous char
 	ld	a, ASCII_BS
-	call	stdioPutC
+	call	STDIO_PUTC
 	ld	a, ' '
-	call	stdioPutC
+	call	STDIO_PUTC
 	ld	a, ASCII_BS
-	call	stdioPutC
+	call	STDIO_PUTC
 	jr	.loop

@@ -27,6 +27,8 @@ jp	aciaInt
 .dw	mmapGetB, mmapPutB
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
+.equ	STDIO_GETC	aciaGetC
+.equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
 .equ	AT28W_RAMSTART	STDIO_RAMEND
@@ -49,9 +51,6 @@ init:
 	im 1
 
 	call	aciaInit
-	ld	hl, aciaGetC
-	ld	de, aciaPutC
-	call	stdioInit
 	call	shellInit
 
 	xor	a

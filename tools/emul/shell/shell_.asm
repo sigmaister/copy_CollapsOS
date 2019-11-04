@@ -58,6 +58,8 @@
 .inc "mmap.asm"
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
+.equ	STDIO_GETC	emulGetC
+.equ	STDIO_PUTC	emulPutC
 .inc "stdio.asm"
 
 .equ	FS_RAMSTART	STDIO_RAMEND
@@ -84,9 +86,6 @@ init:
 	; setup stack
 	ld	hl, KERNEL_RAMEND
 	ld	sp, hl
-	ld	hl, emulGetC
-	ld	de, emulPutC
-	call	stdioInit
 	call	fsInit
 	ld	a, 0	; select fsdev
 	ld	de, BLOCKDEV_SEL

@@ -45,6 +45,8 @@ jp	printstr
 .dw	fsdevGetB, fsdevPutB
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
+.equ	STDIO_GETC	noop
+.equ	STDIO_PUTC	stderrPutC
 .inc "stdio.asm"
 
 .equ	FS_RAMSTART	STDIO_RAMEND
@@ -55,9 +57,6 @@ init:
 	di
 	ld	hl, 0xffff
 	ld	sp, hl
-	ld	hl, unsetZ
-	ld	de, stderrPutC
-	call	stdioInit
 	ld	a, 2	; select fsdev
 	ld	de, BLOCKDEV_SEL
 	call	blkSel

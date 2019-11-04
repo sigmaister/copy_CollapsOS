@@ -16,6 +16,8 @@ jp	init
 .inc "kbd.asm"
 
 .equ	STDIO_RAMSTART	KBD_RAMEND
+.equ	STDIO_GETC	kbdGetC
+.equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
 .equ	SHELL_RAMSTART	STDIO_RAMEND
@@ -30,9 +32,6 @@ init:
 
 	call	aciaInit
 	call	kbdInit
-	ld	hl, kbdGetC
-	ld	de, aciaPutC
-	call	stdioInit
 	call	shellInit
 	jp	shellLoop
 

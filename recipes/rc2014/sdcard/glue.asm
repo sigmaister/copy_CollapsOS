@@ -34,6 +34,8 @@ jp	aciaInt
 
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
+.equ	STDIO_GETC	aciaGetC
+.equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
 .equ	FS_RAMSTART	STDIO_RAMEND
@@ -66,9 +68,6 @@ init:
 	ld	sp, hl
 	im	1
 	call	aciaInit
-	ld	hl, aciaGetC
-	ld	de, aciaPutC
-	call	stdioInit
 	call	fsInit
 	call	shellInit
 	ld	hl, pgmShellHook

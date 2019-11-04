@@ -18,6 +18,8 @@ jp	aciaInt
 .inc "acia.asm"
 
 .equ	STDIO_RAMSTART	ACIA_RAMEND
+.equ	STDIO_GETC	aciaGetC
+.equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
 .equ	SHELL_RAMSTART	STDIO_RAMEND
@@ -32,9 +34,6 @@ init:
 	im 1
 
 	call	aciaInit
-	ld	hl, aciaGetC
-	ld	de, aciaPutC
-	call	stdioInit
 	call	shellInit
 	ei
 	jp	shellLoop

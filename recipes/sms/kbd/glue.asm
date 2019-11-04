@@ -21,6 +21,8 @@
 .inc "sms/vdp.asm"
 
 .equ	STDIO_RAMSTART	VDP_RAMEND
+.equ	STDIO_GETC	kbdGetC
+.equ	STDIO_PUTC	vdpPutC
 .inc "stdio.asm"
 
 .equ	SHELL_RAMSTART	STDIO_RAMEND
@@ -45,10 +47,6 @@ init:
 
 	call	kbdInit
 	call	vdpInit
-
-	ld	hl, kbdGetC
-	ld	de, vdpPutC
-	call	stdioInit
 	call	shellInit
 	jp	shellLoop
 

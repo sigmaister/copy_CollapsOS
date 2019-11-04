@@ -52,6 +52,8 @@
 .inc "sms/vdp.asm"
 
 .equ	STDIO_RAMSTART	VDP_RAMEND
+.equ	STDIO_GETC	kbdGetC
+.equ	STDIO_PUTC	vdpPutC
 .inc "stdio.asm"
 
 .equ	MMAP_START	0xd700
@@ -104,9 +106,6 @@ init:
 	ld	a, 'S'
 	ld	(hl), a
 
-	ld	hl, kbdGetC
-	ld	de, vdpPutC
-	call	stdioInit
 	call	fsInit
 	xor	a
 	ld	de, BLOCKDEV_SEL
