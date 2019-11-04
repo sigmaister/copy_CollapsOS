@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Read specified number of bytes in specified blkdev ID and spit it to stdout.
 # The proper blkdev has to be selected and placed already.

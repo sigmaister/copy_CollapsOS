@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Push specified file  to specified device and verify that the contents is
 # correct by sending a "peek" command afterwards and check the output. Errors

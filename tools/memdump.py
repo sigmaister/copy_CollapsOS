@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Read specified number of bytes at specified memory address and dump it to
 # stdout.
