@@ -28,9 +28,9 @@ minimally get Collapse OS running on it. Then, in the same folder, there are
 auxiliary recipes for nice stuff built around that architecture.
 
 Installation procedures are centered around using a modern system to install
-Collapse OS. This is the most useful instructions to have most pre-collapse and
-post-collapse because even after the collapse, we'll interact mostly with modern
-technology for many years.
+Collapse OS. These are the most useful instructions to have under both
+pre-collapse and post-collapse conditions because even after the collapse,
+we'll interact mostly with modern technology for many years.
 
 There are, however, recipes to write to different storage media, thus making
 Collapse OS fully reproducible. For example, you can use `rc2014/eeprom` to
