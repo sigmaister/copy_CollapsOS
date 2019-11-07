@@ -13,6 +13,7 @@ INCCFS=$(mktemp)
 for p in "$@"; do
     "${CFSPACK}" "${p}" "*.h" >> "${INCCFS}"    
     "${CFSPACK}" "${p}" "*.asm" >> "${INCCFS}"    
+    "${CFSPACK}" "${p}" "*.bin" >> "${INCCFS}"    
 done
 
 "${ZASMBIN}" "${INCCFS}"

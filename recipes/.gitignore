@@ -2,3 +2,5 @@
 *.cfs
 *.hex
 *.obj
+*.rom
+*.sms
