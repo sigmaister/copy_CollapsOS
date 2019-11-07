@@ -26,5 +26,5 @@ while (<$handle>) {
             $num += (1 << $i);
         }
     }
-    printf pack('C', $num);
+    print pack('C', $num);
 }

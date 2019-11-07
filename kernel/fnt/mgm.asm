@@ -16,7 +16,7 @@ fntGet:
 	cp	0x20
 	ret	c	; A < 0x20. Z was unset by cp
 	cp	0x7f
-	jr	nc, unsetZ	; A >= 0x7f. Z might be set
+	jp	nc, unsetZ	; A >= 0x7f. Z might be set
 	
 	push	af	; --> lvl 1
 	push	bc	; --> lvl 2
