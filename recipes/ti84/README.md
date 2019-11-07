@@ -29,4 +29,29 @@ Collapse OS prompt will appear.
 
 ## Upload to the calculator
 
-TODO
+**WARNING: the instructions below will wipe all the contents of your calculator,
+including TI-OS.**
+
+To send your ROM to the calculator, you'll need two more tools:
+[mktiupgrade][mktiupgrade] and [tilp][tilp].
+
+Once you have them, you need to place your calculator in "bootloader mode",
+that is, in a mode where it's ready to receive a new binary from its USB cable.
+To do that you need to:
+
+1. Shut down the calculator by removing one of the battery.
+2. Hold the DEL key
+3. But the battery back.
+4. A "Waiting... Please install operating system now" message will appear.
+
+Once this is done, you can plug the USB cable in your computer and run
+`make send`. This will create an "upgrade file" with `mktiupgrade` and then
+push that upgrade file with `tilp`. `tilp` will prompt you at some point.
+Press "1" to continue.
+
+When this is done, you can press the ON button to see Collapse OS' prompt!
+
+[knightos]: https://knightos.org/
+[z80e]: https://github.com/KnightOS/z80e
+[mktiupgrade]: https://github.com/KnightOS/mktiupgrade
+[tilp]: http://lpg.ticalc.org/prj_tilp/
