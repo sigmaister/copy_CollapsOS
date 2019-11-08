@@ -7,8 +7,8 @@
 
 ; *** Code ***
 
-; Wait for a digit to be pressed and sets the A register to the value (0-9) of
-; that digit.
+; Wait for a digit to be pressed and sets the A register ASCII value
+; corresponding to that key press.
 ;
 ; This routine waits for a key to be pressed, but before that, it waits for
 ; all keys to be de-pressed. It does that to ensure that two calls to
@@ -22,78 +22,50 @@
 ; if the result isn't 0xff, at least one key is pressed.
 kbdGetC:
 	push	bc
+	push	hl
 
 ; loop until a digit is pressed
 .loop:
-	; When we check for digits, we go through all 3 groups containing them.
-	; for each group, we load the digit we check for in B and then test the
-	; bit for that key. If the bit is reset, our key is pressed. we can
-	; jump to the end, copy B into A and return.
-
-	; check group 2
-	ld	a, 0xfb
+	ld	hl, .dtbl
+	; we go through the 7 rows of the table
+	ld	b, 7
+.inner:
+	ld	a, (hl)		; group mask
 	call	.get
-
-	ld	b, '3'
-	bit	1, a
-	jr	z, .end
-
-	ld	b, '6'
-	bit	2, a
-	jr	z, .end
-
-	ld	b, '9'
-	bit	3, a
-	jr	z, .end
-
-	ld	a, 0xf7
-	call	.get
-
-	ld	b, '2'
-	bit	1, a
-	jr	z, .end
-
-	ld	b, '5'
-	bit	2, a
-	jr	z, .end
-
-	ld	b, '8'
-	bit	3, a
-	jr	z, .end
-
-	; check group 4
-	ld	a, 0xef
-	call	.get
-
-	ld	b, '0'
-	bit	0, a
-	jr	z, .end
-
-	ld	b, '1'
-	bit	1, a
-	jr	z, .end
-
-	ld	b, '4'
-	bit	2, a
-	jr	z, .end
-
-	ld	b, '7'
-	bit	3, a
-	jr	z, .end
-
-	jr	.loop		; nothing happened? loop
-
-.end:
-	; loop until all keys are de-pressed
-.loop2:
+	cp	0xff
+	jr	nz, .something
+	; nothing for that group, let's scan the next group
+	ld	a, 9
+	call	addHL		; go to next row
+	djnz	.inner
+	; found nothing, loop
+	jr	.loop
+.something:
+	; We have something on that row! Let's find out which char. Register A
+	; currently contains a mask with the pressed char bit unset.
+	ld	b, 8
+	inc	hl
+.findchar:
+	rrca			; is next bit unset?
+	jr	nc, .gotit	; yes? we have our char!
+	inc	hl
+	djnz	.findchar
+.gotit:
+	ld	a, (hl)
+	or	a		; is char 0?
+	jr	z, .loop	; yes? unsupported. loop.
+	
+	; wait until all keys are de-pressed
+	push	af		; --> lvl 1
+.wait:
 	xor	a
 	call	.get
 	inc	a		; if a was 0xff, will become 0 (nz test)
-	jr	nz, .loop2	; non-zero? something is pressed
+	jr	nz, .wait	; non-zero? something is pressed
 
-	; copy result into A
-	ld	a, b
+	pop	af		; <-- lvl 1
 
+	pop	hl
 	pop	bc
 	ret
 .get:
@@ -106,3 +78,14 @@ kbdGetC:
 	in	a, (KBD_PORT)
 	ei
 	ret
+
+; digits table. each row represents a group. first item is group mask.
+; 0 means unsupported. no group 7 because it has no keys.
+.dtbl:
+	.db	0xfe, 0, 0, 0, 0, 0, 0, 0, 0
+	.db	0xfd, 0x0d, '+' ,'-' ,'*', '/', '^', 0, 0
+	.db	0xfb, 0, '3', '6', '9', ')', 0, 0, 0
+	.db	0xf7, '.', '2', '5', '8', '(', 0, 0, 0
+	.db	0xef, '0', '1', '4', '7', ',', 0, 0, 0
+	.db	0xdf, 0, 0, 0, 0, 0, 0, 0, 0
+	.db	0xbf, 0, 0, 0, 0, 0, 0, 0, 0x7f
