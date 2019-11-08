@@ -2,6 +2,9 @@
 ;
 ; Implement PutC on TI-84+ (for now)'s LCD screen.
 ;
+; Note that "X-increment" and "Y-increment" work in the opposite way than what
+; most people expect. Y moves left and right, X moves up and down.
+; 
 ; *** Requirements ***
 ; fnt/mgm
 ;
@@ -10,6 +13,7 @@
 .equ	LCD_PORT_DATA		0x11
 
 .equ	LCD_CMD_6BIT		0x00
+.equ	LCD_CMD_8BIT		0x01
 .equ	LCD_CMD_DISABLE		0x02
 .equ	LCD_CMD_ENABLE		0x03
 .equ	LCD_CMD_XINC		0x05
@@ -17,6 +21,12 @@
 .equ	LCD_CMD_COL		0x20
 .equ	LCD_CMD_ROW		0x80
 .equ	LCD_CMD_CONTRAST	0xc0
+
+; *** Variables ***
+; Current row being written on. In terms of pixels, not of glyphs. During a
+; linefeed, this increases by FNT_HEIGHT+1.
+.equ	LCD_CURROW	LCD_RAMSTART
+.equ	LCD_RAMEND	@+1
 
 ; *** Code ***
 lcdInit:
@@ -72,18 +82,22 @@ lcdOff:
 
 ; Set LCD's current column to A
 lcdSetCol:
+	push	af
 	; The col index specified in A is compounded with LCD_CMD_COL
 	add	a, LCD_CMD_COL
 	call	lcdWait
 	out	(LCD_PORT_CMD), a
+	pop	af
 	ret
 
 ; Set LCD's current row to A
 lcdSetRow:
+	push	af
 	; The col index specified in A is compounded with LCD_CMD_COL
 	add	a, LCD_CMD_ROW
 	call	lcdWait
 	out	(LCD_PORT_CMD), a
+	pop	af
 	ret
 
 ; Send the 5x7 glyph that HL points to to the LCD, at its current position.
@@ -94,9 +108,7 @@ lcdSendGlyph:
 	push	bc
 	push	hl
 
-	; For the purpose of this program, we only write on the first line.
-	; We can assume that we always start at row 0.
-	xor	a
+	ld	a, (LCD_CURROW)
 	call	lcdSetRow
 
 	ld	b, 7
@@ -129,7 +141,20 @@ lcdSendGlyph:
 	pop	af
 	ret
 
+; Changes the current line and go back to leftmost column
+lcdLinefeed:
+	push	af
+	ld	a, (LCD_CURROW)
+	add	a, FNT_HEIGHT+1
+	ld	(LCD_CURROW), a
+	xor	a
+	call	lcdSetCol
+	pop	af
+	ret
+
 lcdPutC:
+	cp	ASCII_LF
+	jp	z, lcdLinefeed
 	push	hl
 	call	fntGet
 	jr	nz, .end

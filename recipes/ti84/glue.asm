@@ -26,9 +26,10 @@
 .equ	FNT_WIDTH	5
 .equ	FNT_HEIGHT	7
 .inc "fnt/mgm.asm"
+.equ	LCD_RAMSTART	RAMSTART
 .inc "ti/lcd.asm"
 .inc "ti/kbd.asm"
-.equ	STDIO_RAMSTART	RAMSTART
+.equ	STDIO_RAMSTART	LCD_RAMEND
 .equ	STDIO_GETC	GetC
 .equ	STDIO_PUTC	lcdPutC
 .inc "stdio.asm"
