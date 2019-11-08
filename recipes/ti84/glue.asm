@@ -30,7 +30,7 @@
 .inc "ti/lcd.asm"
 .inc "ti/kbd.asm"
 .equ	STDIO_RAMSTART	LCD_RAMEND
-.equ	STDIO_GETC	GetC
+.equ	STDIO_GETC	kbdGetC
 .equ	STDIO_PUTC	lcdPutC
 .inc "stdio.asm"
 
@@ -65,10 +65,6 @@ main:
 	call	lcdSetCol
 	call	shellInit
 	jp	shellLoop
-
-GetC:
-	call	waitForKey
-	jr	boot
 
 handleInterrupt:
 	di
