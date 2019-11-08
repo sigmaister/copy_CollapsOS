@@ -19,6 +19,7 @@
 .equ	LCD_CMD_XINC		0x05
 .equ	LCD_CMD_YINC		0x07
 .equ	LCD_CMD_COL		0x20
+.equ	LCD_CMD_ZOFFSET		0x40
 .equ	LCD_CMD_ROW		0x80
 .equ	LCD_CMD_CONTRAST	0xc0
 
@@ -30,6 +31,10 @@
 
 ; *** Code ***
 lcdInit:
+	; Initialize variables
+	xor	a
+	ld	(LCD_CURROW), a
+
 	; Enable the LCD
 	ld	a, LCD_CMD_ENABLE
 	call	lcdWait
