@@ -10,6 +10,22 @@
 ; Note that "X-increment" and "Y-increment" work in the opposite way than what
 ; most people expect. Y moves left and right, X moves up and down.
 ;
+; *** Z-Offset ***
+;
+; This LCD has a "Z-Offset" parameter, allowing to offset rows on the
+; screen however we wish. This is handy because it allows us to scroll more
+; efficiently. Instead of having to copy the LCD ram around at each linefeed
+; (or instead of having to maintain an in-memory buffer), we can use this
+; feature.
+;
+; The Z-Offet goes upwards, with wrapping. For example, if we have an 8 pixels
+; high line at row 0 and if our offset is 8, that line will go up 8 pixels,
+; wrapping itself to the bottom of the screen.
+;
+; The principle is this: The active line is always the bottom one. Therefore,
+; when active row is 0, Z is FNT_HEIGHT+1, when row is 1, Z is (FNT_HEIGHT+1)*2,
+; When row is 8, Z is 0.
+;
 ; *** Requirements ***
 ; fnt/mgm
 ;
@@ -45,6 +61,10 @@ lcdInit:
 
 	; Clear screen
 	call	lcdClrScr
+
+	; We begin with a Z offset of FNT_HEIGHT+1
+	ld	a, LCD_CMD_ZOFFSET+FNT_HEIGHT+1
+	call	lcdCmd
 
 	; Enable the LCD
 	ld	a, LCD_CMD_ENABLE
@@ -156,17 +176,23 @@ lcdSendGlyph:
 lcdLinefeed:
 	push	af
 	ld	a, (LCD_CURROW)
-	add	a, FNT_HEIGHT+1
-	cp	64
-	jr	c, .nowrap	; A < 96? no wrap
-	; we have to wrap around to the top row
-	xor	a
-.nowrap:
+	call	.addFntH
 	ld	(LCD_CURROW), a
 	call	lcdClrLn
+	; Now, lets set Z offset which is CURROW+FNT_HEIGHT+1
+	call	.addFntH
+	add	a, LCD_CMD_ZOFFSET
+	call	lcdCmd
 	xor	a
 	ld	(LCD_CURCOL), a
 	pop	af
+	ret
+.addFntH:
+	add	a, FNT_HEIGHT+1
+	cp	64
+	ret	c		; A < 64? no wrap
+	; we have to wrap around
+	xor	a
 	ret
 
 ; Clears B rows starting at row A
