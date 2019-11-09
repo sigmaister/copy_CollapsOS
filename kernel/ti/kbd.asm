@@ -126,13 +126,20 @@ kbdGetC:
 	ret
 .debounce:
 	; wait until all keys are de-pressed
+	; To avoid repeat keys, we require 64 subsequent polls to indicate all
+	; depressed keys
 	push	af		; --> lvl 1
+	push	bc		; --> lvl 2
+.pressed:
+	ld	b, 64
 .wait:
 	xor	a
 	call	.get
 	inc	a		; if a was 0xff, will become 0 (nz test)
-	jr	nz, .wait	; non-zero? something is pressed
+	jr	nz, .pressed	; non-zero? something is pressed
+	djnz	.wait
 
+	pop	bc		; <-- lvl 2
 	pop	af		; <-- lvl 1
 	ret
 
