@@ -2,9 +2,14 @@
 ;
 ; Implement PutC on TI-84+ (for now)'s LCD screen.
 ;
+; The screen is 96x64 pixels. The 64 rows are addressed directly with CMD_ROW
+; but columns are addressed in chunks of 6 or 8 bits (there are two modes).
+;
+; In 6-bit mode, there are 16 visible columns. In 8-bit mode, there are 12.
+;
 ; Note that "X-increment" and "Y-increment" work in the opposite way than what
 ; most people expect. Y moves left and right, X moves up and down.
-; 
+;
 ; *** Requirements ***
 ; fnt/mgm
 ;
@@ -45,7 +50,7 @@ lcdInit:
 	ld	a, LCD_CMD_ENABLE
 	call	lcdCmd
 
-	; Hack to get LCD to work. According to WikiTI, we're to sure why TIOS
+	; Hack to get LCD to work. According to WikiTI, we're not sure why TIOS
 	; sends these, but it sends it, and it is required to make the LCD
 	; work. So...
 	ld	a, 0x17
@@ -82,7 +87,7 @@ lcdWait:
 lcdCmd:
 	out	(LCD_PORT_CMD), a
 	jr	lcdWait
-	
+
 ; Send data A to LCD
 lcdData:
 	out	(LCD_PORT_DATA), a
@@ -127,7 +132,7 @@ lcdSendGlyph:
 	call	lcdSetRow
 	ld	a, (LCD_CURCOL)
 	call	lcdSetCol
-	
+
 	; let's increase (and wrap) col now
 	inc	a
 	ld	(LCD_CURCOL), a
@@ -152,14 +157,19 @@ lcdLinefeed:
 	push	af
 	ld	a, (LCD_CURROW)
 	add	a, FNT_HEIGHT+1
+	cp	64
+	jr	c, .nowrap	; A < 96? no wrap
+	; we have to wrap around to the top row
+	xor	a
+.nowrap:
 	ld	(LCD_CURROW), a
+	call	lcdClrLn
 	xor	a
 	ld	(LCD_CURCOL), a
 	pop	af
 	ret
 
 ; Clears B rows starting at row A
-; The LCD will then be set back at row A, column 0
 ; B is not preserved by this routine
 lcdClrX:
 	push	af
