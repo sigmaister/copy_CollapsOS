@@ -84,7 +84,7 @@ kbdGetC:
 	jr	z, .loop	; yes? unsupported. loop.
 	call	.debounce
 	cp	KBD_KEY_ALPHA
-	jr	c, .end	; A < 0x80? valid char, return it.
+	jr	c, .result	; A < 0x80? valid char, return it.
 	jr	z, .handleAlpha
 	cp	KBD_KEY_2ND
 	jr	z, .handle2nd
@@ -110,6 +110,16 @@ kbdGetC:
 	ld	c, a
 	jp	.loop
 
+.result:
+	; We have our result in A, *almost* time to return it. One last thing:
+	; Are in in both Alpha and 2nd mode? If yes, then it means that we
+	; should return the upcase version of our letter (if it's a letter).
+	bit	0, c
+	jr	z, .end		; nope
+	bit	1, c
+	jr	z, .end		; nope
+	; yup, we have Alpha + 2nd. Upcase!
+	call	upcase
 .end:
 	pop	hl
 	pop	bc
@@ -157,9 +167,9 @@ kbdGetC:
 ; alpha table. same as .dtbl, for when we're in alpha mode.
 .atbl:
 	.db	0xfe, 0, 0, 0, 0, 0, 0, 0, 0
-	.db	0xfd, 0x0d, '"' ,'W' ,'R', 'M', 'H', 0, 0
-	.db	0xfb, '?', 0, 'V', 'Q', 'L', 'G', 0, 0
-	.db	0xf7, ':', 'Z', 'U', 'P', 'K', 'F', 'C', 0
-	.db	0xef, ' ', 'Y', 'T', 'O', 'J', 'E', 'B', 0
-	.db	0xdf, 0, 'X', 'S', 'N', 'I', 'D', 'A', KBD_KEY_ALPHA
+	.db	0xfd, 0x0d, '"' ,'w' ,'r', 'm', 'h', 0, 0
+	.db	0xfb, '?', 0, 'v', 'q', 'l', 'g', 0, 0
+	.db	0xf7, ':', 'z', 'u', 'p', 'k', 'f', 'c', 0
+	.db	0xef, ' ', 'y', 't', 'o', 'j', 'e', 'b', 0
+	.db	0xdf, 0, 'x', 's', 'n', 'i', 'd', 'a', KBD_KEY_ALPHA
 	.db	0xbf, 0, 0, 0, 0, 0, KBD_KEY_2ND, 0, 0x7f
