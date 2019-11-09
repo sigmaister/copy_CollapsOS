@@ -153,13 +153,6 @@ lcdSendGlyph:
 	ld	a, (LCD_CURCOL)
 	call	lcdSetCol
 
-	; let's increase (and wrap) col now
-	inc	a
-	ld	(LCD_CURCOL), a
-	cp	16
-	jr	nz, .skip
-	call	lcdLinefeed
-.skip:
 	ld	b, FNT_HEIGHT
 .loop:
 	ld	a, (hl)
@@ -167,6 +160,14 @@ lcdSendGlyph:
 	call	lcdData
 	djnz	.loop
 
+	; Increase column and wrap if necessary
+	ld	a, (LCD_CURCOL)
+	inc	a
+	ld	(LCD_CURCOL), a
+	cp	16
+	jr	nz, .skip
+	call	lcdLinefeed
+.skip:
 	pop	hl
 	pop	bc
 	pop	af
@@ -240,10 +241,20 @@ lcdClrScr:
 lcdPutC:
 	cp	ASCII_LF
 	jp	z, lcdLinefeed
+	cp	ASCII_BS
+	jr	z, .bs
 	push	hl
 	call	fntGet
 	jr	nz, .end
 	call	lcdSendGlyph
 .end:
 	pop	hl
+	ret
+.bs:
+	ld	a, (LCD_CURCOL)
+	or	a
+	ret	z	; going back one line is too complicated.
+			; not implemented yet
+	dec	a
+	ld	(LCD_CURCOL), a
 	ret
