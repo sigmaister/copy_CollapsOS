@@ -27,6 +27,8 @@
 ; Current row being written on. In terms of pixels, not of glyphs. During a
 ; linefeed, this increases by FNT_HEIGHT+1.
 .equ	LCD_CURROW	LCD_RAMSTART
+; Current column
+.equ	LCD_CURCOL	@+1
 .equ	LCD_RAMEND	@+1
 
 ; *** Code ***
@@ -34,6 +36,7 @@ lcdInit:
 	; Initialize variables
 	xor	a
 	ld	(LCD_CURROW), a
+	ld	(LCD_CURCOL), a
 
 	; Clear screen
 	call	lcdClrScr
@@ -122,27 +125,22 @@ lcdSendGlyph:
 
 	ld	a, (LCD_CURROW)
 	call	lcdSetRow
-
-	ld	b, 7
+	ld	a, (LCD_CURCOL)
+	call	lcdSetCol
+	
+	; let's increase (and wrap) col now
+	inc	a
+	ld	(LCD_CURCOL), a
+	cp	16
+	jr	nz, .skip
+	call	lcdLinefeed
+.skip:
+	ld	b, FNT_HEIGHT
 .loop:
 	ld	a, (hl)
 	inc	hl
 	call	lcdData
 	djnz	.loop
-
-	; Now that we've sent our 7 rows of pixels, let's go in "Y-increment"
-	; mode to let the LCD increase by one column after we've sent our 8th
-	; line, which is blank (padding).
-	ld	a, LCD_CMD_YINC
-	call	lcdCmd
-
-	; send blank line
-	xor	a
-	call	lcdData
-
-	; go back in X-increment mode
-	ld	a, LCD_CMD_XINC
-	call	lcdCmd
 
 	pop	hl
 	pop	bc
@@ -156,7 +154,7 @@ lcdLinefeed:
 	add	a, FNT_HEIGHT+1
 	ld	(LCD_CURROW), a
 	xor	a
-	call	lcdSetCol
+	ld	(LCD_CURCOL), a
 	pop	af
 	ret
 
