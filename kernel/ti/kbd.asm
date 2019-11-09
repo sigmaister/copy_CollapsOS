@@ -147,6 +147,6 @@ kbdGetC:
 	.db	0xfd, 0x0d, '"' ,'W' ,'R', 'M', 'H', 0, 0
 	.db	0xfb, '?', 0, 'V', 'Q', 'L', 'G', 0, 0
 	.db	0xf7, ':', 'Z', 'U', 'P', 'K', 'F', 'C', 0
-	.db	0xef, '_', 'Y', 'T', 'O', 'J', 'E', 'B', 0
+	.db	0xef, ' ', 'Y', 'T', 'O', 'J', 'E', 'B', 0
 	.db	0xdf, 0, 'X', 'S', 'N', 'I', 'D', 'A', KBD_KEY_ALPHA
 	.db	0xbf, 0, 0, 0, 0, 0, KBD_KEY_2ND, 0, 0x7f
