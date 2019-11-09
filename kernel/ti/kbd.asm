@@ -19,7 +19,7 @@
 ; *** Code ***
 
 kbdInit:
-	xor	a
+	ld	a, 1		; begin with A-Lock on
 	ld	(KBD_MODS), a
 	ret
 

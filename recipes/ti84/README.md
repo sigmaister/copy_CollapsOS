@@ -1,6 +1,6 @@
 # TI-84+
 
-**This is a work-in-progress, this is far from complete.**
+**This is a work-in-progress**
 
 ## Recipe
 
@@ -25,7 +25,7 @@ You will start with a blank screen, it's normal, you haven't pressed the "ON"
 key yet. This key is mapped to F12 in the emulator. Once you press it, the
 Collapse OS prompt will appear.
 
-**WIP: the keyboard does nothing else than halting the CPU for now.**
+See z80e's `KEYBINDINGS.md` file for details.
 
 ## Upload to the calculator
 
@@ -50,6 +50,29 @@ push that upgrade file with `tilp`. `tilp` will prompt you at some point.
 Press "1" to continue.
 
 When this is done, you can press the ON button to see Collapse OS' prompt!
+
+## Usage
+
+The shell works like a normal shell, but with very tight screen space.
+
+When pressing a "normal" key, it spits the symbol associated to it depending
+on the current mode. In normal mode, it spits the digit/symbol. In Alpha mode,
+it spits the letter. In Alpha+2nd, it spits the uppercase letter.
+
+Special keys are Alpha and 2nd. Pressing them toggles the associated mode.
+Alpha and 2nd mode don't persist for more than one character. After the
+character is spit, mode reset to normal.
+
+Pressing 2nd then Alpha will toggle the A-Lock mode, which is a persistent mode.
+The A-Lock mode makes Alpha enabled all the time. While A-Lock mode is enabled,
+you have to enable Alpha to spit a digit/symbol.
+
+Simultaneous keypresses have undefined behavior. One of the keys will be
+registered as pressed. Mode key don't work by simultaneously pressing them with
+a "normal" key. The presses must be sequential.
+
+Keys that aren't a digit, a letter, a symbol that is part of 7-bit ASCII or one
+of the two mode key have no effect.
 
 [knightos]: https://knightos.org/
 [z80e]: https://github.com/KnightOS/z80e
