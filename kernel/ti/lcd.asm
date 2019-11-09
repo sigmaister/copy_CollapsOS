@@ -35,35 +35,32 @@ lcdInit:
 	xor	a
 	ld	(LCD_CURROW), a
 
+	; Clear screen
+	call	lcdClrScr
+
 	; Enable the LCD
 	ld	a, LCD_CMD_ENABLE
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	; Hack to get LCD to work. According to WikiTI, we're to sure why TIOS
 	; sends these, but it sends it, and it is required to make the LCD
 	; work. So...
 	ld	a, 0x17
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 	ld	a, 0x0b
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	; Set some usable contrast
 	ld	a, LCD_CMD_CONTRAST+0x34
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	; Enable 6-bit mode.
 	ld	a, LCD_CMD_6BIT
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	; Enable X-increment mode
 	ld	a, LCD_CMD_XINC
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	ret
 
@@ -78,11 +75,23 @@ lcdWait:
 	pop	af
 	ret
 
+; Send cmd A to LCD
+lcdCmd:
+	out	(LCD_PORT_CMD), a
+	jr	lcdWait
+	
+; Send data A to LCD
+lcdData:
+	out	(LCD_PORT_DATA), a
+	jr	lcdWait
+
 ; Turn LCD off
 lcdOff:
+	push	af
 	ld	a, LCD_CMD_DISABLE
-	call	lcdWait
+	call	lcdCmd
 	out	(LCD_PORT_CMD), a
+	pop	af
 	ret
 
 ; Set LCD's current column to A
@@ -90,8 +99,7 @@ lcdSetCol:
 	push	af
 	; The col index specified in A is compounded with LCD_CMD_COL
 	add	a, LCD_CMD_COL
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 	pop	af
 	ret
 
@@ -100,8 +108,7 @@ lcdSetRow:
 	push	af
 	; The col index specified in A is compounded with LCD_CMD_COL
 	add	a, LCD_CMD_ROW
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 	pop	af
 	ret
 
@@ -120,26 +127,22 @@ lcdSendGlyph:
 .loop:
 	ld	a, (hl)
 	inc	hl
-	call	lcdWait
-	out	(LCD_PORT_DATA), a
+	call	lcdData
 	djnz	.loop
 
 	; Now that we've sent our 7 rows of pixels, let's go in "Y-increment"
 	; mode to let the LCD increase by one column after we've sent our 8th
 	; line, which is blank (padding).
 	ld	a, LCD_CMD_YINC
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	; send blank line
 	xor	a
-	call	lcdWait
-	out	(LCD_PORT_DATA), a
+	call	lcdData
 
 	; go back in X-increment mode
 	ld	a, LCD_CMD_XINC
-	call	lcdWait
-	out	(LCD_PORT_CMD), a
+	call	lcdCmd
 
 	pop	hl
 	pop	bc
@@ -155,6 +158,49 @@ lcdLinefeed:
 	xor	a
 	call	lcdSetCol
 	pop	af
+	ret
+
+; Clears B rows starting at row A
+; The LCD will then be set back at row A, column 0
+; B is not preserved by this routine
+lcdClrX:
+	push	af
+	call	lcdSetRow
+	ld	a, LCD_CMD_8BIT
+	call	lcdCmd
+.outer:
+	push	bc		; --> lvl 1
+	ld	b, 11
+	ld	a, LCD_CMD_YINC
+	call	lcdCmd
+	xor	a
+	call	lcdSetCol
+.inner:
+	call	lcdData
+	djnz	.inner
+	ld	a, LCD_CMD_XINC
+	call	lcdCmd
+	xor	a
+	call	lcdData
+	pop	bc		; <-- lvl 1
+	djnz	.outer
+	ld	a, LCD_CMD_6BIT
+	call	lcdCmd
+	pop	af
+	ret
+
+lcdClrLn:
+	push	bc
+	ld	b, FNT_HEIGHT+1
+	call	lcdClrX
+	pop	bc
+	ret
+
+lcdClrScr:
+	push	bc
+	ld	b, 64
+	call	lcdClrX
+	pop	bc
 	ret
 
 lcdPutC:
