@@ -31,7 +31,7 @@ kbdInit:
 ; waitForKey only go through after two actual key presses (otherwise, the user
 ; doesn't have enough time to de-press the button before the next waitForKey
 ; routine registers the same key press as a second one).
-; 
+;
 ; Sending 0xff to the port resets the keyboard, and then we have to send groups
 ; we want to "listen" to, with a 0 in the group bit. Thus, to know if *any* key
 ; is pressed, we send 0xff to reset the keypad, then 0x00 to select all groups,
@@ -90,7 +90,10 @@ kbdGetC:
 	jr	z, .handle2nd
 	jp	.loop
 .handleAlpha:
-	set	0, c
+	; Toggle Alpha bit in C. Also, if 2ND bit is set, toggle A-Lock mod.
+	ld	a, 1	; mask for Alpha
+	xor	c
+	ld	c, a
 	bit	1, c		; 2nd set?
 	jp	z, .loop	; unset? loop
 	; we've just hit Alpha with 2nd set. Toggle A-Lock and set Alpha to
@@ -101,9 +104,12 @@ kbdGetC:
 	ld	c, a
 	jp	.loop
 .handle2nd:
-	set	1, c
+	; toggle 2ND bit in C
+	ld	a, 2	; mask for 2ND
+	xor	c
+	ld	c, a
 	jp	.loop
-	
+
 .end:
 	pop	hl
 	pop	bc
