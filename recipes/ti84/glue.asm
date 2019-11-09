@@ -28,8 +28,9 @@
 .inc "fnt/mgm.asm"
 .equ	LCD_RAMSTART	RAMSTART
 .inc "ti/lcd.asm"
+.equ	KBD_RAMSTART	LCD_RAMEND
 .inc "ti/kbd.asm"
-.equ	STDIO_RAMSTART	LCD_RAMEND
+.equ	STDIO_RAMSTART	KBD_RAMEND
 .equ	STDIO_GETC	kbdGetC
 .equ	STDIO_PUTC	lcdPutC
 .inc "stdio.asm"
@@ -60,6 +61,7 @@ boot:
 	halt
 
 main:
+	call	kbdInit
 	call	lcdInit
 	xor	a
 	call	lcdSetCol

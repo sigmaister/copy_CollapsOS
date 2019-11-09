@@ -5,7 +5,23 @@
 ; *** Constants ***
 .equ	KBD_PORT	0x01
 
+; Keys that have a special meaning in GetC. All >= 0x80. They are interpreted
+; by GetC directly and are never returned as-is.
+.equ	KBD_KEY_ALPHA	0x80
+.equ	KBD_KEY_2ND	0x81
+
+; *** Variables ***
+; active long-term modifiers, such as a-lock
+; bit 0: A-Lock
+.equ	KBD_MODS	KBD_RAMSTART
+.equ	KBD_RAMEND	@+1
+
 ; *** Code ***
+
+kbdInit:
+	xor	a
+	ld	(KBD_MODS), a
+	ret
 
 ; Wait for a digit to be pressed and sets the A register ASCII value
 ; corresponding to that key press.
@@ -24,8 +40,14 @@ kbdGetC:
 	push	bc
 	push	hl
 
-	; During this GetC loop, register C holds the modificators (Alpha, 2nd)
-	ld	c, 0
+	; During this GetC loop, register C holds the modificators
+	; bit 0: Alpha
+	; bit 1: 2nd
+	; Initial value should be zero, but if A-Lock is on, it's 1
+	ld	a, (KBD_MODS)
+	and	1
+	ld	c, a
+
 	; loop until a digit is pressed
 .loop:
 	ld	hl, .dtbl
@@ -60,22 +82,29 @@ kbdGetC:
 	ld	a, (hl)
 	or	a		; is char 0?
 	jr	z, .loop	; yes? unsupported. loop.
-	cp	0x80		; is it alpha?
-	jr	nz, .notalpha
+	call	.debounce
+	cp	KBD_KEY_ALPHA
+	jr	c, .end	; A < 0x80? valid char, return it.
+	jr	z, .handleAlpha
+	cp	KBD_KEY_2ND
+	jr	z, .handle2nd
+	jp	.loop
+.handleAlpha:
 	set	0, c
-	jr	.loop
-.notalpha:
+	bit	1, c		; 2nd set?
+	jp	z, .loop	; unset? loop
+	; we've just hit Alpha with 2nd set. Toggle A-Lock and set Alpha to
+	; the value A-Lock has.
+	ld	a, (KBD_MODS)
+	xor	1
+	ld	(KBD_MODS), a
+	ld	c, a
+	jp	.loop
+.handle2nd:
+	set	1, c
+	jp	.loop
 	
-	; wait until all keys are de-pressed
-	push	af		; --> lvl 1
-.wait:
-	xor	a
-	call	.get
-	inc	a		; if a was 0xff, will become 0 (nz test)
-	jr	nz, .wait	; non-zero? something is pressed
-
-	pop	af		; <-- lvl 1
-
+.end:
 	pop	hl
 	pop	bc
 	ret
@@ -89,18 +118,28 @@ kbdGetC:
 	in	a, (KBD_PORT)
 	ei
 	ret
+.debounce:
+	; wait until all keys are de-pressed
+	push	af		; --> lvl 1
+.wait:
+	xor	a
+	call	.get
+	inc	a		; if a was 0xff, will become 0 (nz test)
+	jr	nz, .wait	; non-zero? something is pressed
+
+	pop	af		; <-- lvl 1
+	ret
 
 ; digits table. each row represents a group. first item is group mask.
 ; 0 means unsupported. no group 7 because it has no keys.
-; 0x80 is a special value for ALPHA key which is never returned directly.
 .dtbl:
 	.db	0xfe, 0, 0, 0, 0, 0, 0, 0, 0
 	.db	0xfd, 0x0d, '+' ,'-' ,'*', '/', '^', 0, 0
 	.db	0xfb, 0, '3', '6', '9', ')', 0, 0, 0
 	.db	0xf7, '.', '2', '5', '8', '(', 0, 0, 0
 	.db	0xef, '0', '1', '4', '7', ',', 0, 0, 0
-	.db	0xdf, 0, 0, 0, 0, 0, 0, 0, 0x80
-	.db	0xbf, 0, 0, 0, 0, 0, 0, 0, 0x7f
+	.db	0xdf, 0, 0, 0, 0, 0, 0, 0, KBD_KEY_ALPHA
+	.db	0xbf, 0, 0, 0, 0, 0, KBD_KEY_2ND, 0, 0x7f
 
 ; alpha table. same as .dtbl, for when we're in alpha mode.
 .atbl:
@@ -109,5 +148,5 @@ kbdGetC:
 	.db	0xfb, '?', 0, 'V', 'Q', 'L', 'G', 0, 0
 	.db	0xf7, ':', 'Z', 'U', 'P', 'K', 'F', 'C', 0
 	.db	0xef, '_', 'Y', 'T', 'O', 'J', 'E', 'B', 0
-	.db	0xdf, 0, 'X', 'S', 'N', 'I', 'D', 'A', 0x80
-	.db	0xbf, 0, 0, 0, 0, 0, 0, 0, 0x7f
+	.db	0xdf, 0, 'X', 'S', 'N', 'I', 'D', 'A', KBD_KEY_ALPHA
+	.db	0xbf, 0, 0, 0, 0, 0, KBD_KEY_2ND, 0, 0x7f
