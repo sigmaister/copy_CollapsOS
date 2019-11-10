@@ -248,15 +248,12 @@ parseArg:
 
 ; Returns, with Z, whether A is a groupId
 isGroupId:
-	cp	0xc	; max group id + 1
-	jr	nc, .notgroup	; >= 0xc? not a group
-	cp	0
-	jr	z, .notgroup	; 0? not supposed to happen. something's wrong.
+	or	a
+	jp	z, unsetZ	; not a group
+	cp	0xd		; max group id + 1
+	jp	nc, unsetZ	; >= 0xd? not a group
 	; A is a group. ensure Z is set
 	cp	a
-	ret
-.notgroup:
-	call	unsetZ
 	ret
 
 ; Find argspec A in group id H.
@@ -345,11 +342,16 @@ matchArg:
 	; not an exact match. Before we continue: is A zero? Because if it is,
 	; we have to stop right here: no match possible.
 	or	a
-	jr	nz, .checkIfNumber	; not a zero, we can continue
+	jr	nz, .skip	; not a zero, we can continue
 	; zero, stop here
-	call	unsetZ
+	cp	1			; unset Z
 	ret
-.checkIfNumber:
+.skip:
+	; Alright, let's start with a special case. Is it part of the special
+	; "BIT" group, 0xc? If yes, we actually expect a number, which will
+	; then be ORed like a regular group index.
+	cp	0xc
+	jr	z, .expectsBIT
 	; not an exact match, let's check for numerical constants.
 	call	upcase
 	call	checkNOrM
@@ -363,6 +365,21 @@ matchArg:
 	cp	(hl)
 	ret			; whether we match or not, the result of Z is
 				; the good one.
+.expectsBIT:
+	ld	a, (hl)
+	cp	'N'
+	inc	hl
+	ld	a, (hl)
+	dec	hl
+	cp	8
+	jr	c, .isBit	; A < 8
+	; not a bit
+	or	a		; unset Z
+	ret
+.isBit:
+	cp	a		; set Z
+	ret
+
 .notNumber:
 	; A bit of a delicate situation here: we want A to go in H but also
 	; (HL) to go in A. If not careful, we overwrite each other. EXX is
@@ -443,28 +460,6 @@ handleBIT:
 .error:
 	ld	c, 0
 	jp	unsetZ
-
-handleBITHL:
-	ld	b, 0b01000110
-	jr	_handleBITHL
-handleSETHL:
-	ld	b, 0b11000110
-	jr	_handleBITHL
-handleRESHL:
-	ld	b, 0b10000110
-_handleBITHL:
-	call	handleBIT
-	ret	nz		; error
-	ld	a, 0xcb		; first upcode
-	ld	(INS_UPCODE), a
-	ld	a, (INS_CURARG1+1)	; 0-7
-	rla
-	rla
-	rla
-	or	b		; 2nd upcode
-	ld	(INS_UPCODE+1), a
-	ld	c, 2
-	ret
 
 handleBITIX:
 	ld	a, 0xdd
@@ -981,6 +976,10 @@ argGrpCC:
 argGrpABCDEHL:
 	.db	"BCDEHL_A"	; 0xb
 
+; SPECIAL GROUP "BIT": 0xc
+; When special group "0xc" shows up in argspec, it means: accept a number
+; between 0 and 7. The value is then treated like a regular group value.
+
 ; Each row is 4 bytes wide, fill with zeroes
 instrNames:
 	.db "ADC", 0
@@ -1086,7 +1085,7 @@ instrTBl:
 	.db I_AND, 'n', 0,   0,    0xe6		, 0	; AND n
 	.db I_AND, 'x', 0,   0,    0xdd, 0xa6		; AND (IX+d)
 	.db I_AND, 'y', 0,   0,    0xfd, 0xa6		; AND (IY+d)
-	.db I_BIT, 'n', 'l', 0x20 \ .dw handleBITHL	; BIT b, (HL)
+	.db I_BIT, 0xc, 'l', 0x43, 0xcb, 0b01000110	; BIT b, (HL)
 	.db I_BIT, 'n', 'x', 0x20 \ .dw handleBITIX	; BIT b, (IX+d)
 	.db I_BIT, 'n', 'y', 0x20 \ .dw handleBITIY	; BIT b, (IY+d)
 	.db I_BIT, 'n', 0xb, 0x20 \ .dw handleBITR	; BIT b, r
@@ -1199,7 +1198,7 @@ instrTBl:
 	.db I_PUSH,'X', 0,   0,    0xdd, 0xe5		; PUSH IX
 	.db I_PUSH,'Y', 0,   0,    0xfd, 0xe5		; PUSH IY
 	.db I_PUSH,0x1, 0,   4,    0b11000101	, 0	; PUSH qq
-	.db I_RES, 'n', 'l', 0x20 \ .dw handleRESHL	; RES b, (HL)
+	.db I_RES, 0xc, 'l', 0x43, 0xcb, 0b10000110	; RES b, (HL)
 	.db I_RES, 'n', 'x', 0x20 \ .dw handleRESIX	; RES b, (IX+d)
 	.db I_RES, 'n', 'y', 0x20 \ .dw handleRESIY	; RES b, (IY+d)
 	.db I_RES, 'n', 0xb, 0x20 \ .dw handleRESR	; RES b, r
@@ -1219,7 +1218,7 @@ instrTBl:
 	.db I_SBC, 'A', 0xb, 0,    0b10011000	, 0	; SBC A, r
 	.db I_SBC,'h',0x3,0x44,    0xed, 0b01000010	; SBC HL, ss
 	.db I_SCF, 0,   0,   0,    0x37		, 0	; SCF
-	.db I_SET, 'n', 'l', 0x20 \ .dw handleSETHL	; SET b, (HL)
+	.db I_SET, 0xc, 'l', 0x43, 0xcb, 0b11000110	; SET b, (HL)
 	.db I_SET, 'n', 'x', 0x20 \ .dw handleSETIX	; SET b, (IX+d)
 	.db I_SET, 'n', 'y', 0x20 \ .dw handleSETIY	; SET b, (IY+d)
 	.db I_SET, 'n', 0xb, 0x20 \ .dw handleSETR	; SET b, r
