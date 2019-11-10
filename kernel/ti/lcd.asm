@@ -26,6 +26,25 @@
 ; when active row is 0, Z is FNT_HEIGHT+1, when row is 1, Z is (FNT_HEIGHT+1)*2,
 ; When row is 8, Z is 0.
 ;
+; *** 6/8 bit columns and smaller fonts ***
+;
+; If your glyphs, including padding, are 6 or 8 pixels wide, you're in luck
+; because pushing them to the LCD can be done in a very efficient manner.
+; Unfortunately, this makes the LCD unsuitable for a Collapse OS shell: 6
+; pixels per glyph gives us only 16 characters per line, which is hardly
+; usable.
+;
+; This is why we have this buffering system. How it works is that we're always
+; in 8-bit mode and we hold the whole area (8 pixels wide by FNT_HEIGHT high)
+; in memory. When we want to put a glyph to screen, we first read the contents
+; of that area, then add our new glyph, offsetted and masked, to that buffer,
+; then push the buffer back to the LCD. If the glyph is split, move to the next
+; area and finish the job.
+;
+; That being said, it's important to define clearly what CURX and CURY variable
+; mean. Those variable keep track of the current position *in pixels*, in both
+; axes.
+;
 ; *** Requirements ***
 ; fnt/mgm
 ;
@@ -37,7 +56,9 @@
 .equ	LCD_CMD_8BIT		0x01
 .equ	LCD_CMD_DISABLE		0x02
 .equ	LCD_CMD_ENABLE		0x03
+.equ	LCD_CMD_XDEC		0x04
 .equ	LCD_CMD_XINC		0x05
+.equ	LCD_CMD_YDEC		0x06
 .equ	LCD_CMD_YINC		0x07
 .equ	LCD_CMD_COL		0x20
 .equ	LCD_CMD_ZOFFSET		0x40
@@ -45,19 +66,22 @@
 .equ	LCD_CMD_CONTRAST	0xc0
 
 ; *** Variables ***
-; Current row being written on. In terms of pixels, not of glyphs. During a
-; linefeed, this increases by FNT_HEIGHT+1.
-.equ	LCD_CURROW	LCD_RAMSTART
-; Current column
-.equ	LCD_CURCOL	@+1
-.equ	LCD_RAMEND	@+1
+; Current Y position on the LCD, that is, where re're going to spit our next
+; glyph.
+.equ	LCD_CURY	LCD_RAMSTART
+; Current X position
+.equ	LCD_CURX	@+1
+; two pixel buffers that are 8 pixels wide (1b) by FNT_HEIGHT pixels high.
+; This is where we compose our resulting pixels blocks when spitting a glyph.
+.equ	LCD_BUF		@+1
+.equ	LCD_RAMEND	@+FNT_HEIGHT*2
 
 ; *** Code ***
 lcdInit:
 	; Initialize variables
 	xor	a
-	ld	(LCD_CURROW), a
-	ld	(LCD_CURCOL), a
+	ld	(LCD_CURY), a
+	ld	(LCD_CURX), a
 
 	; Clear screen
 	call	lcdClrScr
@@ -82,12 +106,8 @@ lcdInit:
 	ld	a, LCD_CMD_CONTRAST+0x34
 	call	lcdCmd
 
-	; Enable 6-bit mode.
-	ld	a, LCD_CMD_6BIT
-	call	lcdCmd
-
-	; Enable X-increment mode
-	ld	a, LCD_CMD_XINC
+	; Enable 8-bit mode.
+	ld	a, LCD_CMD_8BIT
 	call	lcdCmd
 
 	ret
@@ -109,8 +129,13 @@ lcdCmd:
 	jr	lcdWait
 
 ; Send data A to LCD
-lcdData:
+lcdDataSet:
 	out	(LCD_PORT_DATA), a
+	jr	lcdWait
+
+; Get data from LCD into A
+lcdDataGet:
+	in	a, (LCD_PORT_DATA)
 	jr	lcdWait
 
 ; Turn LCD off
@@ -140,52 +165,126 @@ lcdSetRow:
 	pop	af
 	ret
 
-; Send the 5x7 glyph that HL points to to the LCD, at its current position.
+; Send the glyph that HL points to to the LCD, at its current position.
 ; After having called this, the LCD's position will have advanced by one
 ; position
 lcdSendGlyph:
 	push	af
 	push	bc
 	push	hl
+	push	ix
 
-	ld	a, (LCD_CURROW)
+	ld	a, (LCD_CURY)
 	call	lcdSetRow
-	ld	a, (LCD_CURCOL)
+	ld	a, (LCD_CURX)
+	srl	a \ srl a \ srl a	; div by 8
 	call	lcdSetCol
 
+	; First operation: read the LCD memory for the "left" side of the
+	; buffer. We assume the right side to always be empty, so we don't
+	; read it. After having read each line, compose it with glyph line at
+	; HL
+
+	; Before we start, what is our bit offset?
+	ld	a, (LCD_CURX)
+	and	0b111
+	; that's our offset, store it in C
+	ld	c, a
+
+	ld	a, LCD_CMD_XINC
+	call	lcdCmd
+	ld	ix, LCD_BUF
 	ld	b, FNT_HEIGHT
-.loop:
+	; A dummy read is needed after a movement.
+	call	lcdDataGet
+.loop1:
+	; let's go get that glyph data
 	ld	a, (hl)
+	ld	(ix), a
+	call	.shiftIX
+	; now let's go get existing pixel on LCD
+	call	lcdDataGet
+	; and now let's do some compositing!
+	or	(ix)
+	ld	(ix), a
 	inc	hl
-	call	lcdData
-	djnz	.loop
+	inc	ix
+	djnz	.loop1
+
+	; Buffer set! now let's send it.
+	ld	a, (LCD_CURY)
+	call	lcdSetRow
+
+	ld	hl, LCD_BUF
+	ld	b, FNT_HEIGHT
+.loop2:
+	ld	a, (hl)
+	call	lcdDataSet
+	inc	hl
+	djnz	.loop2
+
+	; And finally, let's send the "right side" of the buffer
+	ld	a, (LCD_CURY)
+	call	lcdSetRow
+	ld	a, (LCD_CURX)
+	srl	a \ srl a \ srl a	; div by 8
+	inc	a
+	call	lcdSetCol
+
+	ld	hl, LCD_BUF+FNT_HEIGHT
+	ld	b, FNT_HEIGHT
+.loop3:
+	ld	a, (hl)
+	call	lcdDataSet
+	inc	hl
+	djnz	.loop3
 
 	; Increase column and wrap if necessary
-	ld	a, (LCD_CURCOL)
-	inc	a
-	ld	(LCD_CURCOL), a
-	cp	16
-	jr	nz, .skip
+	ld	a, (LCD_CURX)
+	add	a, FNT_WIDTH+1
+	ld	(LCD_CURX), a
+	cp	96-FNT_WIDTH
+	jr	c, .skip	; A < 96-FNT_WIDTH
 	call	lcdLinefeed
 .skip:
+	pop	ix
 	pop	hl
 	pop	bc
 	pop	af
+	ret
+; Shift glyph in (IX) to the right C times, sending carry into (IX+FNT_HEIGHT)
+.shiftIX:
+	dec	c \ inc c
+	ret	z		; zero? nothing to do
+	push	bc		; --> lvl 1
+	xor	a
+	ld	b, a
+	ld	a, (ix)
+	; TODO: support SRL (IX) and RR (IX) in zasm
+.shiftLoop:
+	srl	a
+	rr	b
+	dec	c
+	jr	nz, .shiftLoop
+	ld	(ix), a
+	ld	a, b
+	ld	(ix+FNT_HEIGHT), a
+	pop	bc		; <-- lvl 1
 	ret
 
 ; Changes the current line and go back to leftmost column
 lcdLinefeed:
 	push	af
-	ld	a, (LCD_CURROW)
+	ld	a, (LCD_CURY)
 	call	.addFntH
-	ld	(LCD_CURROW), a
+	ld	(LCD_CURY), a
 	call	lcdClrLn
 	; Now, lets set Z offset which is CURROW+FNT_HEIGHT+1
 	call	.addFntH
 	add	a, LCD_CMD_ZOFFSET
 	call	lcdCmd
 	xor	a
-	ld	(LCD_CURCOL), a
+	ld	(LCD_CURX), a
 	pop	af
 	ret
 .addFntH:
@@ -201,8 +300,6 @@ lcdLinefeed:
 lcdClrX:
 	push	af
 	call	lcdSetRow
-	ld	a, LCD_CMD_8BIT
-	call	lcdCmd
 .outer:
 	push	bc		; --> lvl 1
 	ld	b, 11
@@ -211,16 +308,14 @@ lcdClrX:
 	xor	a
 	call	lcdSetCol
 .inner:
-	call	lcdData
+	call	lcdDataSet
 	djnz	.inner
 	ld	a, LCD_CMD_XINC
 	call	lcdCmd
 	xor	a
-	call	lcdData
+	call	lcdDataSet
 	pop	bc		; <-- lvl 1
 	djnz	.outer
-	ld	a, LCD_CMD_6BIT
-	call	lcdCmd
 	pop	af
 	ret
 
@@ -251,10 +346,10 @@ lcdPutC:
 	pop	hl
 	ret
 .bs:
-	ld	a, (LCD_CURCOL)
+	ld	a, (LCD_CURX)
 	or	a
 	ret	z	; going back one line is too complicated.
 			; not implemented yet
-	dec	a
-	ld	(LCD_CURCOL), a
+	sub	FNT_WIDTH+1
+	ld	(LCD_CURX), a
 	ret
