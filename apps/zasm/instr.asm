@@ -337,7 +337,7 @@ findInGroup:
 ; If it's not this, then we check if it's a numerical arg.
 ; If A is a group ID, we do something else: we check that (HL) exists in the
 ; groupspec (argGrpTbl). Moreover, we go and write the group's "value" (index)
-; in (HL+1). This will save us significant processing later in getUpcode.
+; in (HL+1). This will save us significant processing later in spitUpcode.
 ; Set Z according to whether we match or not.
 matchArg:
 	cp	(hl)
@@ -407,8 +407,8 @@ matchPrimaryRow:
 ; *** Special opcodes ***
 ; The special upcode handling routines below all have the same signature.
 ; Instruction row is at IX and we're expected to perform the same task as
-; getUpcode. The number of bytes, however, must go in C instead of A
-; No need to preserve HL, DE, BC and IX: it's handled by getUpcode already.
+; spitUpcode. The number of bytes, however, must go in C instead of A
+; No need to preserve HL, DE, BC and IX: it's handled by spitUpcode already.
 
 ; Handle like a regular "JP (IX+d)" except that we refuse any displacement: if
 ; a displacement is specified, we error out.
@@ -625,11 +625,9 @@ handleLDrr:
 	ret
 
 ; Compute the upcode for argspec row at (DE) and arguments in curArg{1,2} and
-; writes the resulting upcode in INS_UPCODE. A is the number if bytes written
-; to INS_UPCODE.
-; A is zero on error. The only thing that can go wrong in this routine is
-; overflow.
-getUpcode:
+; writes the resulting upcode to IO.
+; A is zero, with Z set, on success. A is non-zero, with Z unset, on error.
+spitUpcode:
 	push	ix
 	push	de
 	push	hl
@@ -645,7 +643,7 @@ getUpcode:
 	ld	h, (ix+5)
 	call	callHL
 	; We have our result written in INS_UPCODE and C is set.
-	jp	.end
+	jp	.writeIO
 
 .normalInstr:
 	; we begin by writing our "base upcode", which can be one or two bytes
@@ -734,7 +732,7 @@ getUpcode:
 	call	checknmxy
 	jr	z, .withByte
 	; nope, no number, alright, we're finished here
-	jr	.end
+	jr	.writeIO
 .withByte:
 	inc	hl
 	; HL points to our number (LSB), with (HL+1) being our MSB which should
@@ -751,7 +749,7 @@ getUpcode:
 	; verification falsely fail.
 	inc	c		; one extra byte is written
 	call	zasmIsFirstPass
-	jr	z, .end
+	jr	z, .writeIO
 
 	; We're on second pass
 	push	de		; Don't let go of this, that's our dest
@@ -781,7 +779,7 @@ getUpcode:
 	or	a		; cp 0
 	jr	nz, .numberTruncated	; if A is anything but zero, we're out
 					; of bounds.
-	jr	.end
+	jr	.writeIO
 
 .absoluteValue:
 	; verify that the MSB in argument is zero
@@ -794,7 +792,7 @@ getUpcode:
 	ldi
 	pop	bc
 	inc	c
-	jr	.end
+	jr	.writeIO
 
 .withWord:
 	inc	hl	; HL now points to LSB
@@ -805,12 +803,28 @@ getUpcode:
 	pop	bc
 	inc	c		; two extra bytes are written
 	inc	c
+	; to writeIO
+.writeIO:
+	; Let's write INS_UPCODE to IO
+	ld	b, c		; save output byte count
+	ld	hl, INS_UPCODE
+.loopWrite:
+	ld	a, (hl)
+	call	ioPutB
+	jr	nz, .ioError
+	inc	hl
+	djnz	.loopWrite
+	; Z is set by INC HL
 	jr	.end
 .numberTruncated:
-	; problem: not zero, so value is truncated. error
-	ld	c, 0
+	; Z already unset
+	ld	a, ERR_OVFL
+	jr	.end
+.ioError:
+	; Z already unset
+	ld	a, SHELL_ERR_IO_ERROR
+	; continue to .end
 .end:
-	ld	a, c
 	pop	bc
 	pop	hl
 	pop	de
@@ -881,26 +895,10 @@ parseInstruction:
 .match:
 	; We have our matching instruction row. We're getting pretty near our
 	; goal here!
-	call	getUpcode
-	or	a	; is zero?
-	jr	z, .overflow
-	ld	b, a		; save output byte count
-	ld	hl, INS_UPCODE
-.loopWrite:
-	ld	a, (hl)
-	call	ioPutB
-	jr	nz, .ioError
-	inc	hl
-	djnz	.loopWrite
-	cp	a	; ensure Z
-	jr	.end
-.ioError:
-	ld	a, SHELL_ERR_IO_ERROR
-	jr	.error
-.overflow:
-	ld	a, ERR_OVFL
-	jr	.error
+	call	spitUpcode
+	jr	.end		; Z and A set properly, even on error
 .badfmt:
+	; Z already unset
 	ld	a, ERR_BAD_FMT
 .error:
 	; A is set to error already
