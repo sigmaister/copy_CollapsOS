@@ -88,8 +88,9 @@ ioGetB:
 	; We have newline. Increase lineno and return (the rest of the
 	; processing below isn't needed.
 	push	hl
-	ld	hl, IO_INC_LINENO
-	inc	(hl)
+	ld	hl, (IO_INC_LINENO)
+	inc	hl
+	ld	(IO_INC_LINENO), hl
 	pop	hl
 	ret
 
