@@ -101,7 +101,7 @@ testSpitUpcode:
 ; Test data is a argspec pointer in instrTBl followed by 2*3 bytes of CURARG
 ; followed by the expected spit, 1 byte cnt + 4 bytes spits.
 .t1:
-	.dw	instrTBl+19*6	; CCF
+	.dw	instrTBl+17*6	; CCF
 	.db	0, 0, 0
 	.db	0, 0, 0
 	.db	1, 0x3f, 0, 0, 0
@@ -116,7 +116,7 @@ testSpitUpcode:
 	.db	'x', 3, 0
 	.db	4, 0xdd, 0xcb, 0x03, 0x66
 .t4:
-	.dw	instrTBl+20*6	; CP (IX+5)
+	.dw	instrTBl+18*6	; CP (IX+5)
 	.db	'x', 5, 0
 	.db	0, 0, 0
 	.db	3, 0xdd, 0xbe, 0x05, 0

@@ -2,7 +2,7 @@
 ; Number of rows in the argspec table
 .equ	ARGSPEC_TBL_CNT		33
 ; Number of rows in the primary instructions table
-.equ	INSTR_TBL_CNT		150
+.equ	INSTR_TBL_CNT		144
 ; size in bytes of each row in the primary instructions table
 .equ	INSTR_TBL_ROWSIZE	6
 ; Instruction IDs They correspond to the index of the table in instrNames
@@ -487,28 +487,6 @@ _handleBITR:
 	ld	c, 2
 	ret
 
-handleBITIXY:
-	ld	b, 0b01000110
-	jr	_handleBITIXY
-handleSETIXY:
-	ld	b, 0b11000110
-	jr	_handleBITIXY
-handleRESIXY:
-	ld	b, 0b10000110
-_handleBITIXY:
-	ld	a, 0xcb		; 1st upcode
-	ld	(INS_UPCODE), a
-	ld	a, (INS_CURARG2+1)	; IXY displacement
-	ld	(INS_UPCODE+1), a
-	ld	a, (INS_CURARG1+1)	; 0-7
-	rlca	; clears cary if any
-	rla
-	rla
-	or	b		; 4th upcode
-	ld	(INS_UPCODE+2), a
-	ld	c, 3
-	ret
-
 handleIM:
 	ld	a, (INS_CURARG1+1)
 	cp	0
@@ -798,6 +776,11 @@ spitUpcode:
 	inc	c
 	; to writeIO
 .writeIO:
+	; Before we write IO, let's check a very specific case: is our first
+	; upcode 0xcb and our byte count == 3? If yes, then swap the two last
+	; bytes. In all instructions except 0xcb ones, IX/IY displacement comes
+	; last, but in all 0xcb instructions, they come 2nd last.
+	call	.checkCB
 	; Let's write INS_UPCODE to IO
 	dec	c \ inc	c	; is C zero?
 	jr	z, .numberTruncated
@@ -824,6 +807,21 @@ spitUpcode:
 	pop	hl
 	pop	de
 	pop	ix
+	ret
+.checkCB:
+	ld	a, (INS_UPCODE)
+	cp	0xcb
+	ret	nz
+	ld	a, c
+	cp	3
+	ret	nz
+	; We are in 0xcb + displacement situation. Swap bytes 2 and 3.
+	ld	a, (INS_UPCODE+1)
+	ex	af, af'
+	ld	a, (INS_UPCODE+2)
+	ld	(INS_UPCODE+1), a
+	ex	af, af'
+	ld	(INS_UPCODE+2), a
 	ret
 
 ; Parse argument in (HL) and place it in (DE)
@@ -1082,9 +1080,7 @@ instrTBl:
 	.db I_AND, 'l', 0,   0x10, 0xa6		, 0	; AND (HL) + (IX/Y)
 	.db I_AND, 0xb, 0,   0,    0b10100000	, 0	; AND r
 	.db I_AND, 'n', 0,   0,    0xe6		, 0	; AND n
-	.db I_BIT, 0xc, 'x', 0x20 \ .dw handleBITIXY	; BIT b, (IX+d)
-	.db I_BIT, 0xc, 'y', 0x20 \ .dw handleBITIXY	; BIT b, (IY+d)
-	.db I_BIT, 0xc, 'l', 0x43, 0xcb, 0b01000110	; BIT b, (HL)
+	.db I_BIT, 0xc, 'l', 0x53, 0xcb, 0b01000110	; BIT b, (HL) + (IX/Y)
 	.db I_BIT, 'n', 0xb, 0x20 \ .dw handleBITR	; BIT b, r
 	.db I_CALL,0xa, 'N', 3,    0b11000100	, 0	; CALL cc, NN
 	.db I_CALL,'N', 0,   0,    0xcd		, 0	; CALL NN
@@ -1187,8 +1183,6 @@ instrTBl:
 	.db I_PUSH,'X', 0,   0,    0xdd, 0xe5		; PUSH IX
 	.db I_PUSH,'Y', 0,   0,    0xfd, 0xe5		; PUSH IY
 	.db I_PUSH,0x1, 0,   4,    0b11000101	, 0	; PUSH qq
-	.db I_RES, 0xc, 'x', 0x20 \ .dw handleRESIXY	; RES b, (IX+d)
-	.db I_RES, 0xc, 'y', 0x20 \ .dw handleRESIXY	; RES b, (IY+d)
 	.db I_RES, 0xc, 'l', 0x53, 0xcb, 0b10000110	; RES b, (HL) + (IX/Y)
 	.db I_RES, 'n', 0xb, 0x20 \ .dw handleRESR	; RES b, r
 	.db I_RET, 0,   0,   0,    0xc9		, 0	; RET
@@ -1207,8 +1201,6 @@ instrTBl:
 	.db I_SBC, 'A', 0xb, 0,    0b10011000	, 0	; SBC A, r
 	.db I_SBC,'h',0x3,0x44,    0xed, 0b01000010	; SBC HL, ss
 	.db I_SCF, 0,   0,   0,    0x37		, 0	; SCF
-	.db I_SET, 0xc, 'x', 0x20 \ .dw handleSETIXY	; SET b, (IX+d)
-	.db I_SET, 0xc, 'y', 0x20 \ .dw handleSETIXY	; SET b, (IY+d)
 	.db I_SET, 0xc, 'l', 0x53, 0xcb, 0b11000110	; SET b, (HL) + (IX/Y)
 	.db I_SET, 'n', 0xb, 0x20 \ .dw handleSETR	; SET b, r
 	.db I_SLA, 0xb, 0,0x40,    0xcb, 0b00100000	; SLA r
