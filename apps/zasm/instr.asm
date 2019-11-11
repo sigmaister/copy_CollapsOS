@@ -2,7 +2,7 @@
 ; Number of rows in the argspec table
 .equ	ARGSPEC_TBL_CNT		33
 ; Number of rows in the primary instructions table
-.equ	INSTR_TBL_CNT		144
+.equ	INSTR_TBL_CNT		147
 ; size in bytes of each row in the primary instructions table
 .equ	INSTR_TBL_ROWSIZE	6
 ; Instruction IDs They correspond to the index of the table in instrNames
@@ -1081,7 +1081,7 @@ instrTBl:
 	.db I_AND, 0xb, 0,   0,    0b10100000	, 0	; AND r
 	.db I_AND, 'n', 0,   0,    0xe6		, 0	; AND n
 	.db I_BIT, 0xc, 'l', 0x53, 0xcb, 0b01000110	; BIT b, (HL) + (IX/Y)
-	.db I_BIT, 'n', 0xb, 0x20 \ .dw handleBITR	; BIT b, r
+	.db I_BIT, 0xc, 0xb, 0x20 \ .dw handleBITR	; BIT b, r
 	.db I_CALL,0xa, 'N', 3,    0b11000100	, 0	; CALL cc, NN
 	.db I_CALL,'N', 0,   0,    0xcd		, 0	; CALL NN
 	.db I_CCF, 0,   0,   0,    0x3f		, 0	; CCF
@@ -1184,16 +1184,18 @@ instrTBl:
 	.db I_PUSH,'Y', 0,   0,    0xfd, 0xe5		; PUSH IY
 	.db I_PUSH,0x1, 0,   4,    0b11000101	, 0	; PUSH qq
 	.db I_RES, 0xc, 'l', 0x53, 0xcb, 0b10000110	; RES b, (HL) + (IX/Y)
-	.db I_RES, 'n', 0xb, 0x20 \ .dw handleRESR	; RES b, r
+	.db I_RES, 0xc, 0xb, 0x20 \ .dw handleRESR	; RES b, r
 	.db I_RET, 0,   0,   0,    0xc9		, 0	; RET
 	.db I_RET, 0xa, 0,   3,    0b11000000	, 0	; RET cc
 	.db I_RETI,0,   0,   0,    0xed, 0x4d		; RETI
 	.db I_RETN,0,   0,   0,    0xed, 0x45		; RETN
 	.db I_RL,  0xb, 0,0x40,    0xcb, 0b00010000	; RL r
+	.db I_RL,  'l', 0,0x10,    0xcb, 0b00010110	; RL (HL) + (IX/Y)
 	.db I_RLA, 0,   0,   0,    0x17		, 0	; RLA
 	.db I_RLC, 0xb, 0,0x40,    0xcb, 0b00000000	; RLC r
 	.db I_RLCA,0,   0,   0,    0x07		, 0	; RLCA
 	.db I_RR,  0xb, 0,0x40,    0xcb, 0b00011000	; RR r
+	.db I_RR,  'l', 0,0x10,    0xcb, 0b00011110	; RR (HL) + (IX/Y)
 	.db I_RRA, 0,   0,   0,    0x1f		, 0	; RRA
 	.db I_RRC, 0xb, 0,0x40,    0xcb, 0b00001000	; RRC r
 	.db I_RRCA,0,   0,   0,    0x0f		, 0	; RRCA
@@ -1202,9 +1204,10 @@ instrTBl:
 	.db I_SBC,'h',0x3,0x44,    0xed, 0b01000010	; SBC HL, ss
 	.db I_SCF, 0,   0,   0,    0x37		, 0	; SCF
 	.db I_SET, 0xc, 'l', 0x53, 0xcb, 0b11000110	; SET b, (HL) + (IX/Y)
-	.db I_SET, 'n', 0xb, 0x20 \ .dw handleSETR	; SET b, r
+	.db I_SET, 0xc, 0xb, 0x20 \ .dw handleSETR	; SET b, r
 	.db I_SLA, 0xb, 0,0x40,    0xcb, 0b00100000	; SLA r
 	.db I_SRL, 0xb, 0,0x40,    0xcb, 0b00111000	; SRL r
+	.db I_SRL, 'l', 0,0x10,    0xcb, 0b00111110	; SRL (HL) + (IX/Y)
 	.db I_SUB, 'l', 0,   0,    0x96		, 0	; SUB (HL)
 	.db I_SUB, 0xb, 0,   0,    0b10010000	, 0	; SUB r
 	.db I_SUB, 'n', 0,   0,    0xd6 	, 0	; SUB n

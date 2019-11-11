@@ -56,6 +56,12 @@ argGrpTbl = {
     chr(0x0b): "BCDEHLA",
 }
 
+# whenever we encounter the "(HL)" version of these instructions, spit IX/IY
+# too.
+instrsWithIXY = {
+    'ADD', 'AND', 'BIT', 'CP', 'DEC', 'INC', 'OR', 'RES', 'RL', 'RR', 'SET',
+    'SRL'}
+
 def cleanupLine(line):
     line = line.strip()
     idx = line.rfind(';')
@@ -107,6 +113,8 @@ def genargs(argspec):
         return result
     if argspec in argspecTbl:
         return [argspecTbl[argspec]]
+    if argspec == chr(0xc): # special BIT "b" group
+        return ['0', '3', '7']
     grp = argGrpTbl[argspec]
     return [argspecTbl[a] for a in grp]
 
@@ -131,13 +139,14 @@ def main():
         a2 = eval(row[2])
         args1 = genargs(a1)
         # special case handling
+        if n in instrsWithIXY and a1 == 'l':
+            args1 += genargs('x')
+            args1 += genargs('y')
+
         if n == 'JP' and isinstance(a1, str) and a1 in 'xy':
             # we don't test the displacements for IX/IY because there can't be
             # any.
             args1 = args1[:1]
-        if n in {'BIT', 'SET', 'RES'}:
-            # we only want to keep 1, 2, 4
-            args1 = args1[:3]
         if n in {'JR', 'DJNZ'} and a1 == 'n':
             args1 = eargs(args1)
         if n == 'IM':
@@ -145,6 +154,9 @@ def main():
         if args1:
             for arg1 in args1:
                 args2 = genargs(a2)
+                if n in instrsWithIXY and a2 == 'l':
+                    args2 += genargs('x')
+                    args2 += genargs('y')
                 if args2:
                     if n in {'JR', 'DJNZ'} and a2 == 'n':
                         args2 = eargs(args2)
