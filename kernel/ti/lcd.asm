@@ -258,17 +258,12 @@ lcdSendGlyph:
 	ret	z		; zero? nothing to do
 	push	bc		; --> lvl 1
 	xor	a
-	ld	b, a
-	ld	a, (ix)
-	; TODO: support SRL (IX) and RR (IX) in zasm
+	ld	(ix+FNT_HEIGHT), a
 .shiftLoop:
-	srl	a
-	rr	b
+	srl	(ix)
+	rr	(ix+FNT_HEIGHT)
 	dec	c
 	jr	nz, .shiftLoop
-	ld	(ix), a
-	ld	a, b
-	ld	(ix+FNT_HEIGHT), a
 	pop	bc		; <-- lvl 1
 	ret
 
