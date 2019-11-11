@@ -23,8 +23,8 @@
 
 .inc "err.h"
 .inc "core.asm"
-.equ	FNT_WIDTH	5
-.equ	FNT_HEIGHT	7
+.equ	FNT_WIDTH	3
+.equ	FNT_HEIGHT	5
 .inc "fnt/mgm.asm"
 .equ	LCD_RAMSTART	RAMSTART
 .inc "ti/lcd.asm"
@@ -44,7 +44,7 @@ boot:
 	di
 	ld	hl, RAMEND
 	ld	sp, hl
-	im	1		
+	im	1
 
 	; enable ON key interrupt
 	in	a, (PORT_INT_MASK)
@@ -85,11 +85,11 @@ handleInterrupt:
 	pop	af
 	ei
 	jp	main
-	
+
 .done:
 	pop	af
 	ei
 	reti
 
 FNT_DATA:
-.bin "fnt/5x7.bin"
+.bin "fnt/3x5.bin"

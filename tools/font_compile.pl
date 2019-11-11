@@ -23,10 +23,10 @@ unless (open($handle, '<', $fn)) { die "Can't open $fn"; }
 print pack('C*', (0) x $height);
 
 while (<$handle>) {
-    unless (/( |\.){${width}}\n/) { die "Invalid line format '$_'"; }
+    unless (/( |\.){0,${width}}\n/) { die "Invalid line format '$_'"; }
     my @line = split //, $_;
     my $num = 0;
-    for (my $i=0; $i<8; $i++) {
+    for (my $i=0; $i<$width; $i++) {
         if (@line[$i] eq '.') {
             $num += (1 << (7-$i));
         }
