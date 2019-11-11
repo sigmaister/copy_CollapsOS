@@ -45,6 +45,12 @@ Each folder has a README with more details.
 The project unfinished but is progressing well! See [Collapse OS' website][web]
 for more information.
 
+## Discussion
+
+For a general discussion of Collapse OS and the ecosystem of technologies and ideas that may develop around it refer to [r/collapseos][discussion]
+
 [libz80]: https://github.com/ggambetta/libz80
 [web]: https://collapseos.org
 [jsemul]: https://schierlm.github.io/CollapseOS-Web-Emulator/
+[discussion]: https://www.reddit.com/r/collapseos
+
