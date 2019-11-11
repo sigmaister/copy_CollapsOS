@@ -142,19 +142,22 @@ ioPutBack:
 	ret
 
 ioPutB:
-	push	hl
+	push	hl		; --> lvl 1
 	ld	hl, (IO_PC)
 	inc	hl
 	ld	(IO_PC), hl
-	pop	hl
-	push	af
+	pop	hl		; <-- lvl 1
+	push	af		; --> lvl 1
 	call	zasmIsFirstPass
 	jr	z, .skip
-	pop	af
+	pop	af		; <-- lvl 1
+	push	ix		; --> lvl 1
 	ld	ix, IO_OUT_BLK
-	jp	_blkPutB
+	call	_blkPutB
+	pop	ix		; <-- lvl 1
+	ret
 .skip:
-	pop	af
+	pop	af		; <-- lvl 1
 	cp	a		; ensure Z
 	ret
 
