@@ -20,7 +20,6 @@
 ; *** Requirements ***
 ; strncmp
 ; addDE
-; addHL
 ; upcase
 ; unsetZ
 ; intoDE
@@ -34,7 +33,6 @@
 ; fsFindFN
 ; fsOpen
 ; fsGetB
-; cpHLDE
 ; parseArgs
 ; _blkGetB
 ; _blkPutB

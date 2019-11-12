@@ -11,7 +11,6 @@ jp     init    ; 3 bytes
 ; *** JUMP TABLE ***
 jp	strncmp
 jp	addDE
-jp	addHL
 jp	upcase
 jp	unsetZ
 jp	intoDE
@@ -25,7 +24,6 @@ jp	blkSet
 jp	fsFindFN
 jp	fsOpen
 jp	fsGetB
-jp	cpHLDE
 jp	parseArgs
 jp	_blkGetB
 jp	_blkPutB
@@ -83,8 +81,7 @@ emulGetB:
 	cp	a		; ensure z
 	ret
 .eof:
-	call	unsetZ
-	ret
+	jp	unsetZ
 
 emulPutB:
 	out	(STDIO_PORT), a

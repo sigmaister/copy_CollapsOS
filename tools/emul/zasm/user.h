@@ -6,7 +6,6 @@
 ; *** JUMP TABLE ***
 .equ    strncmp        0x03
 .equ    addDE          @+3
-.equ    addHL          @+3
 .equ    upcase         @+3
 .equ    unsetZ         @+3
 .equ    intoDE         @+3
@@ -20,7 +19,6 @@
 .equ    fsFindFN       @+3
 .equ    fsOpen         @+3
 .equ    fsGetB         @+3
-.equ    cpHLDE         @+3
 .equ    parseArgs      @+3
 .equ    _blkGetB       @+3
 .equ    _blkPutB       @+3
