@@ -58,13 +58,14 @@
 .equ	I_RRA	0x33
 .equ	I_RRC	0x34
 .equ	I_RRCA	0x35
-.equ	I_SBC	0x36
-.equ	I_SCF	0x37
-.equ	I_SET	0x38
-.equ	I_SLA	0x39
-.equ	I_SRL	0x3a
-.equ	I_SUB	0x3b
-.equ	I_XOR	0x3c
+.equ	I_RST	0x36
+.equ	I_SBC	0x37
+.equ	I_SCF	0x38
+.equ	I_SET	0x39
+.equ	I_SLA	0x3a
+.equ	I_SRL	0x3b
+.equ	I_SUB	0x3c
+.equ	I_XOR	0x3d
 
 ; *** Variables ***
 ; Args are 3 bytes: argspec, then values of numerical constants (when that's
@@ -553,6 +554,26 @@ handleLDrr:
 	or	0b01000000
 	ld	(INS_UPCODE), a
 	ld	c, 1
+	ret
+
+handleRST:
+	ld	a, (INS_CURARG1+1)
+	; verify that A is either 0x08, 0x10, 0x18, 0x20, 0x28, 0x30 or 0x38.
+	; Good news: they're all multiples of 8.
+	; to verify that we're within range, we to 8-bit rotation. If any of
+	; the first 3 bytes are set (thus not a multiple of 8), the cp 8
+	; later will yield NC because those bits will now be upwards.
+	rrca \ rrca \ rrca
+	cp	8
+	jr	nc, .error
+	; good, we have a proper arg. Now let's get those 3 bits in position
+	rlca \ rlca \ rlca
+	or	0b11000111
+	ld	(INS_UPCODE), a
+	ld	c, 1
+	ret
+.error:
+	ld	c, 0
 	ret
 
 ; Compute the upcode for argspec row at (DE) and arguments in curArg{1,2} and
@@ -1045,6 +1066,7 @@ instrNames:
 	.db "RRA", 0
 	.db "RRC", 0
 	.db "RRCA"
+	.db "RST", 0
 	.db "SBC", 0
 	.db "SCF", 0
 	.db "SET", 0
@@ -1214,6 +1236,7 @@ instrTBlRET:
 	.db I_RRA, 0,   0,   0,    0x1f		, 0	; RRA
 	.db I_RRC, 0xb, 0,0x40,    0xcb, 0b00001000	; RRC r
 	.db I_RRCA,0,   0,   0,    0x0f		, 0	; RRCA
+	.db I_RST, 'n', 0, 0x20 \ .dw handleRST		; RST p
 	.db I_SBC, 'A', 'l', 0,    0x9e		, 0	; SBC A, (HL)
 	.db I_SBC, 'A', 0xb, 0,    0b10011000	, 0	; SBC A, r
 	.db I_SBC,'h',0x3,0x44,    0xed, 0b01000010	; SBC HL, ss

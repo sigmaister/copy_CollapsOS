@@ -84,9 +84,10 @@ def getDbLines(fp, tblname):
     line = fp.readline()
     while line:
         line = cleanupLine(line)
-        if line:
-            if not line.startswith('.db'):
-                break
+        if line == '.db 0xff':
+            break
+        # skip index labels lines
+        if line.startswith('.db'):
             result.append([s.strip() for s in line[4:].split(',')])
         line = fp.readline()
     return result
@@ -151,6 +152,8 @@ def main():
             args1 = eargs(args1)
         if n == 'IM':
             args1 = [0, 1, 2]
+        if n == 'RST':
+            args1 = [i*8 for i in range(8)]
         if args1:
             for arg1 in args1:
                 args2 = genargs(a2)
