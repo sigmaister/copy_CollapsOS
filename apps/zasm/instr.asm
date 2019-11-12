@@ -1,8 +1,6 @@
 ; *** Consts ***
 ; Number of rows in the argspec table
 .equ	ARGSPEC_TBL_CNT		33
-; Number of rows in the primary instructions table
-.equ	INSTR_TBL_CNT		147
 ; size in bytes of each row in the primary instructions table
 .equ	INSTR_TBL_ROWSIZE	6
 ; Instruction IDs They correspond to the index of the table in instrNames
@@ -873,15 +871,28 @@ parseInstruction:
 	jr	nz, .error	; A is set to error
 .nomorearg:
 	; Parsing done, no error, let's move forward to instr row matching!
+	; To speed up things a little, we use a poor man's indexing. Full
+	; bisecting would involve too much complexity.
+	ld	a, c			; recall A param
 	ld	de, instrTBl
-	ld	b, INSTR_TBL_CNT
+	cp	I_EX
+	jr	c, .loop
+	ld	de, instrTBlEX
+	cp	I_LD
+	jr	c, .loop
+	ld	de, instrTBlLD
+	cp	I_RET
+	jr	c, .loop
+	ld	de, instrTBlRET
 .loop:
 	ld	a, c			; recall A param
 	call	matchPrimaryRow
 	jr	z, .match
 	ld	a, INSTR_TBL_ROWSIZE
 	call	addDE
-	djnz	.loop
+	ld	a, (de)
+	cp	0xff
+	jr	nz, .loop
 	; No signature match
 	ld	a, ERR_BAD_ARG
 	jr	.error
@@ -1066,6 +1077,7 @@ instrNames:
 ; custom code.
 ; Bit 4: When in an 'l' argspec, this means "I accept IX and IY variants".
 
+; This table needs to be kept in ascending order of I_* value.
 instrTBl:
 	.db I_ADC, 'A', 'l', 0,    0x8e		, 0	; ADC A, (HL)
 	.db I_ADC, 'A', 0xb, 0,    0b10001000	, 0	; ADC A, r
@@ -1102,6 +1114,7 @@ instrTBl:
 	.db I_DI,  0,   0,   0,    0xf3		, 0	; DI
 	.db I_DJNZ,'n', 0,   0x80, 0x10		, 0	; DJNZ e
 	.db I_EI,  0,   0,   0,    0xfb		, 0	; EI
+instrTBlEX:
 	.db I_EX, 'p', 'h',  0,    0xe3		, 0	; EX (SP), HL
 	.db I_EX, 'p', 'X',  0,    0xdd, 0xe3		; EX (SP), IX
 	.db I_EX, 'p', 'Y',  0,    0xfd, 0xe3		; EX (SP), IY
@@ -1131,6 +1144,7 @@ instrTBl:
 	.db I_JR,  '=', 'n', 0x80, 0x30		, 0	; JR NC, e
 	.db I_JR,  'Z', 'n', 0x80, 0x28		, 0	; JR Z, e
 	.db I_JR,  'z', 'n', 0x80, 0x20		, 0	; JR NZ, e
+instrTBlLD:
 	.db I_LD,  'c', 'A', 0,    0x02		, 0	; LD (BC), A
 	.db I_LD,  'e', 'A', 0,    0x12		, 0	; LD (DE), A
 	.db I_LD,  'A', 'c', 0,    0x0a		, 0	; LD A, (BC)
@@ -1185,6 +1199,7 @@ instrTBl:
 	.db I_PUSH,0x1, 0,   4,    0b11000101	, 0	; PUSH qq
 	.db I_RES, 0xc, 'l', 0x53, 0xcb, 0b10000110	; RES b, (HL) + (IX/Y)
 	.db I_RES, 0xc, 0xb, 0x20 \ .dw handleRESR	; RES b, r
+instrTBlRET:
 	.db I_RET, 0,   0,   0,    0xc9		, 0	; RET
 	.db I_RET, 0xa, 0,   3,    0b11000000	, 0	; RET cc
 	.db I_RETI,0,   0,   0,    0xed, 0x4d		; RETI
@@ -1214,3 +1229,4 @@ instrTBl:
 	.db I_XOR, 'l', 0,   0,    0xae		, 0	; XOR (HL)
 	.db I_XOR, 0xb, 0,   0,    0b10101000	, 0	; XOR r
 	.db I_XOR, 'n', 0,   0,    0xee		, 0	; XOR n
+	.db 0xff
