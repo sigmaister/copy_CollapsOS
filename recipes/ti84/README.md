@@ -1,11 +1,26 @@
 # TI-84+
 
-**This is a work-in-progress**
+The TI-84+ is a machine with many advantages, one being that it's very popular.
+It also has a lot of flash memory and RAM.
+
+Its builtin keyboard and screen, however, are hard to use, especially the
+screen. With a tiny font, the best we can get is a 24x10 console.
+
+There is, however, a built-in USB controller that might prove very handy.
 
 ## Recipe
 
 This recipe gets the Collapse OS shell to run on the TI-84+, using its LCD
 screen as output and its builtin keyboard as input.
+
+## Gathering parts
+
+* [zasm][zasm]
+* A TI-84+ (TI-83+ compatibility is being worked on. See issue #41)
+* A USB cable
+* [tilp][tilp]
+* [mktiupgrade][mktiupgrade]
+* Optional: [z80e][z80e] to emulate
 
 ## Build the ROM
 
@@ -74,6 +89,7 @@ a "normal" key. The presses must be sequential.
 Keys that aren't a digit, a letter, a symbol that is part of 7-bit ASCII or one
 of the two mode key have no effect.
 
+[zasm]: ../../tools/emul
 [knightos]: https://knightos.org/
 [z80e]: https://github.com/KnightOS/z80e
 [mktiupgrade]: https://github.com/KnightOS/mktiupgrade
