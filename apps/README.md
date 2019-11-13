@@ -18,3 +18,10 @@ HL to a pointer to unparsed arguments in string form, null terminated.
 
 The userspace application is expected to set A on return. 0 means success,
 non-zero means error.
+
+A userspace application can expect the `SP` pointer to be properly set. If it
+moves it, it should take care of returning it where it was before returning
+because otherwise, it will break the kernel.
+
+Apps in Collapse OS are design to be ROM-compatible, that is, they don't write
+to addresses that are part of the code's address space.
