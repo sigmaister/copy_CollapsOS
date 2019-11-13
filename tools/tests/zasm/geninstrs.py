@@ -6,12 +6,6 @@
 
 import sys
 
-# Those lines below are improperly assembled by scas and are skipped by tests.
-BLACKLIST = {
-    "AND (IX)",
-    "AND (IY)",
-}
-
 argspecTbl = {
     'A': "A",
     'B': "B",
@@ -124,11 +118,6 @@ def eargs(args):
     newargs = ['$+'+s for s in args[:-1]]
     return newargs + ['$-'+s for s in args[:-1]]
 
-def p(line):
-    if line not in BLACKLIST:
-        print(line)
-
-
 def main():
     asmfile = sys.argv[1]
     with open(asmfile, 'rt') as fp:
@@ -164,11 +153,11 @@ def main():
                     if n in {'JR', 'DJNZ'} and a2 == 'n':
                         args2 = eargs(args2)
                     for arg2 in args2:
-                        p(f"{n} {arg1}, {arg2}")
+                        print(f"{n} {arg1}, {arg2}")
                 else:
-                    p(f"{n} {arg1}")
+                    print(f"{n} {arg1}")
         else:
-            p(n)
+            print(n)
     pass
 
 if __name__ == '__main__':
