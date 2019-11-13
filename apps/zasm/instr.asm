@@ -559,16 +559,14 @@ handleLDrr:
 handleRST:
 	ld	a, (INS_CURARG1+1)
 	; verify that A is either 0x08, 0x10, 0x18, 0x20, 0x28, 0x30 or 0x38.
-	; Good news: they're all multiples of 8.
-	; to verify that we're within range, we to 8-bit rotation. If any of
-	; the first 3 bytes are set (thus not a multiple of 8), the cp 8
-	; later will yield NC because those bits will now be upwards.
-	rrca \ rrca \ rrca
-	cp	8
-	jr	nc, .error
-	; good, we have a proper arg. Now let's get those 3 bits in position
-	rlca \ rlca \ rlca
-	or	0b11000111
+	; Good news: the relevant bits (bits 5:3) are already in place. We only
+	; have to verify that they're surrounded by zeroes.
+	ld	c, 0b11000111
+	and	c
+	jr	nz, .error
+	; We're in range. good.
+	ld	a, (INS_CURARG1+1)
+	or	c
 	ld	(INS_UPCODE), a
 	ld	c, 1
 	ret
