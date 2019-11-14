@@ -49,8 +49,12 @@ for more information.
 
 For a general discussion of Collapse OS and the ecosystem of technologies and ideas that may develop around it refer to [r/collapseos][discussion]
 
+A more traditional [listserv][listserv] and [irc][irc] channels are also maintained.
+
 [libz80]: https://github.com/ggambetta/libz80
 [web]: https://collapseos.org
 [jsemul]: https://schierlm.github.io/CollapseOS-Web-Emulator/
 [discussion]: https://www.reddit.com/r/collapseos
+[irc]: irc://irc.freenode.net/collapseos
+[listserv]: http://lists.sonic.net/mailman/listinfo/collapseos
 
