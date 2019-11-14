@@ -29,13 +29,6 @@ isLineEnd:
 	cp	'\'
 	ret
 
-; Sets Z is A is ' ' '\t'
-isSep:
-	cp	' '
-	ret	z
-	cp	0x09
-	ret
-
 ; Sets Z is A is ' ', ',', ';', CR, LF, or null.
 isSepOrLineEnd:
 	call	isSep

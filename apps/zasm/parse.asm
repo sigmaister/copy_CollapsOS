@@ -195,6 +195,9 @@ parseNumberOrSymbol:
 	; matter that we didn't find our symbol. Return success anyhow.
 	; Otherwise return error. Z is already unset, so in fact, this is the
 	; same as jumping to zasmIsFirstPass
+	; however, before we do, load IX with zero. Returning dummy non-zero
+	; values can have weird consequence (such as false overflow errors).
+	ld	ix, 0
 	jp	zasmIsFirstPass
 
 .returnPC:

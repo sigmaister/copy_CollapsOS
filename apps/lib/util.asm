@@ -1,3 +1,10 @@
+; Sets Z is A is ' ' or '\t'
+isSep:
+	cp	' '
+	ret	z
+	cp	0x09
+	ret
+
 ; Copy string from (HL) in (DE), that is, copy bytes until a null char is
 ; encountered. The null char is also copied.
 ; HL and DE point to the char right after the null char.

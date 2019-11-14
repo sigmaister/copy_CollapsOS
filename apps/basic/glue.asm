@@ -12,6 +12,7 @@
 
 	jp	basStart
 
+.inc "lib/util.asm"
 .inc "lib/parse.asm"
 .equ	BAS_RAMSTART	USER_RAMSTART
 .inc "basic/main.asm"

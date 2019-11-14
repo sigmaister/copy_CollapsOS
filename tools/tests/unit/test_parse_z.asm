@@ -100,29 +100,11 @@ testLiteral:
 	call	nexttest
 	ret
 
-; 2b int, 6b str, null-padded
-tblDecimalValid:
-	.dw	99
-	.db	"99", 0, 0, 0, 0
-	.dw	65535
-	.db	"65535", 0
-
-; 7b strings, null-padded
-tblDecimalInvalid:
-	; TODO: make a null string parse as an invalid decimal
-	; null string is invalid
-	;.db	0, 0, 0, 0, 0, 0, 0
-	; too big, 5 chars
-	.db	"65536", 0, 0
-	.db	"99999", 0, 0
-	; too big, 6 chars with rightmost chars being within bound
-	.db	"111111", 0
-
 testDecimal:
 
 ; test valid cases. We loop through tblDecimalValid for our cases
-	ld	b, 2
-	ld	hl, tblDecimalValid
+	ld	b, 5
+	ld	hl, .valid
 
 .loop1:
 	push	hl	; --> lvl 1
@@ -147,8 +129,8 @@ testDecimal:
 	call	nexttest
 
 ; test invalid cases. We loop through tblDecimalInvalid for our cases
-	ld	b, 3
-	ld	hl, tblDecimalInvalid
+	ld	b, 4
+	ld	hl, .invalid
 
 .loop2:
 	call	parseDecimal
@@ -158,6 +140,34 @@ testDecimal:
 	djnz	.loop2
 	call	nexttest
 	ret
+
+; 2b int, 6b str, null-padded
+.valid:
+	.dw	99
+	.db	"99", 0, 0, 0, 0
+	.dw	65535
+	.db	"65535", 0
+	; Space is also accepted as a number "ender"
+	.dw	42
+	.db	"42 x", 0, 0
+	; Tab too
+	.dw	42
+	.db	"42", 0x09, 'x', 0, 0
+	; A simple "0" works too!
+	.dw	0
+	.db	'0', 0, 0, 0, 0, 0
+
+
+; 7b strings, null-padded
+.invalid:
+	; null string is invalid
+	.db	0, 0, 0, 0, 0, 0, 0
+	; too big, 5 chars
+	.db	"65536", 0, 0
+	.db	"99999", 0, 0
+	; too big, 6 chars with rightmost chars being within bound
+	.db	"111111", 0
+
 
 nexttest:
 	ld	a, (testNum)

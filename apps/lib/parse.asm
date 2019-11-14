@@ -1,6 +1,3 @@
-; *** Requirements ***
-; None
-;
 ; *** Code ***
 
 ; Parse the decimal char at A and extract it's 0-9 numerical value. Put the
@@ -15,31 +12,34 @@
 ; Parse string at (HL) as a decimal value and return value in IX under the
 ; same conditions as parseLiteral.
 ; Sets Z on success, unset on error.
+; To parse successfully, all characters following HL must be digits and those
+; digits must form a number that fits in 16 bits. To end the number, both \0
+; and whitespaces (0x20 and 0x09) are accepted. There must be at least one
+; digit in the string.
 
 parseDecimal:
 	push 	hl
 
-	ld 	a, (hl)
+	ld	a, (hl)
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	jr	c, .error	; not a digit on first char? error
 	exx		; preserve bc, hl, de
 	ld	h, 0
 	ld	l, a	; load first digit in without multiplying
 	ld	b, 3	; Carries can only occur for decimals >=5 in length
-	jr	c, .end
 
 .loop:
 	exx
 	inc hl
 	ld a, (hl)
 	exx
-	
+
 	; inline parseDecimalDigit
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 	sub	0xff-9		; maps to 0-9 and carries if not a digit
-	
 	jr	c, .end
-	
+
 	add	hl, hl	; x2
 	ld	d, h
 	ld	e, l		; de is x2
@@ -74,4 +74,9 @@ parseDecimal:
 	push	hl \ pop ix
 	exx	; restore original de and bc
 	pop	hl
-	ret
+	ret	z
+	; A is not 0? Ok, but if it's a space, we're happy too.
+	jp	isSep
+.error:
+	pop	hl
+	jp	unsetZ
