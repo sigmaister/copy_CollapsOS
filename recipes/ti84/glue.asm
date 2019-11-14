@@ -24,6 +24,7 @@
 .inc "err.h"
 .inc "ascii.h"
 .inc "core.asm"
+.inc "str.asm"
 .equ	FNT_WIDTH	3
 .equ	FNT_HEIGHT	5
 .inc "fnt/mgm.asm"

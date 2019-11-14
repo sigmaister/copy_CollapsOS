@@ -22,27 +22,6 @@
 ; around whenever we add or delete lines. Hopefully, "LDIR" will be our friend
 ; here...
 ;
-; *** Requirements ***
-; BLOCKDEV_SIZE
-; FS_HANDLE_SIZE
-; _blkGetB
-; _blkPutB
-; _blkSeek
-; _blkTell
-; addHL
-; cpHLDE
-; fsFindFN
-; fsOpen
-; fsGetB
-; fsPutB
-; fsSetSize
-; intoHL
-; printstr
-; printcrlf
-; stdioReadLine
-; stdioPutC
-; unsetZ
-;
 ; *** Variables ***
 ;
 .equ	ED_CURLINE	ED_RAMSTART

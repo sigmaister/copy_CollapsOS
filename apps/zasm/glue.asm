@@ -19,12 +19,7 @@
 ;
 ; *** Requirements ***
 ; strncmp
-; addDE
 ; upcase
-; unsetZ
-; intoDE
-; intoHL
-; writeHLinDE
 ; findchar
 ; parseHex
 ; parseHexPair
@@ -73,6 +68,7 @@
 
 jp	zasmMain
 
+.inc "core.asm"
 .inc "zasm/const.asm"
 .inc "lib/util.asm"
 .inc "zasm/util.asm"

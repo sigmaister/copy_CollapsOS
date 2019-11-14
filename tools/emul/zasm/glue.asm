@@ -10,12 +10,7 @@
 jp     init    ; 3 bytes
 ; *** JUMP TABLE ***
 jp	strncmp
-jp	addDE
 jp	upcase
-jp	unsetZ
-jp	intoDE
-jp	intoHL
-jp	writeHLinDE
 jp	findchar
 jp	parseHex
 jp	parseHexPair
@@ -32,6 +27,7 @@ jp	_blkTell
 jp	printstr
 
 .inc "core.asm"
+.inc "str.asm"
 .inc "err.h"
 .inc "ascii.h"
 .inc "parse.asm"

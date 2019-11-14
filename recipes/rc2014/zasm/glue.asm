@@ -13,13 +13,7 @@
 
 ; *** Jump Table ***
 	jp	strncmp
-	jp	addDE
-	jp	addHL
 	jp	upcase
-	jp	unsetZ
-	jp	intoDE
-	jp	intoHL
-	jp	writeHLinDE
 	jp	findchar
 	jp	parseHex
 	jp	parseHexPair
@@ -28,20 +22,19 @@
 	jp	fsFindFN
 	jp	fsOpen
 	jp	fsGetB
-	jp	cpHLDE		; approaching 0x38...
-
-; interrupt hook
-.fill	0x38-$
-jp	aciaInt
-
-; *** Jump Table (cont.) ***
 	jp	parseArgs
 	jp	printstr
 	jp	_blkGetB
 	jp	_blkPutB
 	jp	_blkSeek
 	jp	_blkTell
-	jp	printHexPair
+	jp	printHexPair	; approaching 0x38...
+
+; interrupt hook
+.fill	0x38-$
+jp	aciaInt
+
+; *** Jump Table (cont.) ***
 	jp	sdcGetB
 	jp	sdcPutB
 	jp	blkGetB
@@ -49,6 +42,7 @@ jp	aciaInt
 .inc "err.h"
 .inc "ascii.h"
 .inc "core.asm"
+.inc "str.asm"
 .inc "parse.asm"
 .equ	ACIA_RAMSTART		RAMSTART
 .inc "acia.asm"

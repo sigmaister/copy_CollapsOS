@@ -1,3 +1,20 @@
+; *** Requirements ***
+; BLOCKDEV_SIZE
+; FS_HANDLE_SIZE
+; _blkGetB
+; _blkPutB
+; _blkSeek
+; _blkTell
+; fsFindFN
+; fsOpen
+; fsGetB
+; fsPutB
+; fsSetSize
+; printstr
+; printcrlf
+; stdioReadLine
+; stdioPutC
+;
 .inc "user.h"
 
 ; *** Overridable consts ***
@@ -13,6 +30,7 @@
 
 	jp	edMain
 
+.inc "core.asm"
 .inc "lib/util.asm"
 .inc "lib/parse.asm"
 .equ	IO_RAMSTART	USER_RAMSTART

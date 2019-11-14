@@ -7,6 +7,7 @@
 jp	test
 
 .inc "core.asm"
+.inc "str.asm"
 .inc "lib/util.asm"
 .inc "zasm/util.asm"
 .inc "zasm/const.asm"

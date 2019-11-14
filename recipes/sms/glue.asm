@@ -11,6 +11,7 @@
 .inc "err.h"
 .inc "ascii.h"
 .inc "core.asm"
+.inc "str.asm"
 .inc "parse.asm"
 
 .equ	PAD_RAMSTART	RAMSTART

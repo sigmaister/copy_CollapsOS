@@ -1,5 +1,4 @@
 ; *** Requirements ***
-; addHL
 ; printstr
 ; printcrlf
 ; stdioReadLine
@@ -12,6 +11,7 @@
 
 	jp	basStart
 
+.inc "core.asm"
 .inc "lib/util.asm"
 .inc "lib/parse.asm"
 .equ	BAS_RAMSTART	USER_RAMSTART

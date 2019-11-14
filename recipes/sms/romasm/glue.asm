@@ -8,13 +8,7 @@
 
 ; *** JUMP TABLE ***
 	jp	strncmp
-	jp	addDE
-	jp	addHL
 	jp	upcase
-	jp	unsetZ
-	jp	intoDE
-	jp	intoHL
-	jp	writeHLinDE
 	jp	findchar
 	jp	parseHex
 	jp	parseHexPair
@@ -25,7 +19,6 @@
 	jp	fsGetB
 	jp	fsPutB
 	jp	fsSetSize
-	jp	cpHLDE
 	jp	parseArgs
 	jp	printstr
 	jp	_blkGetB
@@ -42,6 +35,7 @@
 .inc "err.h"
 .inc "ascii.h"
 .inc "core.asm"
+.inc "str.asm"
 .inc "parse.asm"
 
 .inc "sms/kbd.asm"
