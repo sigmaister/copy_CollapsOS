@@ -201,8 +201,11 @@ handleFIL:
 	jr	nz, .badfmt
 	call	parseExpr
 	jr	nz, .badarg
-	push	bc
+	push	bc	; --> lvl 1
 	push	ix \ pop bc
+	ld	a, b
+	cp	0xd0
+	jr	nc, .overflow
 .loop:
 	ld	a, b
 	or	c
@@ -213,20 +216,22 @@ handleFIL:
 	dec	bc
 	jr	.loop
 .loopend:
-	cp	a		; ensure Z
-	pop	bc
+	cp	a	; ensure Z
+	pop	bc	; <-- lvl 1
 	ret
 .ioError:
 	ld	a, SHELL_ERR_IO_ERROR
-	jr	.error
+	jp	unsetZ
 .badfmt:
 	ld	a, ERR_BAD_FMT
-	jr	.error
+	jp	unsetZ
 .badarg:
 	ld	a, ERR_BAD_ARG
-.error:
-	call	unsetZ
-	ret
+	jp	unsetZ
+.overflow:
+	pop	bc	; <-- lvl 1
+	ld	a, ERR_OVFL
+	jp	unsetZ
 
 handleOUT:
 	push	hl

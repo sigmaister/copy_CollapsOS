@@ -121,14 +121,19 @@ allowed. An included file cannot have an `.inc` directive.
           expression written as the second parameter. Example:
           `.equ foo 0x42+'A'`
           
-          If the symbol specified has already been defined, no error occur and
-          the first value defined stays intact. This allows for "user override"
-          of programs.
+If the symbol specified has already been defined, no error occur and
+the first value defined stays intact. This allows for "user override"
+of programs.
 
 **.fill**: Outputs the number of null bytes specified by its argument, an
            expression. Often used with `$` to fill our binary up to a certain
            offset. For example, if we want to place an instruction exactly at
            byte 0x38, we would precede it with `.fill 0x38-$`.
+
+The maximum value possible for `.fill` is `0xd000`. We do this to
+avoid "overshoot" errors, that is, error where `$` is greater than
+the offset you're trying to reach in an expression like `.fill X-$`
+(such an expression overflows to `0xffff`).
 
 **.org**: Sets the Program Counter to the value of the argument, an expression.
           For example, a label being defined right after a `.org 0x400`, would
