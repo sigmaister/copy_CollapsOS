@@ -7,6 +7,7 @@
 jp	init
 
 .inc "err.h"
+.inc "ascii.h"
 .inc "core.asm"
 .inc "parse.asm"
 .equ	ACIA_RAMSTART	RAMSTART

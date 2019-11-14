@@ -119,11 +119,11 @@ vdpPutC:
 	; 6 low bits contain our row*2 (each tile is 2 bytes wide) and high
 	; 2 bits are the two low bits of our line
 	; special case: line feed, carriage return, back space
-	cp	ASCII_LF
+	cp	LF
 	jr	z, vdpLF
-	cp	ASCII_CR
+	cp	CR
 	jr	z, vdpCR
-	cp	ASCII_BS
+	cp	BS
 	jr	z, vdpBS
 
 	push	af

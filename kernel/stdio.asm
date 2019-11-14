@@ -23,7 +23,7 @@
 ; *** Defines ***
 ; STDIO_GETC: address of a GetC routine
 ; STDIO_PUTC: address of a PutC routine
-; 
+;
 ; *** Consts ***
 ; Size of the readline buffer. If a typed line reaches this size, the line is
 ; flushed immediately (same as pressing return).
@@ -81,9 +81,9 @@ printnstr:
 
 printcrlf:
 	push	af
-	ld	a, ASCII_CR
+	ld	a, CR
 	call	STDIO_PUTC
-	ld	a, ASCII_LF
+	ld	a, LF
 	call	STDIO_PUTC
 	pop	af
 	ret
@@ -124,13 +124,13 @@ stdioReadLine:
 	; Let's wait until something is typed.
 	call	STDIO_GETC
 	; got it. Now, is it a CR or LF?
-	cp	ASCII_CR
+	cp	CR
 	jr	z, .complete	; char is CR? buffer complete!
-	cp	ASCII_LF
+	cp	LF
 	jr	z, .complete
-	cp	ASCII_DEL
+	cp	DEL
 	jr	z, .delchr
-	cp	ASCII_BS
+	cp	BS
 	jr	z, .delchr
 
 	; Echo the received character right away so that we see what we type
@@ -161,10 +161,10 @@ stdioReadLine:
 	inc	b
 	; Char deleted in buffer, now send BS + space + BS for the terminal
 	; to clear its previous char
-	ld	a, ASCII_BS
+	ld	a, BS
 	call	STDIO_PUTC
 	ld	a, ' '
 	call	STDIO_PUTC
-	ld	a, ASCII_BS
+	ld	a, BS
 	call	STDIO_PUTC
 	jr	.loop

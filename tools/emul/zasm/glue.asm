@@ -33,6 +33,7 @@ jp	printstr
 
 .inc "core.asm"
 .inc "err.h"
+.inc "ascii.h"
 .inc "parse.asm"
 .equ	BLOCKDEV_RAMSTART	RAMSTART
 .equ	BLOCKDEV_COUNT		3

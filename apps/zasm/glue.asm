@@ -68,6 +68,7 @@
 ; ******
 
 .inc "err.h"
+.inc "ascii.h"
 .org	USER_CODE
 
 jp	zasmMain

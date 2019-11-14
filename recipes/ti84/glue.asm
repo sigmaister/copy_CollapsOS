@@ -22,6 +22,7 @@
 .fill 0x64-$
 
 .inc "err.h"
+.inc "ascii.h"
 .inc "core.asm"
 .equ	FNT_WIDTH	3
 .equ	FNT_HEIGHT	5

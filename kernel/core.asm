@@ -3,16 +3,6 @@
 ; Routines used by pretty much all parts. You will want to include it first
 ; in your glue file.
 
-; *** CONSTS ***
-.equ	ASCII_BS	0x08
-.equ	ASCII_CR	0x0d
-.equ	ASCII_LF	0x0a
-.equ	ASCII_DEL	0x7f
-
-; *** DATA ***
-; Useful data to point to, when a pointer is needed.
-P_NULL:		.db 0
-
 ; *** REGISTER FIDDLING ***
 
 ; add the value of A into DE
@@ -27,7 +17,7 @@ addDE:
 noop:				; piggy backing on the first "ret" we have
 	ret
 
-; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions. 
+; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions.
 ; ld must be done little endian, so least significant byte first.
 intoHL:
 	push 	de
@@ -86,7 +76,7 @@ cpHLDE:
 ; Write the contents of HL in (DE)
 ; de and hl are preserved, so no pushing/popping necessary
 writeHLinDE:
-	ex	de, hl 
+	ex	de, hl
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
@@ -112,8 +102,8 @@ callIY:
 	jp	(iy)
 
 ; Ensures that Z is unset (more complicated than it sounds...)
-; There are often better inline alternatives, either replacing rets with 
-; appropriate jmps, or if an 8 bit register is known to not be 0, an inc 
+; There are often better inline alternatives, either replacing rets with
+; appropriate jmps, or if an 8 bit register is known to not be 0, an inc
 ; then a dec. If a is nonzero, 'or a' is optimal.
 unsetZ:
 	or 	a	;if a nonzero, Z reset
@@ -177,9 +167,9 @@ fmtHex:
 	; it adds 6 to that nibble, carrying to the next nibble and bringing the
 	; value back between 0-9. This gives us 6 of that 7 we needed to add, so
 	; then we just condtionally set the carry and add that carry, along with
-	; a number that maps 0 to '0'. We also need the upper nibble to be a 
+	; a number that maps 0 to '0'. We also need the upper nibble to be a
 	; set value, and have the N, C and H flags clear.
-	or 	0xf0	
+	or 	0xf0
 	daa	; now a =0x50 + the original value + 0x06 if >= 0xfa
 	add 	a, 0xa0	; cause a carry for the values that were >=0x0a
 	adc 	a, 0x40

@@ -185,7 +185,7 @@ padGetC:
 	call	vdpSpitC
 	jp	padGetC
 .return:
-	ld	a, ASCII_LF
+	ld	a, LF
 	ld	(PAD_NEXTCHR), a
 	; continue to .advance
 .advance:
@@ -193,7 +193,7 @@ padGetC:
 	; Z was already set from previous BIT instruction
 	ret
 .backspace:
-	ld	a, ASCII_BS
+	ld	a, BS
 	; Z was already set from previous BIT instruction
 	ret
 .nextchr:

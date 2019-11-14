@@ -329,9 +329,9 @@ lcdClrScr:
 	ret
 
 lcdPutC:
-	cp	ASCII_LF
+	cp	LF
 	jp	z, lcdLinefeed
-	cp	ASCII_BS
+	cp	BS
 	jr	z, .bs
 	push	hl
 	call	fntGet

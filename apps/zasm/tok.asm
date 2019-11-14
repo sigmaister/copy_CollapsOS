@@ -22,14 +22,14 @@ isLineEndOrComment:
 isLineEnd:
 	or	a	; same as cp 0
 	ret	z
-	cp	0x0d
+	cp	CR
 	ret	z
-	cp	0x0a
+	cp	LF
 	ret	z
 	cp	'\'
 	ret
 
-; Sets Z is A is ' ' '\t' or ','
+; Sets Z is A is ' ' '\t'
 isSep:
 	cp	' '
 	ret	z

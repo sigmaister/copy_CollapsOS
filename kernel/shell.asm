@@ -66,7 +66,7 @@ shellInit:
 	jp	printstr
 
 .welcome:
-	.db	"Collapse OS", ASCII_CR, ASCII_LF, "> ", 0
+	.db	"Collapse OS", CR, LF, "> ", 0
 
 ; Inifite loop that processes input. Because it's infinite, you should jump
 ; to it rather than call it. Saves two precious bytes in the stack.

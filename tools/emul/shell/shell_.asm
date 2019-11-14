@@ -42,6 +42,7 @@
 
 .inc "core.asm"
 .inc "err.h"
+.inc "ascii.h"
 .inc "parse.asm"
 
 .equ	BLOCKDEV_RAMSTART	RAMSTART
