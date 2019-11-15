@@ -1,3 +1,8 @@
+.equ foo 456	; AFTER_ORG should not get that value
+.org 0x1234
+.equ AFTER_ORG	@
+.org 0
+
 jp	test
 
 .inc "core.asm"
@@ -40,6 +45,13 @@ test:
 	jp	nz, fail
 	call	nexttest
 
+	; test that "@" is updated by a .org directive
+	ld	hl, AFTER_ORG
+	ld	de, 0x1234
+	call	cpHLDE
+	jp	nz, fail
+	call	nexttest
+
 	; *** cpHLDE ***
 	ld	hl, 0x42
 	ld	de, 0x42
@@ -73,3 +85,4 @@ nexttest:
 fail:
 	ld	a, (testNum)
 	halt
+

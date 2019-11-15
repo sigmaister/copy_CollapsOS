@@ -101,7 +101,10 @@ it was placed there.
 
 Whenever a `.equ` directive is evaluated, its resulting value is saved in a
 special "last value" register that can then be used in any expression. This
-is very useful for variable definitions and for jump tables.
+last value is referenced with the `@` special symbol. This is very useful for
+variable definitions and for jump tables.
+
+Note that `.org` also affect the last value.
 
 ## Includes
 

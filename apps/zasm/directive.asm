@@ -18,7 +18,7 @@
 ; *** CODE ***
 
 ; 3 bytes per row, fill with zero
-directiveNames:
+dirNames:
 	.db	"DB", 0
 	.db	"DW", 0
 	.db	"EQU"
@@ -28,8 +28,8 @@ directiveNames:
 	.db	"INC"
 	.db	"BIN"
 
-; This is a list of handlers corresponding to indexes in directiveNames
-directiveHandlers:
+; This is a list of handlers corresponding to indexes in dirNames
+dirHandlers:
 	.dw	handleDB
 	.dw	handleDW
 	.dw	handleEQU
@@ -184,6 +184,7 @@ handleORG:
 	call	parseExpr
 	jr	nz, .badarg
 	push	ix \ pop hl
+	ld	(DIREC_LASTVAL), hl
 	call	zasmSetOrg
 	cp	a		; ensure Z
 	ret
@@ -310,7 +311,7 @@ getDirectiveID:
 	inc	hl
 	ld	b, D_BIN+1		; D_BIN is last
 	ld	c, 3
-	ld	de, directiveNames
+	ld	de, dirNames
 	call	findStringInList
 	pop	de
 	pop	bc
@@ -324,9 +325,9 @@ getDirectiveID:
 ; error, A contains the error number (ERR_*).
 parseDirective:
 	push	de
-	; double A to have a proper offset in directiveHandlers
+	; double A to have a proper offset in dirHandlers
 	add	a, a
-	ld	de, directiveHandlers
+	ld	de, dirHandlers
 	call	addDE
 	call	intoDE
 	push	de \ pop ix
