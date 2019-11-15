@@ -2,7 +2,10 @@ jp	test
 
 .inc "core.asm"
 
+dummyLabel:
 testNum:	.db 1
+
+.equ	dummyLabel	0x42
 
 test:
 	ld	hl, 0xffff
@@ -28,6 +31,13 @@ test:
 	jp	m, fail		; positive
 	dec	a
 	jp	p, fail		; negative
+	call	nexttest
+
+	; Test that .equ can override label
+	ld	a, 0x42
+	ld	hl, dummyLabel
+	cp	l
+	jp	nz, fail
 	call	nexttest
 
 	; *** cpHLDE ***

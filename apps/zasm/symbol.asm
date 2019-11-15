@@ -112,11 +112,11 @@ symRegister:
 	push	de		; --> lvl 3
 	ld 	d, 0
 	ld 	e, c
-	add 	hl, de		; if carry set here, sbc will carry too	
+	add 	hl, de		; if carry set here, sbc will carry too
 	ld	e, (ix+2)	; DE --> pointer to record list, which is also
 	ld	d, (ix+3)	; the end of names pool
 	; DE --> names end
-	
+
 	sbc	hl, de		; compares hl and de destructively
 	pop	de		; <-- lvl 3
 	pop	hl		; <-- lvl 2
@@ -192,11 +192,11 @@ _symFind:
 	jr	z, .end		; match! Z already set, IY and HL placed.
 .skip:
 	; ok, next!
-	
+
 	push 	de		; --> lvl 1
 	ld 	de, 0x0003
 	add 	iy, de		; faster and shorter than three inc's
-	ld 	e, (iy-3)	; offset is also compulsory, so no extra bytes used	
+	ld 	e, (iy-3)	; offset is also compulsory, so no extra bytes used
 	; (iy-3) holds the name length of the string just processed
 	add 	hl, de	; advance HL by (iy-3) characters
 	pop	de		; <-- lvl 1
@@ -219,13 +219,13 @@ symFindVal:
 	push	ix
 	call	symIsLabelLocal
 	jr	z, .local
-	; global. Let's try labels first, then consts
+	; global. Let's try consts first, then symbols
 	push	hl		; --> lvl 1. we'll need it again if not found.
-	ld	ix, SYM_GLOBAL_REGISTRY
+	ld	ix, SYM_CONST_REGISTRY
 	call	_symFind
 	pop	hl		; <-- lvl 1
 	jr	z, .found
-	ld	ix, SYM_CONST_REGISTRY
+	ld	ix, SYM_GLOBAL_REGISTRY
 	call	_symFind
 	jr	nz, .end
 .found:
