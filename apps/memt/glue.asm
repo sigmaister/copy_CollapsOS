@@ -13,8 +13,7 @@
 ; *** Includes ***
 
 .inc "user.h"
-.org	USER_CODE
-
 jp	memtMain
 
 .inc "memt/main.asm"
+USER_RAMSTART:

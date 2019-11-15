@@ -1,8 +1,5 @@
-; USER_CODE is filled in on-the-fly with either ED_CODE or ZASM_CODE
-.equ    ED_CODE         0x1900
-.equ    ZASM_CODE       0x1d00
 .equ    USER_RAMSTART   0xc200
-.equ    FS_HANDLE_SIZE  6
+.equ    FS_HANDLE_SIZE  8
 .equ    BLOCKDEV_SIZE   8
 ; Make ed fit in SMS's memory
 .equ    ED_BUF_MAXLINES 0x100

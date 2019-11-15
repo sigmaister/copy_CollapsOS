@@ -26,8 +26,6 @@
 ; ******
 
 .inc "err.h"
-.org	USER_CODE
-
 	jp	edMain
 
 .inc "core.asm"
@@ -41,3 +39,4 @@
 .inc "ed/cmd.asm"
 .equ	ED_RAMSTART	CMD_RAMEND
 .inc "ed/main.asm"
+USER_RAMSTART:

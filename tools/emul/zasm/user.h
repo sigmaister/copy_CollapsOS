@@ -1,4 +1,4 @@
-.equ    USER_CODE       0x4800
+.org    0x4800          ; in sync with USER_CODE in glue.asm
 .equ    USER_RAMSTART   0x6000
 .equ    FS_HANDLE_SIZE  8
 .equ    BLOCKDEV_SIZE   8

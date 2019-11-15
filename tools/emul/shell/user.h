@@ -1,5 +1,4 @@
-.equ    USER_CODE       0x4200
-.equ    USER_RAMSTART   USER_CODE+0x1800
+.org    0x4200              ; in sync with USERCODE in shell/shell_.asm
 .equ    FS_HANDLE_SIZE  8
 .equ    BLOCKDEV_SIZE   8
 

@@ -64,8 +64,6 @@
 
 .inc "err.h"
 .inc "ascii.h"
-.org	USER_CODE
-
 jp	zasmMain
 
 .inc "core.asm"
@@ -87,3 +85,4 @@ jp	zasmMain
 .inc "zasm/symbol.asm"
 .equ	ZASM_RAMSTART	SYM_RAMEND
 .inc "zasm/main.asm"
+USER_RAMSTART:

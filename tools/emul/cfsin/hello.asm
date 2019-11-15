@@ -1,6 +1,4 @@
 .inc "user.h"
-.org	USER_CODE
-
 	ld	hl, sAwesome
 	call	printstr
 	xor	a		; success

@@ -10,8 +10,16 @@ you will typically not want to do that.
 
 ## Userspace convention
 
-We execute a userspace application by calling the address it's loaded into. This
-means: a userspace application is expected to return.
+We execute a userspace application by calling the address it's loaded into.
+
+This means that userspace applications must be assembled with a proper `.org`,
+otherwise labels in its code will be wrong.
+
+The `.org`, it is not specified by glue code of the apps themselves. It is
+expected to be set either in the `user.h` file to through `zasm` 3rd argument.
+
+That a userspace is called also means that an application, when finished
+running, is expected to return with a regular `ret` and a clean stack.
 
 Whatever calls the userspace app (usually, it will be the shell), should set
 HL to a pointer to unparsed arguments in string form, null terminated.
@@ -25,3 +33,8 @@ because otherwise, it will break the kernel.
 
 Apps in Collapse OS are design to be ROM-compatible, that is, they don't write
 to addresses that are part of the code's address space.
+
+By default, apps set their RAM to begin at the end of the binary because in
+most cases, these apps will be ran from RAM. If they're ran from ROM, make sure
+to set `USER_RAMSTART` properly in your `user.h` to ensure that the RAM is
+placed properly.

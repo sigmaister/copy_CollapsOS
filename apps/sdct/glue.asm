@@ -19,9 +19,9 @@
 ; *** Includes ***
 
 .inc "user.h"
-.org	USER_CODE
 .equ	SDCT_RAMSTART	USER_RAMSTART
 
 jp	sdctMain
 
 .inc "sdct/main.asm"
+USER_RAMSTART:

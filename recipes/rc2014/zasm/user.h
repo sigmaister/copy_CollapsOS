@@ -1,6 +1,5 @@
-.equ    USER_CODE       0x8700
-.equ    USER_RAMSTART   USER_CODE+0x1900
-.equ    FS_HANDLE_SIZE  6
+.org    0x8700
+.equ    FS_HANDLE_SIZE  8
 .equ    BLOCKDEV_SIZE   8
 
 ; *** JUMP TABLE ***
