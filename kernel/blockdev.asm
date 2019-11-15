@@ -37,13 +37,6 @@
 ; BLOCKDEV_COUNT: The number of devices we manage.
 
 ; *** CONSTS ***
-.equ	BLOCKDEV_SEEK_ABSOLUTE		0
-.equ	BLOCKDEV_SEEK_FORWARD		1
-.equ	BLOCKDEV_SEEK_BACKWARD		2
-.equ	BLOCKDEV_SEEK_BEGINNING		3
-.equ	BLOCKDEV_SEEK_END		4
-
-.equ	BLOCKDEV_SIZE			8
 ; *** VARIABLES ***
 ; Pointer to the selected block device. A block device is a 8 bytes block of
 ; memory with pointers to GetB, PutB, and a 32-bit counter, in that order.
@@ -51,9 +44,17 @@
 .equ	BLOCKDEV_RAMEND		@+BLOCKDEV_SIZE
 
 ; *** CODE ***
+; Put the pointer to the "regular" blkdev selection in DE
+blkSelPtr:
+	ld	de, BLOCKDEV_SEL
+
 ; Select block index specified in A and place them in routine pointers at (DE).
 ; For example, for a "regular" blkSel, you will want to set DE to BLOCKDEV_SEL.
+; Sets Z on success, reset on error.
+; If A >= BLOCKDEV_COUNT, it's an error.
 blkSel:
+	cp	BLOCKDEV_COUNT
+	jp	nc, unsetZ	; if selection >= device count, error
 	push	af
 	push	de
 	push	hl
@@ -73,6 +74,7 @@ blkSel:
 	pop	hl
 	pop	de
 	pop	af
+	cp	a	; ensure Z
 	ret
 
 ; Setup blkdev handle in (DE) using routines at (HL).

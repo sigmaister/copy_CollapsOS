@@ -10,7 +10,7 @@ CFSPACK = $(TOOLS)/cfspack/cfspack
 all: os.bin sdcard.cfs
 
 os.bin: glue.asm
-	$(ZASM) $(KERNEL) < $< > $@
+	$(ZASM) $(KERNEL) $(APPS) < $< > $@
 
 $(CFSPACK):
 	make -C $(TOOLS)/cfspack

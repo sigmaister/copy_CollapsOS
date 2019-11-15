@@ -1,12 +1,13 @@
 TARGET = os.rom
 ZASM = ../../tools/zasm.sh
 KERNEL = ../../kernel
+APPS = ../../apps
 MKTIUPGRADE = mktiupgrade
 
 .PHONY: all
 all: $(TARGET)
 $(TARGET): glue.asm
-	$(ZASM) $(KERNEL) < $< > $@
+	$(ZASM) $(KERNEL) $(APPS) < $< > $@
 	truncate -s 1M $@
 
 os.8xu: $(TARGET)

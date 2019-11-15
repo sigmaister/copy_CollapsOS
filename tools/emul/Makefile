@@ -10,8 +10,12 @@ CFSIN_CONTENTS = $(SHELLAPPS) cfsin/user.h
 .PHONY: all
 all: $(TARGETS) $(CFSIN_CONTENTS)
 
-shell/kernel-bin.h: shell/shell_.asm $(ZASMBIN)
-	$(ZASMSH) $(KERNEL) < $< | ./bin2c.sh KERNEL | tee $@ > /dev/null
+# -o in sync with SHELL_CODE in shell/glue.asm
+shell/shell.bin: $(APPS)/shell/glue.asm $(ZASMBIN)
+	$(ZASMSH) -o 07 $(KERNEL) shell/user.h $(APPS) < $< | tee $@ > /dev/null
+
+shell/kernel-bin.h: shell/glue.asm shell/shell.bin $(ZASMBIN)
+	$(ZASMSH) $(KERNEL) shell/shell.bin < $< | ./bin2c.sh KERNEL | tee $@ > /dev/null
 
 zasm/kernel-bin.h: zasm/kernel.bin
 	./bin2c.sh KERNEL < $< | tee $@ > /dev/null
@@ -32,8 +36,9 @@ libz80/libz80.o: libz80/z80.c
 $(CFSPACK):
 	$(MAKE) -C ../cfspack
 
+# -o in sync with USER_CODE in shell/user.h
 $(SHELLAPPS): $(ZASMBIN)
-	$(ZASMSH) $(KERNEL) $(APPS) shell/user.h < $(APPS)/$(notdir $@)/glue.asm > $@
+	$(ZASMSH) -o 42 $(KERNEL) $(APPS) shell/user.h < $(APPS)/$(notdir $@)/glue.asm > $@
 
 cfsin/user.h: shell/user.h
 	cp $< $@

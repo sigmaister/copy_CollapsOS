@@ -30,12 +30,9 @@
 .equ	STDIO_BUFSIZE		0x20
 
 ; *** Variables ***
-; Used to store formatted hex values just before printing it.
-.equ	STDIO_HEX_FMT	STDIO_RAMSTART
-
 ; Line buffer. We read types chars into this buffer until return is pressed
 ; This buffer is null-terminated.
-.equ	STDIO_BUF	@+2
+.equ	STDIO_BUF	STDIO_RAMSTART
 
 ; Index where the next char will go in stdioGetC.
 .equ	STDIO_RAMEND	@+STDIO_BUFSIZE
@@ -85,28 +82,6 @@ printcrlf:
 	call	STDIO_PUTC
 	ld	a, LF
 	call	STDIO_PUTC
-	pop	af
-	ret
-
-; Print the hex char in A
-printHex:
-	push	bc
-	push	hl
-	ld	hl, STDIO_HEX_FMT
-	call	fmtHexPair
-	ld	b, 2
-	call	printnstr
-	pop	hl
-	pop	bc
-	ret
-
-; Print the hex pair in HL
-printHexPair:
-	push	af
-	ld	a, h
-	call	printHex
-	ld	a, l
-	call	printHex
 	pop	af
 	ret
 

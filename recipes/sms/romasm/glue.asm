@@ -34,9 +34,10 @@
 
 .inc "err.h"
 .inc "ascii.h"
+.inc "blkdev.h"
+.inc "fs.h"
 .inc "core.asm"
 .inc "str.asm"
-.inc "parse.asm"
 
 .inc "sms/kbd.asm"
 .equ	KBD_RAMSTART	RAMSTART
@@ -69,18 +70,23 @@
 .equ	FS_HANDLE_COUNT	2
 .inc "fs.asm"
 
+; *** Shell ***
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
+.inc "lib/stdio.asm"
 .equ	SHELL_RAMSTART	FS_RAMEND
 .equ	SHELL_EXTRA_CMD_COUNT 10
-.inc "shell.asm"
+.inc "shell/main.asm"
 .dw	edCmd, zasmCmd, fnewCmd, fdelCmd, fopnCmd, flsCmd, blkBselCmd
 .dw	blkSeekCmd, blkLoadCmd, blkSaveCmd
 
-.inc "blockdev_cmds.asm"
-.inc "fs_cmds.asm"
+.inc "shell/blkdev.asm"
+.inc "shell/fs.asm"
 
 .equ	PGM_RAMSTART		SHELL_RAMEND
 .equ	PGM_CODEADDR		USER_RAMSTART
-.inc "pgm.asm"
+.inc "shell/pgm.asm"
 
 .out	PGM_RAMEND
 

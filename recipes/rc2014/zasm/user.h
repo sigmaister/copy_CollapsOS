@@ -1,6 +1,4 @@
 .org    0x8700
-.equ    FS_HANDLE_SIZE  8
-.equ    BLOCKDEV_SIZE   8
 
 ; *** JUMP TABLE ***
 .equ    strncmp        0x03

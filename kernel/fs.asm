@@ -76,21 +76,7 @@
 ; *** DEFINES ***
 ; Number of handles we want to support
 ; FS_HANDLE_COUNT
-; *** CONSTS ***
-.equ	FS_MAX_NAME_SIZE	0x1a
-.equ	FS_BLOCKSIZE		0x100
-.equ	FS_METASIZE		0x20
-
-.equ	FS_META_ALLOC_OFFSET	3
-.equ	FS_META_FSIZE_OFFSET	4
-.equ	FS_META_FNAME_OFFSET	6
-; Size in bytes of a FS handle:
-; * 4 bytes for starting offset of the FS block
-; * 2 bytes for file size
-.equ	FS_HANDLE_SIZE		6
-.equ	FS_ERR_NO_FS		0x5
-.equ	FS_ERR_NOT_FOUND	0x6
-
+;
 ; *** VARIABLES ***
 ; A copy of BLOCKDEV_SEL when the FS was mounted. 0 if no FS is mounted.
 .equ	FS_BLK		FS_RAMSTART
@@ -551,4 +537,47 @@ fsIsOn:
 .end:
 	pop	de
 	pop	hl
+	ret
+
+; Iterate over files in active file system and, for each file, call (IY) with
+; the file's metadata currently placed. HL is set to FS_META.
+; Sets Z on success, unset on error.
+; There are no error condition happening midway. If you get an error, then (IY)
+; was never called.
+fsIter:
+	call	fsIsOn
+	ret	nz
+	call	fsBegin
+	ret	nz
+.loop:
+	call	fsIsDeleted
+	ld	hl, FS_META
+	call	nz, callIY
+	call	fsNext
+	jr	z, .loop	; Z set? fsNext was successful
+	or	a		; ensure Z
+	ret
+
+; Delete currently active file
+; Sets Z on success, unset on error.
+fsDel:
+	call	fsIsValid
+	ret	nz
+	xor	a
+	; Set filename to zero to flag it as deleted
+	ld	(FS_META+FS_META_FNAME_OFFSET), a
+	jp	fsWriteMeta
+
+; Given a handle index in A, set DE to point to the proper handle.
+fsHandle:
+	ld	de, FS_HANDLES
+	or	a		; cp 0
+	ret	z	; DE already point to correct handle
+	push	bc
+	ld	b, a
+.loop:
+	ld	a, FS_HANDLE_SIZE
+	call	addDE
+	djnz	.loop
+	pop	bc
 	ret

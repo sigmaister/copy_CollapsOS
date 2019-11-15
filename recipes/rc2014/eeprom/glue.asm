@@ -13,9 +13,9 @@ jp	aciaInt
 
 .inc "err.h"
 .inc "ascii.h"
+.inc "blkdev.h"
 .inc "core.asm"
 .inc "str.asm"
-.inc "parse.asm"
 .equ	ACIA_RAMSTART	RAMSTART
 .inc "acia.asm"
 
@@ -36,14 +36,19 @@ jp	aciaInt
 .equ	AT28W_RAMSTART	STDIO_RAMEND
 .inc "at28w/main.asm"
 
+; *** Shell ***
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
+.inc "lib/stdio.asm"
 .equ	SHELL_RAMSTART	AT28W_RAMEND
 .equ	SHELL_EXTRA_CMD_COUNT 5
-.inc "shell.asm"
+.inc "shell/main.asm"
 ; Extra cmds
 .dw	a28wCmd
 .dw	blkBselCmd, blkSeekCmd, blkLoadCmd, blkSaveCmd
 
-.inc "blockdev_cmds.asm"
+.inc "shell/blkdev.asm"
 
 init:
 	di

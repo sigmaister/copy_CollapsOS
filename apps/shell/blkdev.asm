@@ -1,16 +1,17 @@
 ; *** REQUIREMENTS ***
-; blockdev
-; stdio
+; blkSelPtr
+; blkSel
+; blkSeek
+; blkTell
 
 blkBselCmd:
 	.db	"bsel", 0b001, 0, 0
 	ld	a, (hl)	; argument supplied
-	cp	BLOCKDEV_COUNT
-	jr	nc, .error	; if selection >= device count, error
 	push	de
-	ld	de, BLOCKDEV_SEL
+	call	blkSelPtr
 	call	blkSel
 	pop	de
+	jr	nz, .error
 	xor	a
 	ret
 .error:

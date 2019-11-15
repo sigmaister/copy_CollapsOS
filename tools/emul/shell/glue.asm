@@ -1,9 +1,17 @@
-; named shell_.asm to avoid infinite include loop.
+; Last check:
+; Kernel size: 0x619
+; Kernel RAM usage: 0x66
+; Shell size: 0x411
+; Shell RAM usage: 0x11
+
+.inc "blkdev.h"
+.inc "fs.h"
+.inc "err.h"
+.inc "ascii.h"
 .equ	RAMSTART	0x4000
-; kernel ram is well under 0x100 bytes. We're giving us 0x200 bytes so that we
-; never worry about the stack.
-.equ	KERNEL_RAMEND	0x4200
-.equ	USERCODE	KERNEL_RAMEND
+; 0x100 - 0x66 gives us a nice space for the stack.
+.equ	KERNEL_RAMEND	0x4100
+.equ	SHELL_CODE	0x0700
 .equ	STDIO_PORT	0x00
 .equ	FS_DATA_PORT	0x01
 .equ	FS_ADDR_PORT	0x02
@@ -14,30 +22,36 @@
 	jp	strncmp
 	jp	upcase
 	jp	findchar
-	jp	parseHex
-	jp	parseHexPair
+	jp	blkSelPtr
 	jp	blkSel
 	jp	blkSet
+	jp	blkSeek
+	jp	blkTell
+	jp	blkGetB
+	jp	blkPutB
 	jp	fsFindFN
 	jp	fsOpen
 	jp	fsGetB
 	jp	fsPutB
 	jp	fsSetSize
-	jp	parseArgs
+	jp	fsOn
+	jp	fsIter
+	jp	fsAlloc
+	jp	fsDel
+	jp	fsHandle
 	jp	printstr
+	jp	printnstr
 	jp	_blkGetB
 	jp	_blkPutB
 	jp	_blkSeek
 	jp	_blkTell
 	jp	printcrlf
+	jp	stdioGetC
 	jp	stdioPutC
 	jp	stdioReadLine
 
 .inc "core.asm"
 .inc "str.asm"
-.inc "err.h"
-.inc "ascii.h"
-.inc "parse.asm"
 
 .equ	BLOCKDEV_RAMSTART	RAMSTART
 .equ	BLOCKDEV_COUNT		4
@@ -61,35 +75,16 @@
 .equ	FS_HANDLE_COUNT	2
 .inc "fs.asm"
 
-.equ	SHELL_RAMSTART		FS_RAMEND
-.equ	SHELL_EXTRA_CMD_COUNT	9
-.inc "shell.asm"
-.dw	blkBselCmd, blkSeekCmd, blkLoadCmd, blkSaveCmd
-.dw	fsOnCmd, flsCmd, fnewCmd, fdelCmd, fopnCmd
-
-.inc "blockdev_cmds.asm"
-.inc "fs_cmds.asm"
-
-.equ	PGM_RAMSTART		SHELL_RAMEND
-.equ	PGM_CODEADDR		USERCODE
-.inc "pgm.asm"
-
-;.out	PGM_RAMEND
-
 init:
 	di
 	; setup stack
-	ld	hl, KERNEL_RAMEND
-	ld	sp, hl
+	ld	sp, KERNEL_RAMEND
 	call	fsInit
 	ld	a, 0	; select fsdev
 	ld	de, BLOCKDEV_SEL
 	call	blkSel
 	call	fsOn
-	call	shellInit
-	ld	hl, pgmShellHook
-	ld	(SHELL_CMDHOOK), hl
-	jp	shellLoop
+	call	SHELL_CODE
 
 emulGetC:
 	; Blocks until a char is returned
@@ -154,3 +149,5 @@ stdinPutB:
 	ld	ix, STDIN_HANDLE
 	jp	fsPutB
 
+.fill SHELL_CODE-$
+.bin "shell.bin"

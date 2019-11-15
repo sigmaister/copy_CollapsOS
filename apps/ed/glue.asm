@@ -26,6 +26,8 @@
 ; ******
 
 .inc "err.h"
+.inc "fs.h"
+.inc "blkdev.h"
 	jp	edMain
 
 .inc "core.asm"

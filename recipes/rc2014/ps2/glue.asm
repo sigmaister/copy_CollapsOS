@@ -10,7 +10,6 @@ jp	init
 .inc "ascii.h"
 .inc "core.asm"
 .inc "str.asm"
-.inc "parse.asm"
 .equ	ACIA_RAMSTART	RAMSTART
 .inc "acia.asm"
 
@@ -22,9 +21,14 @@ jp	init
 .equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
+; *** Shell ***
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
+.inc "lib/stdio.asm"
 .equ	SHELL_RAMSTART	STDIO_RAMEND
 .equ	SHELL_EXTRA_CMD_COUNT 0
-.inc "shell.asm"
+.inc "shell/main.asm"
 
 init:
 	di

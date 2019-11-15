@@ -12,7 +12,6 @@
 .inc "ascii.h"
 .inc "core.asm"
 .inc "str.asm"
-.inc "parse.asm"
 
 .inc "sms/kbd.asm"
 .equ	KBD_RAMSTART	RAMSTART
@@ -27,9 +26,14 @@
 .equ	STDIO_PUTC	vdpPutC
 .inc "stdio.asm"
 
+; *** Shell ***
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
+.inc "lib/stdio.asm"
 .equ	SHELL_RAMSTART	STDIO_RAMEND
 .equ	SHELL_EXTRA_CMD_COUNT 0
-.inc "shell.asm"
+.inc "shell/main.asm"
 
 init:
 	di

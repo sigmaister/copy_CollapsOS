@@ -14,7 +14,7 @@ zasm.bin: $(APPS)/zasm/glue.asm
 	$(ZASM) -o 1d $(KERNEL) $(APPS) user.h < $< > $@
 
 os.sms: glue.asm ed.bin zasm.bin
-	$(ZASM) $(KERNEL) ed.bin zasm.bin < $< > $@
+	$(ZASM) $(KERNEL) $(APPS) ed.bin zasm.bin < $< > $@
 
 clean:
 	rm -f os.sms ed.bin zasm.bin

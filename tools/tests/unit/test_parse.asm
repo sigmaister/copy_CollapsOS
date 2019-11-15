@@ -1,7 +1,9 @@
 jp	test
 
 .inc "core.asm"
-.inc "parse.asm"
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
 
 zasmGetPC:
 	ret

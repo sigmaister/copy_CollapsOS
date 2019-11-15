@@ -3,7 +3,6 @@ jp	runTests
 .inc "err.h"
 .inc "core.asm"
 .inc "str.asm"
-.inc "parse.asm"
 .inc "zasm/const.asm"
 .inc "lib/util.asm"
 .inc "zasm/util.asm"

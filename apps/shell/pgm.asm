@@ -21,8 +21,6 @@
 ; Routine suitable to plug into SHELL_CMDHOOK. HL points to the full cmdline.
 ; which has been processed to replace the first ' ' with a null char.
 pgmShellHook:
-	call	fsIsOn
-	jr	nz, .noFile
 	; (HL) is suitable for a direct fsFindFN call
 	call	fsFindFN
 	jr	nz, .noFile
@@ -31,17 +29,11 @@ pgmShellHook:
 	call	findchar
 	inc	hl		; beginning of args
 	; Alright, ready to run!
-	jp	pgmRun
+	jp	.run
 .noFile:
 	ld	a, SHELL_ERR_IO_ERROR
 	ret
-
-; Loads code in file that FS_PTR is currently pointing at and place it in
-; PGM_CODEADDR. Then, jump to PGM_CODEADDR. We expect HL to point to unparsed
-; arguments being given to the program.
-pgmRun:
-	call	fsIsValid
-	jr	nz, .ioError
+.run:
 	push	hl		; unparsed args
 	ld	ix, PGM_HANDLE
 	call	fsOpen
@@ -57,7 +49,3 @@ pgmRun:
 	pop	hl		; recall args
 	; ready to jump!
 	jp	PGM_CODEADDR
-
-.ioError:
-	ld	a, SHELL_ERR_IO_ERROR
-	ret

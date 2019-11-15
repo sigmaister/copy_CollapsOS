@@ -37,10 +37,14 @@
 .equ	STDIO_PUTC	lcdPutC
 .inc "stdio.asm"
 
-.inc "parse.asm"
+; *** Shell ***
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
+.inc "lib/stdio.asm"
 .equ	SHELL_RAMSTART	STDIO_RAMEND
 .equ	SHELL_EXTRA_CMD_COUNT 0
-.inc "shell.asm"
+.inc "shell/main.asm"
 
 boot:
 	di

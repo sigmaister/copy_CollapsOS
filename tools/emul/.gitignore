@@ -2,6 +2,7 @@
 /zasm/zasm
 /runbin/runbin
 /*/*-bin.h
+/*/*.bin
 /cfsin/zasm
 /cfsin/ed
 /cfsin/basic

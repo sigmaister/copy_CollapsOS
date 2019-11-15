@@ -21,14 +21,11 @@
 ; strncmp
 ; upcase
 ; findchar
-; parseHex
-; parseHexPair
 ; blkSel
 ; blkSet
 ; fsFindFN
 ; fsOpen
 ; fsGetB
-; parseArgs
 ; _blkGetB
 ; _blkPutB
 ; _blkSeek
@@ -64,17 +61,20 @@
 
 .inc "err.h"
 .inc "ascii.h"
+.inc "blkdev.h"
+.inc "fs.h"
 jp	zasmMain
 
 .inc "core.asm"
 .inc "zasm/const.asm"
 .inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
 .inc "zasm/util.asm"
 .equ	IO_RAMSTART	USER_RAMSTART
 .inc "zasm/io.asm"
 .equ	TOK_RAMSTART	IO_RAMEND
 .inc "zasm/tok.asm"
-.inc "lib/parse.asm"
 .equ	INS_RAMSTART	TOK_RAMEND
 .inc "zasm/instr.asm"
 .equ	DIREC_RAMSTART	INS_RAMEND

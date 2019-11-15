@@ -4,6 +4,7 @@ AVRDUDEARGS ?= -c usbtiny -P usb
 TARGETS = $(PROGNAME).hex os.bin
 ZASM = ../../../tools/zasm.sh
 KERNEL = ../../../kernel
+APPS = ../../../apps
 
 # Rules
 
@@ -19,7 +20,7 @@ $(PROGNAME).hex: $(PROGNAME).asm
 	avra -o $@ $<
 
 os.bin: glue.asm
-	$(ZASM) $(KERNEL) < $< > $@
+	$(ZASM) $(KERNEL) $(APPS) < $< > $@
 
 clean:
 	rm -f $(TARGETS) *.eep.hex *.obj os.bin

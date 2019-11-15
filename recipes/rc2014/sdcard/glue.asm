@@ -22,9 +22,10 @@ jp	aciaInt
 
 .inc "err.h"
 .inc "ascii.h"
+.inc "blkdev.h"
+.inc "fs.h"
 .inc "core.asm"
 .inc "str.asm"
-.inc "parse.asm"
 .equ	ACIA_RAMSTART	RAMSTART
 .inc "acia.asm"
 .equ	BLOCKDEV_RAMSTART	ACIA_RAMEND
@@ -44,18 +45,23 @@ jp	aciaInt
 .equ	FS_HANDLE_COUNT	1
 .inc "fs.asm"
 
+; *** Shell ***
+.inc "lib/util.asm"
+.inc "lib/parse.asm"
+.inc "lib/args.asm"
+.inc "lib/stdio.asm"
 .equ	SHELL_RAMSTART		FS_RAMEND
 .equ	SHELL_EXTRA_CMD_COUNT	11
-.inc "shell.asm"
+.inc "shell/main.asm"
 .dw	sdcInitializeCmd, sdcFlushCmd
 .dw	blkBselCmd, blkSeekCmd, blkLoadCmd, blkSaveCmd
 .dw	fsOnCmd, flsCmd, fnewCmd, fdelCmd, fopnCmd
 
-.inc "blockdev_cmds.asm"
-.inc "fs_cmds.asm"
+.inc "shell/blkdev.asm"
+.inc "shell/fs.asm"
 
 .equ	PGM_RAMSTART		SHELL_RAMEND
-.inc "pgm.asm"
+.inc "shell/pgm.asm"
 
 .equ	SDC_RAMSTART	PGM_RAMEND
 .equ	SDC_PORT_CSHIGH	6

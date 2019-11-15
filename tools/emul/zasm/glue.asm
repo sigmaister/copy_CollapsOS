@@ -6,20 +6,21 @@
 .equ FS_DATA_PORT	0x02
 .equ FS_SEEK_PORT	0x03
 .equ STDERR_PORT	0x04
+.inc "err.h"
+.inc "ascii.h"
+.inc "blkdev.h"
+.inc "fs.h"
 
 jp     init    ; 3 bytes
 ; *** JUMP TABLE ***
 jp	strncmp
 jp	upcase
 jp	findchar
-jp	parseHex
-jp	parseHexPair
 jp	blkSel
 jp	blkSet
 jp	fsFindFN
 jp	fsOpen
 jp	fsGetB
-jp	parseArgs
 jp	_blkGetB
 jp	_blkPutB
 jp	_blkSeek
@@ -28,9 +29,6 @@ jp	printstr
 
 .inc "core.asm"
 .inc "str.asm"
-.inc "err.h"
-.inc "ascii.h"
-.inc "parse.asm"
 .equ	BLOCKDEV_RAMSTART	RAMSTART
 .equ	BLOCKDEV_COUNT		3
 .inc "blockdev.asm"

@@ -5,7 +5,6 @@
 ; strncmp
 ;
 .inc "user.h"
-
 .inc "err.h"
 
 	jp	basStart

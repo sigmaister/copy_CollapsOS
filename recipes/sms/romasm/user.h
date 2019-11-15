@@ -1,6 +1,4 @@
 .equ    USER_RAMSTART   0xc200
-.equ    FS_HANDLE_SIZE  8
-.equ    BLOCKDEV_SIZE   8
 ; Make ed fit in SMS's memory
 .equ    ED_BUF_MAXLINES 0x100
 .equ    ED_BUF_PADMAXLEN 0x800

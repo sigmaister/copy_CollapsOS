@@ -7,7 +7,7 @@
 
 ## User guide
 
-* [The shell](shell.md)
+* [The shell](../apps/shell/README.md)
 * [Load code in RAM and run it](load-run-code.md)
 * [Using block devices](blockdev.md)
 * [Using the filesystem](fs.md)
