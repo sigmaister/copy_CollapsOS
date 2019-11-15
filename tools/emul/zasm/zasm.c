@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "../libz80/z80.h"
 #include "kernel-bin.h"
 #include "zasm-bin.h"
@@ -8,8 +9,11 @@
  * in another specified blkdev. In our emulator layer, we use stdin and stdout
  * as those specified blkdevs.
  *
- * This executable takes one argument: the path to a .cfs file to use for
- * includes.
+ * This executable takes two arguments. Both are optional, but you need to
+ * specify the first one if you want to get to the second one.
+ * The first one is the value to send to z80-zasm's 3rd argument (the initial
+ * .org). Defaults to '00'.
+ * The second one is the path to a .cfs file to use for includes.
  *
  * Because the input blkdev needs support for Seek, we buffer it in the emulator
  * layer.
@@ -155,7 +159,7 @@ static void mem_write(int unused, uint16_t addr, uint8_t val)
 
 int main(int argc, char *argv[])
 {
-    if (argc > 2) {
+    if (argc > 3) {
         fprintf(stderr, "Too many args\n");
         return 1;
     }
@@ -166,9 +170,19 @@ int main(int argc, char *argv[])
     for (int i=0; i<sizeof(USERSPACE); i++) {
         mem[i+USER_CODE] = USERSPACE[i];
     }
+    char *init_org = "00";
+    if (argc >= 2) {
+        init_org = argv[1];
+        if (strlen(init_org) != 2) {
+            fprintf(stderr, "Initial org must be a two-character hex string");
+        }
+    }
+    // glue.asm knows that it needs to fetch these arguments at this address.
+    mem[0xff00] = init_org[0];
+    mem[0xff01] = init_org[1];
     fsdev_size = 0;
-    if (argc == 2) {
-        FILE *fp = fopen(argv[1], "r");
+    if (argc == 3) {
+        FILE *fp = fopen(argv[2], "r");
         if (fp == NULL) {
             fprintf(stderr, "Can't open file %s\n", argv[1]);
             return 1;

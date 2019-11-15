@@ -8,14 +8,17 @@
 ; whether we're in "local pass", that is, in local label scanning mode. During
 ; this special pass, ZASM_FIRST_PASS will also be set so that the rest of the
 ; code behaves as is we were in the first pass.
-.equ	ZASM_LOCAL_PASS		ZASM_FIRST_PASS+1
+.equ	ZASM_LOCAL_PASS		@+1
 ; What IO_PC was when we started our context
-.equ	ZASM_CTX_PC		ZASM_LOCAL_PASS+1
+.equ	ZASM_CTX_PC		@+1
 ; current ".org" offset, that is, what we must offset all our label by.
-.equ	ZASM_ORG		ZASM_CTX_PC+2
-.equ	ZASM_RAMEND		ZASM_ORG+2
+.equ	ZASM_ORG		@+2
+.equ	ZASM_RAMEND		@+2
 
 ; Takes 2 byte arguments, blkdev in and blkdev out, expressed as IDs.
+; Can optionally take a 3rd argument which is the high byte of the initial
+; .org. For example, passing 0x42 to this 3rd arg is the equivalent of beginning
+; the unit with ".org 0x4200".
 ; Read file through blkdev in and outputs its upcodes through blkdev out.
 ; HL is set to the last lineno to be read.
 ; Sets Z on success, unset on error. On error, A contains an error code (ERR_*)
@@ -23,7 +26,7 @@ zasmMain:
 	; Parse args. HL points to string already
 	; We don't allocate memory just to hold this. Because this happens
 	; before initialization, we don't really care where those args are
-	; parsed.
+	; parsed. That's why we borrow zasm's RAMSTART for a little while.
 	ld	de, .argspecs
 	ld	ix, ZASM_RAMSTART
 	call	parseArgs
@@ -44,11 +47,18 @@ zasmMain:
 	ld	de, IO_OUT_BLK
 	call	blkSel
 
-	; Init modules
+	; Init .org
+	; This is the 3rd argument, optional, will be zero if not given.
+	; Save in "@" too
+	ld	a, (ZASM_RAMSTART+2)
+	ld	(ZASM_ORG+1), a		; high byte of .org
+	ld	(DIREC_LASTVAL+1), a
 	xor	a
+	ld	(ZASM_ORG), a		; low byte zero in all cases
+	ld	(DIREC_LASTVAL), a
+
+	; And then the rest.
 	ld	(ZASM_LOCAL_PASS), a
-	ld	(ZASM_ORG), a
-	ld	(ZASM_ORG+1), a
 	call	ioInit
 	call	symInit
 
@@ -73,7 +83,7 @@ zasmMain:
 	jp	ioLineNo		; --> HL, --> DE, returns
 
 .argspecs:
-	.db	0b001, 0b001, 0
+	.db	0b001, 0b001, 0b101
 .sFirstPass:
 	.db	"First pass", 0
 .sSecondPass:

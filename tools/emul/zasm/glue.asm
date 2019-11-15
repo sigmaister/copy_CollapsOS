@@ -56,13 +56,20 @@ init:
 	ld	de, BLOCKDEV_SEL
 	call	blkSel
 	call	fsOn
+	; There's a special understanding between zasm.c and this unit: The
+	; addresses 0xff00 and 0xff01 contain the two ascii chars to send to
+	; zasm as the 3rd argument.
+	ld	a, (0xff00)
+	ld	(.zasmArgs+4), a
+	ld	a, (0xff01)
+	ld	(.zasmArgs+5), a
 	ld	hl, .zasmArgs
 	call	USER_CODE
 	; signal the emulator we're done
 	halt
 
 .zasmArgs:
-	.db	"0 1", 0
+	.db	"0 1 XX", 0
 
 ; *** I/O ***
 emulGetB:

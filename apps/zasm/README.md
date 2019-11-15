@@ -3,6 +3,21 @@
 This is probably the most critical part of the Collapse OS project because it
 ensures its self-reproduction.
 
+## Invocation
+
+`zasm` is invoked with 2 mandatory arguments and an optional one. The mandatory
+arguments are input blockdev id and output blockdev id. For example, `zasm 0 1`
+reads source code from blockdev 0, assembles it and spit the result in blockdev
+1.
+
+Input blockdev needs to be seek-able, output blockdev doesn't need to (zasm
+writes in one pass, sequentially.
+
+The 3rd argument, optional, is the initial `.org` value. It's the high byte of
+the value. For example, `zasm 0 1 4f` assembles source in blockdev 0 as if it
+started with the line `.org 0x4f00`. This also means that the initial value of
+the `@` symbol is `0x4f00`.
+
 ## Running on a "modern" machine
 
 To be able to develop zasm efficiently, [libz80][libz80] is used to run zasm
