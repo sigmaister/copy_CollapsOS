@@ -52,3 +52,25 @@ strcmp:
 	; early, set otherwise)
 	ret
 
+; Returns length of string at (HL) in A.
+; Doesn't include null termination.
+strlen:
+	push	bc
+	push	hl
+	ld	bc, 0
+	xor	a	; look for null char
+.loop:
+	cpi
+	jp	z, .found
+	jr	.loop
+.found:
+	; How many char do we have? the (NEG BC)-1, which started at 0 and
+	; decreased at each CPI call. In this routine, we stay in the 8-bit
+	; realm, so C only.
+	ld	a, c
+	neg
+	dec	a
+	pop	hl
+	pop	bc
+	ret
+

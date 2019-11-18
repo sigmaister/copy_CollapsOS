@@ -2,6 +2,7 @@ jp	test
 
 .inc "core.asm"
 .inc "str.asm"
+.inc "lib/util.asm"
 .inc "zasm/util.asm"
 
 testNum:	.db 1

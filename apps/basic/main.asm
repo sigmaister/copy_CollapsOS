@@ -105,7 +105,7 @@ basBYE:
 	.db	"Goodbye!", 0
 
 basPRINT:
-	call	parseDecimal
+	call	parseLiteral
 	jp	nz, basERR
 	push	ix \ pop de
 	ld	hl, BAS_SCRATCHPAD

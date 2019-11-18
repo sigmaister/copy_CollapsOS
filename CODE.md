@@ -46,6 +46,11 @@ Another exception to this rule are "top-level" routines, that is, routines that
 aren't designed to be called from other parts of Collapse OS. Those are
 generally routines close to an application's main loop.
 
+It is important to note, however, that shadow registers aren't preserved.
+Therefore, shadow registers should only be used in code that doesn't call
+routines or that call a routine that explicitly states that it preserves
+shadow registers.
+
 ## Stack management
 
 Keeping the stack "balanced" is a big challenge when writing assembler code.
