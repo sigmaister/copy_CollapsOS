@@ -1,10 +1,13 @@
+; *** Constants ***
+.equ	BAS_SCRATCHPAD_SIZE	0x20
 ; *** Variables ***
 ; Value of `SP` when basic was first invoked. This is where SP is going back to
 ; on restarts.
 .equ	BAS_INITSP	BAS_RAMSTART
 ; **Pointer** to current line number
 .equ	BAS_PCURLN	@+2
-.equ	BAS_RAMEND	@+2
+.equ	BAS_SCRATCHPAD	@+2
+.equ	BAS_RAMEND	@+BAS_SCRATCHPAD_SIZE
 
 ; *** Code ***
 basStart:
@@ -39,24 +42,37 @@ basPrompt:
 	.db "> ", 0
 
 basDirect:
+	; First, get cmd length
+	call	fnWSIdx
+	cp	7
+	jr	nc, .unknown	; Too long, can't possibly fit anything.
+	; A contains whitespace IDX, save it in B
+	ld	b, a
 	ex	de, hl
-	ld	hl, basCmds1
+	ld	hl, basCmds1+2
 .loop:
-	ld	a, 4
+	ld	a, b		; whitespace IDX
 	call	strncmp
 	jr	z, .found
-	ld	a, 6
+	ld	a, 8
 	call	addHL
 	ld	a, (hl)
 	cp	0xff
 	jr	nz, .loop
+.unknown:
 	ld	hl, .sUnknown
 	jr	basPrintLn
 
 .found:
-	inc	hl \ inc hl \ inc hl \ inc hl
+	dec	hl \ dec hl
 	call	intoHL
-	jp	(hl)
+	push	hl \ pop ix
+	; Bring back command string from DE to HL
+	ex	de, hl
+	ld	a, b	; cmd's length
+	call	addHL
+	call	rdWS
+	jp	(ix)
 
 .sUnknown:
 	.db	"Unknown command", 0
@@ -66,7 +82,17 @@ basPrintLn:
 	call	printstr
 	jp	printcrlf
 
+basERR:
+	ld	hl, .sErr
+	jr	basPrintLn
+.sErr:
+	.db	"ERR", 0
+
 ; *** Commands ***
+; A command receives its argument through (HL), which is already placed to
+; either:
+; 1 - the end of the string if the command has no arg.
+; 2 - the beginning of the arg, with whitespace properly skipped.
 basBYE:
 	ld	hl, .sBye
 	call	basPrintLn
@@ -78,10 +104,20 @@ basBYE:
 .sBye:
 	.db	"Goodbye!", 0
 
+basPRINT:
+	call	parseDecimal
+	jp	nz, basERR
+	push	ix \ pop de
+	ld	hl, BAS_SCRATCHPAD
+	call	fmtDecimal
+	jp	basPrintLn
+
 ; direct only
 basCmds1:
-	.db	"bye", 0
 	.dw	basBYE
+	.db	"bye", 0, 0, 0
 ; statements
 basCmds2:
-	.db	0xff	; end of table
+	.dw	basPRINT
+	.db	"print", 0
+	.db	0xff, 0xff, 0xff	; end of table

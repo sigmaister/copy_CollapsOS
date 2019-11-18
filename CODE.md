@@ -32,6 +32,20 @@ Thus, code that glue parts together could look like:
     MOD2_RAMSTART .equ MOD1_RAMEND
     #include "mod2.asm"
 
+## Register protection
+
+As a general rule, all routines systematically protect registers they use,
+including input parameters. This allows us to stop worrying, each time we call
+a routine, whether our registers are all messed up.
+
+Some routines stray from that rule, but the fact that they destroy a particular
+register is documented. An undocumented register change is considered a bug.
+Clean up after yourself, you nasty routine!
+
+Another exception to this rule are "top-level" routines, that is, routines that
+aren't designed to be called from other parts of Collapse OS. Those are
+generally routines close to an application's main loop.
+
 ## Stack management
 
 Keeping the stack "balanced" is a big challenge when writing assembler code.
