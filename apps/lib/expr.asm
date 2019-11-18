@@ -1,3 +1,15 @@
+; *** Requirements ***
+; findchar
+; multDEBC
+;
+; *** Defines ***
+;
+; EXPR_PARSE: routine to call to parse literals or symbols that are part of
+;             the expression. Routine's signature:
+;	      String in (HL), returns its parsed value to IX. Z for success.
+;
+; *** Code ***
+;
 ; Parse expression in string at (HL) and returns the result in IX.
 ; We expect (HL) to be disposable: we mutate it to avoid having to make a copy.
 ; Sets Z on success, unset on error.
@@ -19,7 +31,7 @@ _parseExpr:
 	ld	a, '*'
 	call	_findAndSplit
 	jp	z, _applyMult
-	jp	parseNumberOrSymbol
+	jp	EXPR_PARSE
 
 ; Given a string in (HL) and a separator char in A, return a splitted string,
 ; that is, the same (HL) string but with the found A char replaced by a null

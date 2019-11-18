@@ -7,8 +7,8 @@ jp	runTests
 .inc "lib/util.asm"
 .inc "zasm/util.asm"
 .inc "lib/parse.asm"
-.inc "zasm/parse.asm"
-.inc "zasm/expr.asm"
+.equ	EXPR_PARSE	parseLiteral
+.inc "lib/expr.asm"
 .equ	INS_RAMSTART	RAMSTART
 .inc "zasm/instr.asm"
 

@@ -14,6 +14,8 @@
 .inc "lib/ari.asm"
 .inc "lib/parse.asm"
 .inc "lib/fmt.asm"
+.equ	EXPR_PARSE	parseLiteral
+.inc "lib/expr.asm"
 .inc "basic/tok.asm"
 .equ	BAS_RAMSTART	USER_RAMSTART
 .inc "basic/main.asm"

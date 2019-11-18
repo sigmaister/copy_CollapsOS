@@ -31,8 +31,6 @@
 ; _blkSeek
 ; _blkTell
 ; printstr
-; FS_HANDLE_SIZE
-; BLOCKDEV_SIZE
 
 .inc "user.h"
 
@@ -80,7 +78,8 @@ jp	zasmMain
 .equ	DIREC_RAMSTART	INS_RAMEND
 .inc "zasm/directive.asm"
 .inc "zasm/parse.asm"
-.inc "zasm/expr.asm"
+.equ	EXPR_PARSE	parseNumberOrSymbol
+.inc "lib/expr.asm"
 .equ	SYM_RAMSTART	DIREC_RAMEND
 .inc "zasm/symbol.asm"
 .equ	ZASM_RAMSTART	SYM_RAMEND

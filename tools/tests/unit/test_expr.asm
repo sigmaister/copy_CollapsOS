@@ -18,7 +18,8 @@ jp	test
 .inc "zasm/parse.asm"
 .equ	SYM_RAMSTART	DIREC_LASTVAL+2
 .inc "zasm/symbol.asm"
-.inc "zasm/expr.asm"
+.equ	EXPR_PARSE	parseNumberOrSymbol
+.inc "lib/expr.asm"
 
 ; Pretend that we aren't in first pass
 zasmIsFirstPass:
