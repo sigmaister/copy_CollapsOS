@@ -51,6 +51,21 @@ Therefore, shadow registers should only be used in code that doesn't call
 routines or that call a routine that explicitly states that it preserves
 shadow registers.
 
+## Z for success
+
+The vast majority of routines use the Z flag to indicate success. When Z is set,
+it indicates success. When Z is unset, it indicates error. This follows the
+tradition of a zero indicating success and a nonzero indicating error.
+
+Important note: only Z indicate success. Many routines return a meaningful
+nonzero value in A and still set Z to indicate success.
+
+In error conditions, however, most of the time A is set to an error code.
+
+In many routines, this is specified verbosely, but it's repeated so often that
+I started writing it in short form, "Z for success", which means what is
+described here.
+
 ## Stack management
 
 Keeping the stack "balanced" is a big challenge when writing assembler code.

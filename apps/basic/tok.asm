@@ -46,3 +46,11 @@ fnWSIdx:
 	pop	bc
 	pop	hl
 	ret
+
+; Advance HL to the next whitespace or to the end of string.
+toWS:
+	ld	a, (hl)
+	call	isSep
+	ret	z
+	inc	hl
+	jr	toWS

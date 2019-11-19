@@ -12,6 +12,7 @@
 ; *** Code ***
 basStart:
 	ld	(BAS_INITSP), sp
+	call	bufInit
 	xor	a
 	ld	hl, .welcome
 	call	printstr
@@ -32,12 +33,13 @@ basPrompt:
 	call	basDirect
 	jr	basPrompt
 .number:
-	; do nothing for now, we only support direct mode.
-	ld	hl, .sNumber
-	call	basPrintLn
+	push	ix \ pop de
+	call	toWS
+	call	rdWS
+	call	bufAdd
+	jp	nz, basERR
+	call	printcrlf
 	jr	basPrompt
-.sNumber:
-	.db "A number!", 0
 .sPrompt:
 	.db "> ", 0
 
@@ -104,6 +106,27 @@ basBYE:
 .sBye:
 	.db	"Goodbye!", 0
 
+basLIST:
+	call	printcrlf
+	call	bufFirst
+	ret	nz
+.loop:
+	ld	e, (ix)
+	ld	d, (ix+1)
+	ld	hl, BAS_SCRATCHPAD
+	call	fmtDecimal
+	call	printstr
+	ld	a, ' '
+	call	stdioPutC
+	push	ix \ pop hl
+	inc	hl \ inc hl \ inc hl
+	call	printstr
+	call	printcrlf
+	call	bufNext
+	jr	z, .loop
+	ret
+
+
 basPRINT:
 	call	parseExpr
 	jp	nz, basERR
@@ -116,6 +139,8 @@ basPRINT:
 basCmds1:
 	.dw	basBYE
 	.db	"bye", 0, 0, 0
+	.dw	basLIST
+	.db	"list", 0, 0
 ; statements
 basCmds2:
 	.dw	basPRINT

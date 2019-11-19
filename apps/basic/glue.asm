@@ -17,6 +17,8 @@
 .equ	EXPR_PARSE	parseLiteral
 .inc "lib/expr.asm"
 .inc "basic/tok.asm"
-.equ	BAS_RAMSTART	USER_RAMSTART
+.equ	BUF_RAMSTART	USER_RAMSTART
+.inc "basic/buf.asm"
+.equ	BAS_RAMSTART	BUF_RAMEND
 .inc "basic/main.asm"
 USER_RAMSTART:
