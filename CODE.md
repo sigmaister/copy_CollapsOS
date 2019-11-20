@@ -51,6 +51,10 @@ Therefore, shadow registers should only be used in code that doesn't call
 routines or that call a routine that explicitly states that it preserves
 shadow registers.
 
+Another important note is that routines returning success with Z generally don't
+preserve AF: too complicated. But otherwise, AF is often preserved. For example,
+register fiddling routines in core try to preserve AF.
+
 ## Z for success
 
 The vast majority of routines use the Z flag to indicate success. When Z is set,
@@ -102,4 +106,12 @@ comments. Example:
     pop     af  ; <-- lvl 1
 
 I think that this should do the trick, so I'll do this consistently from now on.
+
+## String length
+
+Pretty much every routine expecting a string have no provision for a string
+that doesn't have null termination within 0xff bytes. Treat strings of such
+lengths with extra precaution and distrust proper handling of existing routines
+for those strings.
+
 [zasm]: ../apps/zasm/README.md

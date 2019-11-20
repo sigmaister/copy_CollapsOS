@@ -118,8 +118,7 @@ basLIST:
 	call	printstr
 	ld	a, ' '
 	call	stdioPutC
-	push	ix \ pop hl
-	inc	hl \ inc hl \ inc hl
+	call	bufStr
 	call	printstr
 	call	printcrlf
 	call	bufNext
