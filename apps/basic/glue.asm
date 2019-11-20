@@ -14,10 +14,12 @@
 .inc "lib/ari.asm"
 .inc "lib/parse.asm"
 .inc "lib/fmt.asm"
-.equ	EXPR_PARSE	parseLiteral
+.equ	EXPR_PARSE	parseLiteralOrVar
 .inc "lib/expr.asm"
 .inc "basic/tok.asm"
-.equ	BUF_RAMSTART	USER_RAMSTART
+.equ	VAR_RAMSTART	USER_RAMSTART
+.inc "basic/var.asm"
+.equ	BUF_RAMSTART	VAR_RAMEND
 .inc "basic/buf.asm"
 .equ	BAS_RAMSTART	BUF_RAMEND
 .inc "basic/main.asm"

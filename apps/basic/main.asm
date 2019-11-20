@@ -12,6 +12,7 @@
 ; *** Code ***
 basStart:
 	ld	(BAS_INITSP), sp
+	call	varInit
 	call	bufInit
 	xor	a
 	ld	hl, .welcome
@@ -51,8 +52,20 @@ basLoop:
 ; If found, jump to it. If not found, unset Z. We expect commands to set Z
 ; on success. Therefore, when calling basCallCmd results in NZ, we're not sure
 ; where the error come from, but well...
+; Before being evaluated, (HL) is copied in BAS_SCRATCHPAD because some
+; evaluation routines (such as parseExpr) mutate the string it evaluates.
+; TODO: straighten this situation up. Mutating a string like this breaks
+; expectations.
 basCallCmd:
-	; First, get cmd length
+	push	de	; --> lvl 1
+	ld	de, BAS_SCRATCHPAD
+	call	strcpy
+	ex	de, hl	; HL now points to scratchpad
+	pop	de	; <-- lvl 1
+	; let's see if it's a variable assignment.
+	call	varTryAssign
+	ret	z	; Done!
+	; Second, get cmd length
 	call	fnWSIdx
 	cp	7
 	jp	nc, unsetZ	; Too long, can't possibly fit anything.
