@@ -19,39 +19,47 @@ basStart:
 	call	printcrlf
 	ld	hl, .welcome+2		; points to a zero word
 	ld	(BAS_PCURLN), hl
-	jr	basPrompt
+	jr	basLoop
 
 .welcome:
 	.db "OK", 0, 0
 
-basPrompt:
+basLoop:
 	ld	hl, .sPrompt
 	call	printstr
 	call	stdioReadLine
+	call	printcrlf
 	call	parseDecimal
 	jr	z, .number
-	call	basDirect
-	jr	basPrompt
+	ld	de, basCmds1
+	call	basCallCmd
+	jr	z, basLoop
+	; Error
+	call	basERR
+	jr	basLoop
 .number:
 	push	ix \ pop de
 	call	toWS
 	call	rdWS
 	call	bufAdd
 	jp	nz, basERR
-	call	printcrlf
-	jr	basPrompt
+	jr	basLoop
 .sPrompt:
 	.db "> ", 0
 
-basDirect:
+; Call command in (HL) after having looked for it in cmd table in (DE).
+; If found, jump to it. If not found, unset Z. We expect commands to set Z
+; on success. Therefore, when calling basCallCmd results in NZ, we're not sure
+; where the error come from, but well...
+basCallCmd:
 	; First, get cmd length
 	call	fnWSIdx
 	cp	7
-	jr	nc, .unknown	; Too long, can't possibly fit anything.
+	jp	nc, unsetZ	; Too long, can't possibly fit anything.
 	; A contains whitespace IDX, save it in B
 	ld	b, a
 	ex	de, hl
-	ld	hl, basCmds1+2
+	inc	hl \ inc hl
 .loop:
 	ld	a, b		; whitespace IDX
 	call	strncmp
@@ -61,10 +69,8 @@ basDirect:
 	ld	a, (hl)
 	cp	0xff
 	jr	nz, .loop
-.unknown:
-	ld	hl, .sUnknown
-	jr	basPrintLn
-
+	; not found
+	jp	unsetZ
 .found:
 	dec	hl \ dec hl
 	call	intoHL
@@ -76,11 +82,8 @@ basDirect:
 	call	rdWS
 	jp	(ix)
 
-.sUnknown:
-	.db	"Unknown command", 0
 
 basPrintLn:
-	call	printcrlf
 	call	printstr
 	jp	printcrlf
 
@@ -95,6 +98,8 @@ basERR:
 ; either:
 ; 1 - the end of the string if the command has no arg.
 ; 2 - the beginning of the arg, with whitespace properly skipped.
+;
+; Commands are expected to set Z on success.
 basBYE:
 	ld	hl, .sBye
 	call	basPrintLn
@@ -107,7 +112,6 @@ basBYE:
 	.db	"Goodbye!", 0
 
 basLIST:
-	call	printcrlf
 	call	bufFirst
 	ret	nz
 .loop:
@@ -123,15 +127,44 @@ basLIST:
 	call	printcrlf
 	call	bufNext
 	jr	z, .loop
+	cp	a		; ensure Z
 	ret
 
 
+basRUN:
+	call	bufFirst
+	ret	nz
+.loop:
+	call	bufStr
+	ld	de, basCmds2
+	push	ix		; --> lvl 1
+	call	basCallCmd
+	pop	ix		; <-- lvl 1
+	jp	nz, .err
+	call	bufNext
+	jr	z, .loop
+	cp	a		; ensure Z
+	ret
+.err:
+	; Print line number, then return NZ (which will print ERR)
+	ld	e, (ix)
+	ld	d, (ix+1)
+	ld	hl, BAS_SCRATCHPAD
+	call	fmtDecimal
+	call	printstr
+	ld	a, ' '
+	call	stdioPutC
+	jp	unsetZ
+
+.runline:
+
 basPRINT:
 	call	parseExpr
-	jp	nz, basERR
+	ret	nz
 	push	ix \ pop de
 	ld	hl, BAS_SCRATCHPAD
 	call	fmtDecimal
+	cp	a		; ensure Z
 	jp	basPrintLn
 
 ; direct only
@@ -140,6 +173,8 @@ basCmds1:
 	.db	"bye", 0, 0, 0
 	.dw	basLIST
 	.db	"list", 0, 0
+	.dw	basRUN
+	.db	"run", 0, 0, 0
 ; statements
 basCmds2:
 	.dw	basPRINT
