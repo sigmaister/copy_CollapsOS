@@ -4,8 +4,11 @@
 ; Value of `SP` when basic was first invoked. This is where SP is going back to
 ; on restarts.
 .equ	BAS_INITSP	BAS_RAMSTART
-; **Pointer** to current line number
-.equ	BAS_PCURLN	@+2
+; Pointer to next line to run. If nonzero, it means that the next line is
+; the first of the list. This is used by GOTO to indicate where to jump next.
+; Important note: this is **not** a line number, it's a pointer to a line index
+; in buffer. If it's not zero, its a valid pointer.
+.equ	BAS_PNEXTLN	@+2
 .equ	BAS_SCRATCHPAD	@+2
 .equ	BAS_RAMEND	@+BAS_SCRATCHPAD_SIZE
 
@@ -18,12 +21,12 @@ basStart:
 	ld	hl, .welcome
 	call	printstr
 	call	printcrlf
-	ld	hl, .welcome+2		; points to a zero word
-	ld	(BAS_PCURLN), hl
+	ld	hl, 0		; points to a zero word
+	ld	(BAS_PNEXTLN), hl
 	jr	basLoop
 
 .welcome:
-	.db "OK", 0, 0
+	.db "OK", 0
 
 basLoop:
 	ld	hl, .sPrompt
@@ -145,6 +148,8 @@ basLIST:
 
 
 basRUN:
+	call	.maybeGOTO
+	jr	nz, .loop	; IX already set
 	call	bufFirst
 	ret	nz
 .loop:
@@ -154,6 +159,8 @@ basRUN:
 	call	basCallCmd
 	pop	ix		; <-- lvl 1
 	jp	nz, .err
+	call	.maybeGOTO
+	jr	nz, .loop	; IX already set
 	call	bufNext
 	jr	z, .loop
 	cp	a		; ensure Z
@@ -169,7 +176,19 @@ basRUN:
 	call	stdioPutC
 	jp	unsetZ
 
-.runline:
+; This returns the opposite Z result as the one we usually see: Z is set if
+; we **don't** goto, unset if we do. If we do, IX is properly set.
+.maybeGOTO:
+	ld	de, (BAS_PNEXTLN)
+	ld	a, d
+	or	e
+	ret	z
+	; we goto
+	push	de \ pop ix
+	; we need to reset our goto marker
+	ld	de, 0
+	ld	(BAS_PNEXTLN), de
+	ret
 
 basPRINT:
 	call	parseExpr
@@ -179,6 +198,22 @@ basPRINT:
 	call	fmtDecimal
 	cp	a		; ensure Z
 	jp	basPrintLn
+
+basGOTO:
+	call	parseExpr
+	ret	nz
+	push	ix \ pop de
+	call	bufFind
+	jr	nz, .notFound
+	push	ix \ pop de
+	; Z already set
+	jr	.end
+.notFound:
+	ld	de, 0
+	; Z already unset
+.end:
+	ld	(BAS_PNEXTLN), de
+	ret
 
 ; direct only
 basCmds1:
@@ -192,4 +227,6 @@ basCmds1:
 basCmds2:
 	.dw	basPRINT
 	.db	"print", 0
+	.dw	basGOTO
+	.db	"goto", 0, 0
 	.db	0xff, 0xff, 0xff	; end of table
