@@ -9,6 +9,10 @@
 
 	jp	basStart
 
+; RAM space used in different routines for short term processing.
+.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD	USER_RAMSTART
+
 .inc "core.asm"
 .inc "lib/util.asm"
 .inc "lib/ari.asm"
@@ -17,7 +21,7 @@
 .equ	EXPR_PARSE	parseLiteralOrVar
 .inc "lib/expr.asm"
 .inc "basic/tok.asm"
-.equ	VAR_RAMSTART	USER_RAMSTART
+.equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
 .inc "basic/var.asm"
 .equ	BUF_RAMSTART	VAR_RAMEND
 .inc "basic/buf.asm"

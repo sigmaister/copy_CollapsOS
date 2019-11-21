@@ -1,5 +1,5 @@
-; Sets Z is A is ' ' or '\t'
-isSep:
+; Sets Z is A is ' ' or '\t' (whitespace)
+isWS:
 	cp	' '
 	ret	z
 	cp	0x09

@@ -31,7 +31,7 @@ isLineEnd:
 
 ; Sets Z is A is ' ', ',', ';', CR, LF, or null.
 isSepOrLineEnd:
-	call	isSep
+	call	isWS
 	ret	z
 	jr	isLineEndOrComment
 
@@ -68,7 +68,7 @@ isLabel:
 ; read char in A
 _eatWhitespace:
 	call	ioGetB
-	call	isSep
+	call	isWS
 	ret	nz
 	jr	_eatWhitespace
 

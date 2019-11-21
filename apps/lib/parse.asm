@@ -132,7 +132,7 @@ parseDecimal:
 	pop	hl
 	ret	z
 	; A is not 0? Ok, but if it's a space, we're happy too.
-	jp	isSep
+	jp	isWS
 .error:
 	pop	hl
 	jp	unsetZ

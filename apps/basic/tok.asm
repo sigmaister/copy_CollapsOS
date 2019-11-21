@@ -1,3 +1,12 @@
+; Sets Z is A is ' ' or '\t' (whitespace), or ',' (arg sep)
+isSep:
+	cp	' '
+	ret	z
+	cp	0x09
+	ret	z
+	cp	','
+	ret
+
 ; Expect at least one whitespace (0x20, 0x09) at (HL), and then advance HL
 ; until a non-whitespace character is met.
 ; HL is advanced to the first non-whitespace char.
@@ -5,7 +14,7 @@
 ; Failure is either not having a first whitespace or reaching the end of the
 ; string.
 ; Sets Z if we found a non-whitespace char, unset if we found the end of string.
-rdWS:
+rdSep:
 	ld	a, (hl)
 	call	isSep
 	ret	nz	; failure
@@ -47,10 +56,32 @@ fnWSIdx:
 	pop	hl
 	ret
 
-; Advance HL to the next whitespace or to the end of string.
-toWS:
+; Advance HL to the next separator or to the end of string.
+toSep:
 	ld	a, (hl)
 	call	isSep
 	ret	z
 	inc	hl
-	jr	toWS
+	jr	toSep
+
+; Read (HL) until the next separator and copy it in (DE)
+; DE is preserved, but HL is advanced to the end of the read word.
+rdWord:
+	push	af
+	push	de
+.loop:
+	ld	a, (hl)
+	call	isSep
+	jr	z, .stop
+	or	a
+	jr	z, .stop
+	ld	(de), a
+	inc	hl
+	inc	de
+	jr	.loop
+.stop:
+	xor	a
+	ld	(de), a
+	pop	de
+	pop	af
+	ret

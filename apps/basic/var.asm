@@ -44,29 +44,33 @@ varTryAssign:
 	; We have a variable! Its table index is currently in A.
 	push	ix	; --> lvl 1
 	push	hl	; --> lvl 2
-	push	af	; --> lvl 3. save for later
-	; Let's start by evaluating that expression
+	push	de	; --> lvl 3
+	push	af	; --> lvl 4. save for later
+	; Let's put that expression to read in scratchpad
 	inc	hl \ inc hl
+	ld	de, SCRATCHPAD
+	call	rdWord
+	ex	de, hl
+	; Now, evaluate that expression now in (HL)
 	call	parseExpr	; --> number in IX
 	jr	nz, .exprErr
-	pop	af	; <-- lvl 3
+	pop	af	; <-- lvl 4
 	add	a, a	; * 2 because each element is a word
 	ld	hl, VAR_TBL
 	call	addHL
 	; HL placed, write number
-	push	de	; --> lvl 3
 	push	ix \ pop de
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
-	pop	de	; <-- lvl 3
 	xor	a	; ensure Z
 .end:
+	pop	de	; <-- lvl 3
 	pop	hl	; <-- lvl 2
 	pop	ix	; <-- lvl 1
 	ret
 .exprErr:
-	pop	af	; <-- lvl 3
+	pop	af	; <-- lvl 4
 	jr	.end
 
 ; Check if value at (HL) is a variable. If yes, returns its associated value.
