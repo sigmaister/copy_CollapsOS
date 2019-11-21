@@ -11,10 +11,6 @@ reuse those bits of code.
 Integrating an existing BASIC to Collapse OS seemed a bigger challenge than
 writing from scratch, so here I am, writing from scratch again...
 
-The biggest challenge here is to extract code from zasm, adapt it to fit BASIC,
-not break anything, and have the wisdom to see when copy/pasting is a better
-idea.
-
 ## Design goal
 
 The reason for including a BASIC dialect in Collapse OS is to supply some form
@@ -28,3 +24,66 @@ an interpreter.
 Because the goal is not to provide a foundation for complex programs, I'm
 planning on intentionally crippling this BASIC dialect for the sake of
 simplicity. 
+
+## Usage
+
+Upon launch, a prompt is presented, waiting for a command. There are two types
+of command invocation: direct and numbered.
+
+A direct command is executed immediately. Example: `print 42` will print `42`
+immediately.
+
+A numbered command is added to BASIC's code listing at the specified line
+number. For example, `10 print 42` will set line 10 to the string `print 42`.
+
+Code listing can be printed with `list` and can be ran with `run`. The listing
+is kept in order of lines. Line number don't need to be sequential. You can
+keep leeway in between your lines and then insert a line with a middle number
+later.
+
+### Numbers, expressions and variables
+
+Only 16-bit integers (unsigned for now) are supported in this BASIC. When
+printed, they're printed in decimal form. When expressing number literals, you
+can do so either in decimal (`42`), hexadecimal (`0x2a`) or binary (`0b101010`).
+
+Expressions are accepted wherever a number is expected. For example,
+`print 2+3` will print `5`. Expressions can't have whitespace inside them and
+don't support (yet) parentheses. Supported operators are `+`, `-`, `*` and `/`.
+
+Inside a `if` command, "truth" expressions are accepted (`=`, `<`, `>`, `<=`,
+`>=`). A thruth expression that doesn't contain a truth operator evaluates the
+number as-is: zero if false, nonzero is true.
+
+There are 26 one-letter variables in BASIC which can be assigned a 16-bit
+integer to them. You assign a value to a variable with `=`. For example,
+`a=42+4` will assign 46 to `a` (case insensitive). Those variables can then
+be used in expressions. For example, `print a-6` will print `40`. All variables
+are initialized to zero on launch.
+
+### Commands
+
+There are two types of commands: normal and direct-only. The latter can only
+be invoked in direct mode, not through a code listing.
+
+**bye**. Direct-only. Quits BASIC
+
+**list**. Direct-only. Prints all lines in the code listing, prefixing them
+with their associated line number.
+
+**run**. Direct-only. Runs code from the listing, starting with the first one.
+If `goto` was previously called in direct mode, we start from that line instead.
+
+**print**. Prints the result of the specified expression, then CR/LF. Can be
+given multiple arguments, separated with `,`. In that case, all arguments are
+printed separately with a space in between. For example, `print 12 13` prints
+`12 13<cr><lf>`
+
+**goto**. Make the next line to be executed the line number specified as an
+argument. Errors out if line doesn't exist. Argument can be an expression. If
+invoked in direct mode, `run` must be called to actually run the line (followed
+by the next, and so on).
+
+**if**. If specified condition is true, execute the rest of the line. Otherwise,
+do nothing. For example, `if 2>1 print 12` prints `12` and `if 2<1 print 12`
+does nothing. The argument for this command is a "thruth expression".
