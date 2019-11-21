@@ -11,6 +11,7 @@
 ; *** Code ***
 ;
 ; Parse expression in string at (HL) and returns the result in IX.
+; **This routine mutates (HL).**
 ; We expect (HL) to be disposable: we mutate it to avoid having to make a copy.
 ; Sets Z on success, unset on error.
 parseExpr:

@@ -20,6 +20,7 @@
 .inc "lib/fmt.asm"
 .equ	EXPR_PARSE	parseLiteralOrVar
 .inc "lib/expr.asm"
+.inc "basic/parse.asm"
 .inc "basic/tok.asm"
 .equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
 .inc "basic/var.asm"

@@ -218,6 +218,23 @@ basGOTO:
 	ld	(BAS_PNEXTLN), de
 	ret
 
+basIF:
+	push	hl	; --> lvl 1. original arg
+	ld	de, SCRATCHPAD
+	call	rdWord
+	ex	de, hl
+	call	parseTruth
+	pop	hl	; <-- lvl 1. restore
+	ret	nz
+	or	a
+	ret	z
+	; expr is true, execute next
+	; (HL) back to beginning of args, skip to next arg
+	call	toSep
+	call	rdSep
+	ld	de, basCmds2
+	jp	basCallCmd
+
 ; direct only
 basCmds1:
 	.dw	basBYE
@@ -232,4 +249,6 @@ basCmds2:
 	.db	"print", 0
 	.dw	basGOTO
 	.db	"goto", 0, 0
+	.dw	basIF
+	.db	"if", 0, 0, 0, 0
 	.db	0xff, 0xff, 0xff	; end of table

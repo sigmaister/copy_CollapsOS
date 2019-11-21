@@ -19,8 +19,7 @@ fill:
 findchar:
 	push	bc
 	ld	c, a	; let's use C as our cp target
-	ld	a, 0xff
-	ld	b, a
+	ld	b, 0xff
 
 .loop:	ld	a, (hl)
 	cp	c
@@ -30,7 +29,7 @@ findchar:
 	inc	hl
 	djnz	.loop
 .nomatch:
-	call	unsetZ
+	inc	a		; unset Z
 	jr	.end
 .match:
 	; We ran 0xff-B loops. That's the result that goes in A.
