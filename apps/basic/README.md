@@ -41,11 +41,16 @@ is kept in order of lines. Line number don't need to be sequential. You can
 keep leeway in between your lines and then insert a line with a middle number
 later.
 
+Some commands take arguments. Those are given by typing a whitespace after the
+command name and then the argument. Additional arguments are given the same way,
+by typing a whitespace.
+
 ### Numbers, expressions and variables
 
 Only 16-bit integers (unsigned for now) are supported in this BASIC. When
 printed, they're printed in decimal form. When expressing number literals, you
-can do so either in decimal (`42`), hexadecimal (`0x2a`) or binary (`0b101010`).
+can do so either in decimal (`42`), hexadecimal (`0x2a`), binary (`0b101010`)
+or char ('a', resulting in number 97).
 
 Expressions are accepted wherever a number is expected. For example,
 `print 2+3` will print `5`. Expressions can't have whitespace inside them and
@@ -75,9 +80,12 @@ with their associated line number.
 If `goto` was previously called in direct mode, we start from that line instead.
 
 **print**. Prints the result of the specified expression, then CR/LF. Can be
-given multiple arguments, separated with `,`. In that case, all arguments are
-printed separately with a space in between. For example, `print 12 13` prints
-`12 13<cr><lf>`
+given multiple arguments. In that case, all arguments are printed separately
+with a space in between. For example, `print 12 13` prints `12 13<cr><lf>`
+
+Unlike anywhere else, the `print` command can take a string inside a double
+quote. That string will be printed as-is. For example, `print "foo" 40+2` will
+print `foo 42`.
 
 **goto**. Make the next line to be executed the line number specified as an
 argument. Errors out if line doesn't exist. Argument can be an expression. If

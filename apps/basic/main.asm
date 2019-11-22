@@ -176,21 +176,31 @@ basRUN:
 	ret
 
 basPRINT:
+	; Do we have arguments at all? if not, it's not an error, just print
+	; crlf
+	ld	a, (hl)
+	or	a
+	jr	z, .end
+	; Is our arg a string literal?
+	call	spitQuoted
+	jr	z, .chkAnother	; string printed, skip to chkAnother
 	ld	de, SCRATCHPAD
 	call	rdWord
 	push	hl		; --> lvl 1
 	ex	de, hl
 	call	parseExpr
-	ret	nz
+	jr	nz, .parseError
 	push	ix \ pop de
 	ld	hl, SCRATCHPAD
 	call	fmtDecimal
 	call	printstr
 	pop	hl		; <-- lvl 1
+.chkAnother:
 	; Do we have another arg?
 	call	rdSep
 	jr	z, .another
 	; no, we can stop here
+.end:
 	cp	a		; ensure Z
 	jp	printcrlf
 .another:
@@ -198,6 +208,11 @@ basPRINT:
 	ld	a, ' '
 	call	stdioPutC
 	jr	basPRINT
+.parseError:
+	; unwind the stack before returning
+	pop	hl		; <-- lvl 1
+	ret
+
 
 basGOTO:
 	ld	de, SCRATCHPAD
