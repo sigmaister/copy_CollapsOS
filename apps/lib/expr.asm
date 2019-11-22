@@ -123,6 +123,10 @@ exprTbl:
 	.dw	.or
 	.db	'^'
 	.dw	.xor
+	.db	'}'
+	.dw	.rshift
+	.db	'{'
+	.dw	.lshift
 	.db	0		; end of table
 
 .plus:
@@ -196,5 +200,37 @@ exprTbl:
 	xor	e
 	ld	l, a
 	push	hl \ pop ix
+	cp	a		; ensure Z
+	ret
+
+.rshift:
+	push	ix \ pop hl
+	ld	a, l
+	and	0xf
+	ret	z
+	push	bc
+	ld	b, a
+.rshiftLoop:
+	srl	d
+	rr	e
+	djnz	.rshiftLoop
+	push	de \ pop ix
+	pop	bc
+	cp	a		; ensure Z
+	ret
+
+.lshift:
+	push	ix \ pop hl
+	ld	a, l
+	and	0xf
+	ret	z
+	push	bc
+	ld	b, a
+.lshiftLoop:
+	sla	e
+	rl	d
+	djnz	.lshiftLoop
+	push	de \ pop ix
+	pop	bc
 	cp	a		; ensure Z
 	ret

@@ -91,8 +91,12 @@ this way, it's going to mess with the parser.
 
 An expression is a bunch of literals or symbols assembled by operators.
 Supported operators are `+`, `-`, `*`, `/`, `%` (modulo), `&` (bitwise and),
-`|` (bitwise or) and `^` (bitwise xor). Bitwise operator always operate on
-the whole 16-bits.
+`|` (bitwise or), `^` (bitwise xor), `{` (shift left), `}` (shift right).
+Bitwise operator always operate on the whole 16-bits.
+
+Shift operators break from the `<<` and `>>` tradition because the complexity
+if two-sized operator is significant and deemed not worth it. The shift
+operator shift the left operand X times, X being the right operand.
 
 There is no parenthesis support yet.
 
