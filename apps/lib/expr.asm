@@ -113,6 +113,10 @@ exprTbl:
 	.dw	.minus
 	.db	'*'
 	.dw	.mult
+	.db	'/'
+	.dw	.div
+	.db	'%'
+	.dw	.mod
 	.db	0		; end of table
 
 .plus:
@@ -136,4 +140,20 @@ exprTbl:
 	call	multDEBC
 	push	hl \ pop ix
 	cp	a		; ensure Z
+	ret
+
+.div:
+	; divide takes HL/DE
+	push	bc
+	ex	de, hl
+	push	ix \ pop de
+	call	divide
+	push	bc \ pop ix
+	pop	bc
+	cp	a		; ensure Z
+	ret
+
+.mod:
+	call	.div
+	push	hl \ pop	ix
 	ret

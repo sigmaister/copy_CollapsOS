@@ -42,9 +42,9 @@ sFOO:		.db "FOO", 0
 sBAR:		.db "BAR", 0
 
 test:
-	ld	hl, 0xffff
-	ld	sp, hl
+	ld	sp, 0xffff
 
+	; Old-style tests, not touching them now.
 	ld	hl, s1
 	call	parseExpr
 	jp	nz, fail
@@ -128,9 +128,39 @@ test:
 	jp	nz, fail
 	call	nexttest
 
+	; New-style tests
+	call	testParseExpr
 	; success
 	xor	a
 	halt
+
+testParseExpr:
+	ld	iy, .t1
+	call	.testEQ
+	ld	iy, .t2
+	call	.testEQ
+	ret
+
+.testEQ:
+	push	iy \ pop hl
+	inc	hl \ inc hl
+	call	parseExpr
+	jp	nz, fail
+	push	ix \ pop de
+	ld	a, e
+	cp	(iy)
+	jp	nz, fail
+	ld	a, d
+	cp	(iy+1)
+	jp	nz, fail
+	jp	nexttest
+
+.t1:
+	.dw	7
+	.db	"42/6", 0
+.t2:
+	.dw	1
+	.db	"7%3", 0
 
 nexttest:
 	ld	a, (testNum)
