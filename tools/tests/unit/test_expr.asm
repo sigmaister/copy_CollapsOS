@@ -139,6 +139,12 @@ testParseExpr:
 	call	.testEQ
 	ld	iy, .t2
 	call	.testEQ
+	ld	iy, .t3
+	call	.testEQ
+	ld	iy, .t4
+	call	.testEQ
+	ld	iy, .t5
+	call	.testEQ
 	ret
 
 .testEQ:
@@ -161,6 +167,15 @@ testParseExpr:
 .t2:
 	.dw	1
 	.db	"7%3", 0
+.t3:
+	.dw	0x0907
+	.db	"0x99f7&0x0f0f", 0
+.t4:
+	.dw	0x9fff
+	.db	"0x99f7|0x0f0f", 0
+.t5:
+	.dw	0x96f8
+	.db	"0x99f7^0x0f0f", 0
 
 nexttest:
 	ld	a, (testNum)

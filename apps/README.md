@@ -90,7 +90,11 @@ this way, it's going to mess with the parser.
 ### Expressions
 
 An expression is a bunch of literals or symbols assembled by operators.
-Supported operators are `+`, `-`, `*`, `/` and `%` (modulo). No parenthesis yet.
+Supported operators are `+`, `-`, `*`, `/`, `%` (modulo), `&` (bitwise and),
+`|` (bitwise or) and `^` (bitwise xor). Bitwise operator always operate on
+the whole 16-bits.
+
+There is no parenthesis support yet.
 
 Symbols have a different meaning depending on the application. In zasm, it's
 labels and constants. In basic, it's variables.

@@ -117,6 +117,12 @@ exprTbl:
 	.dw	.div
 	.db	'%'
 	.dw	.mod
+	.db	'&'
+	.dw	.and
+	.db	0x7c		; '|'
+	.dw	.or
+	.db	'^'
+	.dw	.xor
 	.db	0		; end of table
 
 .plus:
@@ -155,5 +161,40 @@ exprTbl:
 
 .mod:
 	call	.div
-	push	hl \ pop	ix
+	push	hl \ pop ix
+	ret
+
+.and:
+	push	ix \ pop hl
+	ld	a, h
+	and	d
+	ld	h, a
+	ld	a, l
+	and	e
+	ld	l, a
+	push	hl \ pop ix
+	cp	a		; ensure Z
+	ret
+.or:
+	push	ix \ pop hl
+	ld	a, h
+	or	d
+	ld	h, a
+	ld	a, l
+	or	e
+	ld	l, a
+	push	hl \ pop ix
+	cp	a		; ensure Z
+	ret
+
+.xor:
+	push	ix \ pop hl
+	ld	a, h
+	xor	d
+	ld	h, a
+	ld	a, l
+	xor	e
+	ld	l, a
+	push	hl \ pop ix
+	cp	a		; ensure Z
 	ret
