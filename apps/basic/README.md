@@ -49,12 +49,11 @@ by typing a whitespace.
 
 Only 16-bit integers (unsigned for now) are supported in this BASIC. When
 printed, they're printed in decimal form. When expressing number literals, you
-can do so either in decimal (`42`), hexadecimal (`0x2a`), binary (`0b101010`)
-or char ('a', resulting in number 97).
+can do so either in multiple forms. . See "Number literals" in `apps/README.md`
+for details.
 
 Expressions are accepted wherever a number is expected. For example,
-`print 2+3` will print `5`. Expressions can't have whitespace inside them and
-don't support (yet) parentheses. Supported operators are `+`, `-`, `*` and `/`.
+`print 2+3` will print `5`.  See "Expressions" in `apps/README.md`.
 
 Inside a `if` command, "truth" expressions are accepted (`=`, `<`, `>`, `<=`,
 `>=`). A thruth expression that doesn't contain a truth operator evaluates the

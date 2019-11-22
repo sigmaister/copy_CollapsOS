@@ -61,3 +61,38 @@ relevant parts of the app's glue unit in your kernel's glue unit. This is often
 simpler and more efficient. However, if your shell is a big program, it might
 run into zasm's limits. In that case, you'd have to assemble your shell
 separately.
+
+## Common features
+
+The folder `lib/` contains code shared in more than one apps and this has the
+effect that some concepts are exactly the same in many application. They are
+therefore sharing documentation, here.
+
+### Number literals
+
+There are decimal, hexadecimal and binary literals. A "straight" number is
+parsed as a decimal. Hexadecimal literals must be prefixed with `0x` (`0xf4`).
+Binary must be prefixed with `0b` (`0b01100110`).
+
+Decimals and hexadecimal are "flexible". Whether they're written in a byte or
+a word, you don't need to prefix them with zeroes. Watch out for overflow,
+however.
+
+Binary literals are also "flexible" (`0b110` is fine), but can't go over a byte.
+
+There is also the char literal (`'X'`), that is, two quotes with a character in
+the middle. The value of that character is interpreted as-is, without any
+encoding involved. That is, whatever binary code is written in between those
+two quotes, it's what is evaluated. Only a single byte at once can be evaluated
+thus. There is no escaping. `'''` results in `0x27`. You can't express a newline
+this way, it's going to mess with the parser.
+
+### Expressions
+
+An expression is a bunch of literals or symbols assembled by operators. For
+now, only `+`, `-` and `*` operators are supported. No parenthesis yet.
+
+Symbols have a different meaning depending on the application. In zasm, it's
+labels and constants. In basic, it's variables.
+
+Expressions can't contain spaces.
