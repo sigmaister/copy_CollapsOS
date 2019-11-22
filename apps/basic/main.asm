@@ -250,6 +250,23 @@ basIF:
 	ld	de, basCmds2
 	jp	basCallCmd
 
+basINPUT:
+	; If our first arg is a string literal, spit it
+	call	spitQuoted
+	call	rdSep
+	ld	a, (hl)
+	call	varChk
+	ret	nz		; not in variable range
+	push	af		; --> lvl 1. remember var index
+	call	stdioReadLine
+	call	parseExpr
+	push	ix \ pop de
+	pop	af		; <-- lvl 1. restore var index
+	call	varAssign
+	call	printcrlf
+	cp	a		; ensure Z
+	ret
+
 ; direct only
 basCmds1:
 	.dw	basBYE
@@ -266,4 +283,6 @@ basCmds2:
 	.db	"goto", 0, 0
 	.dw	basIF
 	.db	"if", 0, 0, 0, 0
+	.dw	basINPUT
+	.db	"input", 0
 	.db	0xff, 0xff, 0xff	; end of table

@@ -55,14 +55,8 @@ varTryAssign:
 	call	parseExpr	; --> number in IX
 	jr	nz, .exprErr
 	pop	af	; <-- lvl 4
-	add	a, a	; * 2 because each element is a word
-	ld	hl, VAR_TBL
-	call	addHL
-	; HL placed, write number
-	push	ix \ pop de
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
+	push	ix \ pop de	; send number to DE
+	call	varAssign
 	xor	a	; ensure Z
 .end:
 	pop	de	; <-- lvl 3
@@ -72,6 +66,21 @@ varTryAssign:
 .exprErr:
 	pop	af	; <-- lvl 4
 	jr	.end
+
+; Given a variable **index** in A (call varChk to transform) and a value in
+; DE, assign that value in the proper cell in VAR_TBL.
+; No checks are made.
+varAssign:
+	push	hl
+	add	a, a	; * 2 because each element is a word
+	ld	hl, VAR_TBL
+	call	addHL
+	; HL placed, write number
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	pop	hl
+	ret
 
 ; Check if value at (HL) is a variable. If yes, returns its associated value.
 ; Otherwise, jump to parseLiteral.

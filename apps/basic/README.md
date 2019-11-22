@@ -95,3 +95,10 @@ by the next, and so on).
 **if**. If specified condition is true, execute the rest of the line. Otherwise,
 do nothing. For example, `if 2>1 print 12` prints `12` and `if 2<1 print 12`
 does nothing. The argument for this command is a "thruth expression".
+
+**input**. Prompts the user for a numerical value and puts that value in the
+specified variable. The prompted value is evaluated as an expression and then
+stored where specified. For example, `input x` stores the result of the
+evaluation in variable `x`. Before the variable name, a quoted string literal
+can be specified. In that case, that string will be printed as-is just before
+the prompt.
