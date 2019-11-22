@@ -1,20 +1,18 @@
 jp	test
 
 .inc "core.asm"
-.inc "str.asm"
-.inc "lib/util.asm"
-.inc "zasm/util.asm"
+.inc "lib/ari.asm"
 
 testNum:	.db 1
-sFoo:		.db "foo", 0
 
 test:
-	ld	hl, 0xffff
-	ld	sp, hl
+	ld	sp, 0xffff
 
-	ld	hl, sFoo
-	call	strlen
-	cp	3
+	ld	de, 12
+	ld	bc, 4
+	call	multDEBC
+	ld	a, l
+	cp	48
 	jp	nz, fail
 	call	nexttest
 
@@ -31,6 +29,7 @@ nexttest:
 fail:
 	ld	a, (testNum)
 	halt
+
 
 
 

@@ -66,6 +66,7 @@ jp	zasmMain
 .inc "core.asm"
 .inc "zasm/const.asm"
 .inc "lib/util.asm"
+.inc "lib/ari.asm"
 .inc "lib/parse.asm"
 .inc "lib/args.asm"
 .inc "zasm/util.asm"

@@ -25,3 +25,20 @@ divide:
 	sbc a, d
 	ld h, a
 	ret
+
+; DE * BC -> DE (high) and HL (low)
+multDEBC:
+	ld	hl, 0
+	ld	a, 0x10
+.loop:
+	add	hl, hl
+	rl	e
+	rl	d
+	jr	nc, .noinc
+	add	hl, bc
+	jr	nc, .noinc
+	inc	de
+.noinc:
+	dec a
+	jr	nz, .loop
+	ret

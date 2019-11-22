@@ -3,6 +3,7 @@ jp	test
 .inc "core.asm"
 .inc "str.asm"
 .inc "lib/util.asm"
+.inc "lib/ari.asm"
 .inc "lib/parse.asm"
 .equ	EXPR_PARSE	parseLiteral
 .inc "lib/expr.asm"

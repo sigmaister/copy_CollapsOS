@@ -4,6 +4,7 @@ jp	runTests
 .inc "core.asm"
 .inc "str.asm"
 .inc "zasm/const.asm"
+.inc "lib/ari.asm"
 .inc "lib/util.asm"
 .inc "zasm/util.asm"
 .inc "lib/parse.asm"

@@ -12,6 +12,7 @@ jp	test
 .inc "core.asm"
 .inc "str.asm"
 .inc "lib/util.asm"
+.inc "lib/ari.asm"
 .inc "zasm/util.asm"
 .inc "zasm/const.asm"
 .inc "lib/parse.asm"

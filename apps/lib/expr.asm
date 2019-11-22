@@ -23,16 +23,30 @@ parseExpr:
 	ret
 
 _parseExpr:
-	ld	a, '+'
+	ld	de, exprTbl
+.loop:
+	ld	a, (de)
+	or	a
+	jp	z, EXPR_PARSE	; no operator, just parse the literal
+	push	de		; --> lvl 1. save operator row
 	call	_findAndSplit
-	jp	z, _applyPlus
-	ld	a, '-'
-	call	_findAndSplit
-	jp	z, _applyMinus
-	ld	a, '*'
-	call	_findAndSplit
-	jp	z, _applyMult
-	jp	EXPR_PARSE
+	jr	z, .found
+	pop	de		; <-- lvl 1
+	inc	de \ inc de \ inc de
+	jr	.loop
+.found:
+	; Operator found, string splitted. Left in (HL), right in (DE)
+	call	_resolveLeftAndRight
+	; Whether _resolveLeftAndRight was a success, we pop our lvl 1 stack
+	; out, which contains our operator row. We pop it in HL because we
+	; don't need our string anymore. L-R numbers are parsed, and in DE and
+	; IX.
+	pop	hl		; <-- lvl 1
+	ret	nz
+	; Resolving left and right succeeded, proceed!
+	inc	hl		; point to routine pointer
+	call	intoHL
+	jp	(hl)
 
 ; Given a string in (HL) and a separator char in A, return a splitted string,
 ; that is, the same (HL) string but with the found A char replaced by a null
@@ -88,20 +102,25 @@ _resolveLeftAndRight:
 	pop	de	; numeric left expr result in DE
 	jp	parseExpr
 
-; Parse expr in (HL) and expr in (DE) and apply + operator to both sides.
-; Put result in IX.
-_applyPlus:
-	call	_resolveLeftAndRight
-	ret	nz
-	; Good! let's do the math! IX has our right part, DE has our left one.
+; Routines in here all have the same signature: they take two numbers, DE (left)
+; and IX (right), apply the operator and put the resulting number in IX.
+; The table has 3 bytes per row: 1 byte for operator and 2 bytes for routine
+; pointer.
+exprTbl:
+	.db	'+'
+	.dw	.plus
+	.db	'-'
+	.dw	.minus
+	.db	'*'
+	.dw	.mult
+	.db	0		; end of table
+
+.plus:
 	add	ix, de
 	cp	a		; ensure Z
 	ret
 
-; Same as _applyPlus but with -
-_applyMinus:
-	call	_resolveLeftAndRight
-	ret	nz
+.minus:
 	push	ix
 	pop	hl
 	ex	de, hl
@@ -112,9 +131,7 @@ _applyMinus:
 	cp	a		; ensure Z
 	ret
 
-_applyMult:
-	call	_resolveLeftAndRight
-	ret	nz
+.mult:
 	push	ix \ pop bc
 	call	multDEBC
 	push	hl \ pop ix
