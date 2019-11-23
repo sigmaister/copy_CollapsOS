@@ -1,6 +1,7 @@
 ; *** Requirements ***
 ; findchar
 ; multDEBC
+; callIXI
 ;
 ; *** Defines ***
 ;
@@ -14,6 +15,9 @@
 ; **This routine mutates (HL).**
 ; We expect (HL) to be disposable: we mutate it to avoid having to make a copy.
 ; Sets Z on success, unset on error.
+; TODO: the IX output register is a bit awkward. Nearly everywhere, I need
+;       to push \ pop that thing. See if we could return the result in DE
+;       instead.
 parseExpr:
 	push	de
 	push	hl
@@ -38,15 +42,16 @@ _parseExpr:
 	; Operator found, string splitted. Left in (HL), right in (DE)
 	call	_resolveLeftAndRight
 	; Whether _resolveLeftAndRight was a success, we pop our lvl 1 stack
-	; out, which contains our operator row. We pop it in HL because we
-	; don't need our string anymore. L-R numbers are parsed, and in DE and
-	; IX.
-	pop	hl		; <-- lvl 1
+	; out, which contains our operator row. We pop it in IX.
+	; L-R numbers are parsed in HL (left) and DE (right).
+	pop	ix		; <-- lvl 1
 	ret	nz
 	; Resolving left and right succeeded, proceed!
-	inc	hl		; point to routine pointer
-	call	intoHL
-	jp	(hl)
+	inc	ix		; point to routine pointer
+	call	callIXI
+	push	de \ pop ix
+	cp	a		; ensure Z
+	ret
 
 ; Given a string in (HL) and a separator char in A, return a splitted string,
 ; that is, the same (HL) string but with the found A char replaced by a null
@@ -90,7 +95,7 @@ _findAndSplit:
 .find:
 
 ; parse expression on the left (HL) and the right (DE) and put the results in
-; DE (left) and IX (right)
+; HL (left) and DE (right)
 _resolveLeftAndRight:
 	call	parseExpr
 	ret	nz		; return immediately if error
@@ -98,12 +103,14 @@ _resolveLeftAndRight:
 	; IX. What we need to do now is the same thing on (DE) and then apply
 	; the + operator. Let's save IX somewhere and parse this.
 	ex	de, hl	; right expr now in HL
-	push	ix
-	pop	de	; numeric left expr result in DE
-	jp	parseExpr
+	push	ix	; --> lvl 1
+	call	parseExpr
+	pop	hl	; <-- lvl 1. left
+	push	ix \ pop de	; right
+	ret		; Z is parseExpr's result
 
 ; Routines in here all have the same signature: they take two numbers, DE (left)
-; and IX (right), apply the operator and put the resulting number in IX.
+; and IX (right), apply the operator and put the resulting number in DE.
 ; The table has 3 bytes per row: 1 byte for operator and 2 bytes for routine
 ; pointer.
 exprTbl:
@@ -130,107 +137,87 @@ exprTbl:
 	.db	0		; end of table
 
 .plus:
-	add	ix, de
-	cp	a		; ensure Z
+	add	hl, de
+	ex	de, hl
 	ret
 
 .minus:
-	push	ix
-	pop	hl
-	ex	de, hl
-	scf \ ccf
+	or	a	; clear carry
 	sbc	hl, de
-	push	hl
-	pop	ix
-	cp	a		; ensure Z
+	ex	de, hl
 	ret
 
 .mult:
-	push	ix \ pop bc
-	call	multDEBC
-	push	hl \ pop ix
-	cp	a		; ensure Z
+	ld	b, h
+	ld	c, l
+	call	multDEBC	; --> HL
+	ex	de, hl
 	ret
 
 .div:
 	; divide takes HL/DE
 	push	bc
-	ex	de, hl
-	push	ix \ pop de
 	call	divide
-	push	bc \ pop ix
+	ld	e, c
+	ld	d, b
 	pop	bc
-	cp	a		; ensure Z
 	ret
 
 .mod:
 	call	.div
-	push	hl \ pop ix
+	ex	de, hl
 	ret
 
 .and:
-	push	ix \ pop hl
 	ld	a, h
 	and	d
-	ld	h, a
+	ld	d, a
 	ld	a, l
 	and	e
-	ld	l, a
-	push	hl \ pop ix
-	cp	a		; ensure Z
+	ld	e, a
 	ret
 .or:
-	push	ix \ pop hl
 	ld	a, h
 	or	d
-	ld	h, a
+	ld	d, a
 	ld	a, l
 	or	e
-	ld	l, a
-	push	hl \ pop ix
-	cp	a		; ensure Z
+	ld	e, a
 	ret
 
 .xor:
-	push	ix \ pop hl
 	ld	a, h
 	xor	d
-	ld	h, a
+	ld	d, a
 	ld	a, l
 	xor	e
-	ld	l, a
-	push	hl \ pop ix
-	cp	a		; ensure Z
+	ld	e, a
 	ret
 
 .rshift:
-	push	ix \ pop hl
-	ld	a, l
+	ld	a, e
 	and	0xf
 	ret	z
 	push	bc
 	ld	b, a
 .rshiftLoop:
-	srl	d
-	rr	e
+	srl	h
+	rr	l
 	djnz	.rshiftLoop
-	push	de \ pop ix
+	ex	de, hl
 	pop	bc
-	cp	a		; ensure Z
 	ret
 
 .lshift:
-	push	ix \ pop hl
-	ld	a, l
+	ld	a, e
 	and	0xf
 	ret	z
 	push	bc
 	ld	b, a
 .lshiftLoop:
-	sla	e
-	rl	d
+	sla	l
+	rl	h
 	djnz	.lshiftLoop
-	push	de \ pop ix
+	ex	de, hl
 	pop	bc
-	cp	a		; ensure Z
 	ret
