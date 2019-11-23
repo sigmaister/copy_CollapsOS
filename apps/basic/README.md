@@ -103,3 +103,14 @@ stored where specified. For example, `input x` stores the result of the
 evaluation in variable `x`. Before the variable name, a quoted string literal
 can be specified. In that case, that string will be printed as-is just before
 the prompt.
+
+**peek/deek**: Put the value at specified memory address into specified
+variable. peek is for a single byte, deek is for a word (little endian). For
+example, `peek 42 a` puts the byte value contained in memory address 0x002a
+into variable `a`. `deek 42 a` does the same as peek, but also puts the value
+of 0x002b into `a`'s MSB.
+
+**poke/doke**: Put the value of specified expression into specified memory
+address. For example, `poke 42 0x102+0x40` puts `0x42` in memory address
+0x2a (MSB is ignored) and `doke 42 0x102+0x40` does the same as poke, but also
+puts `0x01` in memory address 0x2b.

@@ -267,6 +267,47 @@ basINPUT:
 	cp	a		; ensure Z
 	ret
 
+basPEEK:
+	call	basDEEK
+	ret	nz
+	ld	d, 0
+	call	varAssign
+	ret
+
+basPOKE:
+	call	rdExpr
+	ret	nz
+	; peek address in IX. Save it for later
+	push	ix		; --> lvl 1
+	call	rdSep
+	call	rdExpr
+	push	ix \ pop hl
+	pop	ix		; <-- lvl 1
+	ret	nz
+	; Poke!
+	ld	(ix), l
+	ret
+
+basDEEK:
+	call	rdExpr
+	ret	nz
+	; peek address in IX. Let's peek and put result in DE
+	ld	e, (ix)
+	ld	d, (ix+1)
+	call	rdSep
+	ld	a, (hl)
+	call	varChk
+	ret	nz		; not in variable range
+	; All good assign
+	call	varAssign
+	cp	a		; ensure Z
+	ret
+
+basDOKE:
+	call	basPOKE
+	ld	(ix+1), h
+	ret
+
 ; direct only
 basCmds1:
 	.dw	basBYE
@@ -285,4 +326,12 @@ basCmds2:
 	.db	"if", 0, 0, 0, 0
 	.dw	basINPUT
 	.db	"input", 0
+	.dw	basPEEK
+	.db	"peek", 0, 0
+	.dw	basPOKE
+	.db	"poke", 0, 0
+	.dw	basDEEK
+	.db	"deek", 0, 0
+	.dw	basDOKE
+	.db	"doke", 0, 0
 	.db	0xff, 0xff, 0xff	; end of table
