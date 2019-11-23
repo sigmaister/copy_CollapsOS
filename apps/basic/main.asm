@@ -272,6 +272,7 @@ basPEEK:
 	ret	nz
 	ld	d, 0
 	call	varAssign
+	cp	a		; ensure Z
 	ret
 
 basPOKE:
@@ -308,6 +309,17 @@ basDOKE:
 	ld	(ix+1), h
 	ret
 
+basSLEEP:
+	call	rdExpr
+	ret	nz
+	push	ix \ pop hl
+.loop:
+	ld	a, h	; 4T
+	or	l	; 4T
+	ret	z	; 5T
+	dec	hl	; 6T
+	jr	.loop	; 12T
+
 ; direct only
 basCmds1:
 	.dw	basBYE
@@ -334,4 +346,6 @@ basCmds2:
 	.db	"deek", 0, 0
 	.dw	basDOKE
 	.db	"doke", 0, 0
+	.dw	basSLEEP
+	.db	"sleep", 0
 	.db	0xff, 0xff, 0xff	; end of table

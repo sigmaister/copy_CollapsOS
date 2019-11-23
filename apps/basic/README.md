@@ -114,3 +114,6 @@ of 0x002b into `a`'s MSB.
 address. For example, `poke 42 0x102+0x40` puts `0x42` in memory address
 0x2a (MSB is ignored) and `doke 42 0x102+0x40` does the same as poke, but also
 puts `0x01` in memory address 0x2b.
+
+**sleep**: Sleep a number of "units" specified by the supplied expression. A
+"unit" depends on the CPU clock speed. At 4MHz, it is roughly 8 microseconds.
