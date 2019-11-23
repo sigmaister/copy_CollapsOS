@@ -97,8 +97,16 @@ _findAndSplit:
 ; parse expression on the left (HL) and the right (DE) and put the results in
 ; HL (left) and DE (right)
 _resolveLeftAndRight:
+	; special case: is (HL) zero? If yes, it means that our left operand
+	; is empty. consider it as 0
+	ld	ix, 0		; pre-set to 0
+	ld	a, (hl)
+	or	a
+	jr	z, .skip
+	; Parse left operand in (HL)
 	call	parseExpr
 	ret	nz		; return immediately if error
+.skip:
 	; Now we have parsed everything to the left and we have its result in
 	; IX. What we need to do now is the same thing on (DE) and then apply
 	; the + operator. Let's save IX somewhere and parse this.

@@ -192,7 +192,7 @@ basPRINT:
 	jr	nz, .parseError
 	push	ix \ pop de
 	ld	hl, SCRATCHPAD
-	call	fmtDecimal
+	call	fmtDecimalS
 	call	printstr
 	pop	hl		; <-- lvl 1
 .chkAnother:

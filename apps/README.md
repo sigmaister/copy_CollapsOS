@@ -104,3 +104,8 @@ Symbols have a different meaning depending on the application. In zasm, it's
 labels and constants. In basic, it's variables.
 
 Expressions can't contain spaces.
+
+Expressions can have an empty left operand. It will then be considered as 0.
+This allows signed integers, for example, `-42` to be expressed as expected.
+That form doesn't work well everywhere and is mostly supported for BASIC. In
+zasm, you're safer with `0-42`.

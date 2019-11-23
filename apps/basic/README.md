@@ -47,10 +47,12 @@ by typing a whitespace.
 
 ### Numbers, expressions and variables
 
-Only 16-bit integers (unsigned for now) are supported in this BASIC. When
-printed, they're printed in decimal form. When expressing number literals, you
-can do so either in multiple forms. . See "Number literals" in `apps/README.md`
-for details.
+Numbers are stored in memory as 16-bit integers (little endian) and numbers
+being represented by BASIC are expressed as signed integers, in decimal form.
+Line numbers, however, are expressed and treated as unsigned integers: You can,
+if you want, put something on line "-1", but it will be the equivalent of line
+65535. When expressing number literals, you can do so either in multiple forms.
+See "Number literals" in `apps/README.md` for details.
 
 Expressions are accepted wherever a number is expected. For example,
 `print 2+3` will print `5`.  See "Expressions" in `apps/README.md`.

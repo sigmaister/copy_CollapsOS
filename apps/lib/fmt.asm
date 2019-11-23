@@ -1,4 +1,25 @@
 
+; Same as fmtDecimal, but DE is considered a signed number
+fmtDecimalS:
+	bit	7, d
+	jr	z, fmtDecimal	; unset, not negative
+	; Invert DE. spit '-', unset bit, then call fmtDecimal
+	push	de
+	ld	a, '-'
+	ld	(hl), a
+	inc	hl
+	ld	a, d
+	cpl
+	ld	d, a
+	ld	a, e
+	cpl
+	ld	e, a
+	inc	de
+	call	fmtDecimal
+	dec	hl
+	pop	de
+	ret
+
 ; Format the number in DE into the string at (HL) in a decimal form.
 ; Null-terminated. DE is considered an unsigned number.
 fmtDecimal:

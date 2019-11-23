@@ -149,6 +149,8 @@ testParseExpr:
 	call	.testEQ
 	ld	iy, .t7
 	call	.testEQ
+	ld	iy, .t8
+	call	.testEQ
 	ret
 
 .testEQ:
@@ -186,6 +188,9 @@ testParseExpr:
 .t7:
 	.dw	0xcfb8
 	.db	"0x99f7{3", 0
+.t8:
+	.dw	0xffff
+	.db	"-1", 0
 
 nexttest:
 	ld	a, (testNum)
