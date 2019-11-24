@@ -139,7 +139,7 @@ basBYE:
 
 basLIST:
 	call	bufFirst
-	ret	nz
+	jr	nz, .end
 .loop:
 	ld	e, (ix)
 	ld	d, (ix+1)
@@ -153,6 +153,7 @@ basLIST:
 	call	printcrlf
 	call	bufNext
 	jr	z, .loop
+.end:
 	cp	a		; ensure Z
 	ret
 
@@ -383,6 +384,8 @@ basCmds1:
 	.db	"list", 0, 0
 	.dw	basRUN
 	.db	"run", 0, 0, 0
+	.dw	bufInit
+	.db	"clear", 0
 ; statements
 basCmds2:
 	.dw	basPRINT

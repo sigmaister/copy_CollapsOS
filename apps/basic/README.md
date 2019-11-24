@@ -82,15 +82,17 @@ are initialized to zero on launch.
 There are two types of commands: normal and direct-only. The latter can only
 be invoked in direct mode, not through a code listing.
 
-**bye**. Direct-only. Quits BASIC
+**bye**: Direct-only. Quits BASIC
 
-**list**. Direct-only. Prints all lines in the code listing, prefixing them
+**list**: Direct-only. Prints all lines in the code listing, prefixing them
 with their associated line number.
 
-**run**. Direct-only. Runs code from the listing, starting with the first one.
+**run**: Direct-only. Runs code from the listing, starting with the first one.
 If `goto` was previously called in direct mode, we start from that line instead.
 
-**print**. Prints the result of the specified expression, then CR/LF. Can be
+**clear**: Direct-only. Clears the current code listing.
+
+**print**: Prints the result of the specified expression, then CR/LF. Can be
 given multiple arguments. In that case, all arguments are printed separately
 with a space in between. For example, `print 12 13` prints `12 13<cr><lf>`
 
@@ -98,16 +100,16 @@ Unlike anywhere else, the `print` command can take a string inside a double
 quote. That string will be printed as-is. For example, `print "foo" 40+2` will
 print `foo 42`.
 
-**goto**. Make the next line to be executed the line number specified as an
+**goto**: Make the next line to be executed the line number specified as an
 argument. Errors out if line doesn't exist. Argument can be an expression. If
 invoked in direct mode, `run` must be called to actually run the line (followed
 by the next, and so on).
 
-**if**. If specified condition is true, execute the rest of the line. Otherwise,
+**if**: If specified condition is true, execute the rest of the line. Otherwise,
 do nothing. For example, `if 2>1 print 12` prints `12` and `if 2<1 print 12`
 does nothing. The argument for this command is a "thruth expression".
 
-**input**. Prompts the user for a numerical value and puts that value in the
+**input**: Prompts the user for a numerical value and puts that value in the
 specified variable. The prompted value is evaluated as an expression and then
 stored where specified. For example, `input x` stores the result of the
 evaluation in variable `x`. Before the variable name, a quoted string literal
@@ -144,3 +146,7 @@ Here's the documentation for them.
 `fs.asm` provides those commands:
 
 **fls**: prints the list of files contained in the active filesystem.
+
+**ldbas**: loads the content of the file specified in the argument (as an
+unquoted filename) and replace the current code listing with this contents. Any
+line not starting with a number is ignored (not an error).

@@ -84,11 +84,10 @@
 .inc "basic/var.asm"
 .equ	BUF_RAMSTART	VAR_RAMEND
 .inc "basic/buf.asm"
-.equ	BAS_RAMSTART	BUF_RAMEND
-.inc "basic/main.asm"
-
-; Extra cmds
+.equ	BFS_RAMSTART	BUF_RAMEND
 .inc "basic/fs.asm"
+.equ	BAS_RAMSTART	BFS_RAMEND
+.inc "basic/main.asm"
 
 init:
 	di

@@ -22,6 +22,7 @@ bufInit:
 	ld	(BUF_LFREE), hl
 	ld	hl, BUF_POOL
 	ld	(BUF_PFREE), hl
+	cp	a		; ensure Z
 	ret
 
 ; Add line at (HL) with line number DE to the buffer. The string at (HL) should
