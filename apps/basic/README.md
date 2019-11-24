@@ -25,6 +25,12 @@ Because the goal is not to provide a foundation for complex programs, I'm
 planning on intentionally crippling this BASIC dialect for the sake of
 simplicity. 
 
+The idea here is that the system administrator would build herself many little
+tools in assembler and BASIC would be the interactive glue to those tools.
+
+If you find yourself writing complex programs in Collapse OS BASIC, you're on a
+wrong path. Back off, that program should be in assembler.
+
 ## Glueing
 
 The `glue.asm` file in this folder represents the minimal basic system. There
@@ -143,6 +149,16 @@ output I/O on port 42 with value 3.
 
 **sleep**: Sleep a number of "units" specified by the supplied expression. A
 "unit" depends on the CPU clock speed. At 4MHz, it is roughly 8 microseconds.
+
+**addr**: This very handy returns (in `A`), the address you query for. You can
+query for two types of things: commands or special stuff.
+
+If you query for a command, type the name of the command as an argument. The
+address of the associated routine will be returned.
+
+Then, there's the *special stuff*. This is the list of things you can query for:
+
+* `$`: the scratchpad.
 
 ## Optional modules
 

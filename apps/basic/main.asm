@@ -360,6 +360,45 @@ basSLEEP:
 	dec	hl	; 6T
 	jr	.loop	; 12T
 
+basADDR:
+	call	rdWord
+	ex	de, hl
+	ld	de, .specialTbl
+.loop:
+	ld	a, (de)
+	or	a
+	jr	z, .notSpecial
+	cp	(hl)
+	jr	z, .found
+	inc	de \ inc de \ inc de
+	jr	.loop
+.notSpecial:
+	; not found, find cmd. needle in (HL)
+	ex	de, hl		; now in (DE)
+	ld	hl, basCmds1
+	call	basFindCmd
+	jr	z, .foundCmd
+	; no core command? let's try the find hook.
+	ld	ix, (BAS_FINDHOOK)
+	call	callIX
+	ret	nz
+.foundCmd:
+	; We have routine addr in IX
+	ld	(VAR_TBL), ix
+	cp	a		; ensure Z
+	ret
+.found:
+	; found special thing. Put in "A".
+	inc	de
+	call	intoDE
+	ld	(VAR_TBL), de
+	ret		; Z set from .found jump.
+
+.specialTbl:
+	.db	'$'
+	.dw	SCRATCHPAD
+	.db	0
+
 ; direct only
 basCmds1:
 	.dw	basBYE
@@ -394,4 +433,6 @@ basCmds2:
 	.db	"in", 0, 0, 0, 0
 	.dw	basSLEEP
 	.db	"sleep", 0
+	.dw	basADDR
+	.db	"addr", 0, 0
 	.db	0xff, 0xff, 0xff	; end of table
