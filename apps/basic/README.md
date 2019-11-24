@@ -25,6 +25,16 @@ Because the goal is not to provide a foundation for complex programs, I'm
 planning on intentionally crippling this BASIC dialect for the sake of
 simplicity. 
 
+## Glueing
+
+The `glue.asm` file in this folder represents the minimal basic system. There
+are additional modules that can be added that aren't added by default, such
+as `fs.asm` because they require kernel options that might not be available.
+
+To include these modules, you'll need to write your own glue file and to hook
+extra commands through `BAS_FINDHOOK`. Look for examples in `tools/emul` and
+in recipes.
+
 ## Usage
 
 Upon launch, a prompt is presented, waiting for a command. There are two types
@@ -123,3 +133,14 @@ output I/O on port 42 with value 3.
 
 **sleep**: Sleep a number of "units" specified by the supplied expression. A
 "unit" depends on the CPU clock speed. At 4MHz, it is roughly 8 microseconds.
+
+## Optional modules
+
+As explained in "glueing" section abolve, this folder contains optional modules.
+Here's the documentation for them.
+
+### fs
+
+`fs.asm` provides those commands:
+
+**fls**: prints the list of files contained in the active filesystem.

@@ -7,6 +7,7 @@
 .inc "user.h"
 .inc "err.h"
 
+	call	basInit
 	jp	basStart
 
 ; RAM space used in different routines for short term processing.

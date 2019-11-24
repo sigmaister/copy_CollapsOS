@@ -7,16 +7,24 @@
 ; Important note: this is **not** a line number, it's a pointer to a line index
 ; in buffer. If it's not zero, its a valid pointer.
 .equ	BAS_PNEXTLN	@+2
+; Points to a routine to call when a command isn't found in the "core" cmd
+; table. This gives the opportunity to glue code to configure extra commands.
+.equ	BAS_FINDHOOK	@+2
 .equ	BAS_RAMEND	@+2
 
 ; *** Code ***
-basStart:
+basInit:
 	ld	(BAS_INITSP), sp
 	call	varInit
 	call	bufInit
 	xor	a
 	ld	(BAS_PNEXTLN), a
 	ld	(BAS_PNEXTLN+1), a
+	ld	hl, unsetZ
+	ld	(BAS_FINDHOOK), hl
+	ret
+
+basStart:
 	ld	hl, .welcome
 	call	printstr
 	call	printcrlf
@@ -48,10 +56,35 @@ basLoop:
 .sPrompt:
 	.db "> ", 0
 
+; Tries to find command specified in (DE) (must be null-terminated) in cmd
+; table in (HL). If found, sets IX to point to the associated routine. If
+; not found, calls BAS_FINDHOOK so that we look through extra commands
+; configured by glue code.
+; Destroys HL.
+; Z is set if found, unset otherwise.
+basFindCmd:
+	; cmd table starts with routine pointer, skip
+	inc	hl \ inc hl
+.loop:
+	call	strcmp
+	jr	z, .found
+	ld	a, 8
+	call	addHL
+	ld	a, (hl)
+	cp	0xff
+	jr	nz, .loop
+	jp	unsetZ
+.found:
+	dec	hl \ dec hl
+	call	intoHL
+	push	hl \ pop ix
+	ret
+
 ; Call command in (HL) after having looked for it in cmd table in (DE).
-; If found, jump to it. If not found, unset Z. We expect commands to set Z
-; on success. Therefore, when calling basCallCmd results in NZ, we're not sure
-; where the error come from, but well...
+; If found, jump to it. If not found, try (BAS_FINDHOOK). If still not found,
+; unset Z. We expect commands to set Z on success. Therefore, when calling
+; basCallCmd results in NZ, we're not sure where the error come from, but
+; well...
 basCallCmd:
 	; let's see if it's a variable assignment.
 	call	varTryAssign
@@ -64,24 +97,17 @@ basCallCmd:
 	; cmd table in the stack, which we want in HL and we have the rest of
 	; the cmdline in (HL), which we want in the stack!
 	ex	(sp), hl
-	inc	hl \ inc hl
-.loop:
-	call	strcmp
-	jr	z, .found
-	ld	a, 8
-	call	addHL
-	ld	a, (hl)
-	cp	0xff
-	jr	nz, .loop
-	; not found
-	pop	hl		; <-- lvl 1
-	jp	unsetZ
-.found:
-	dec	hl \ dec hl
-	call	intoHL
-	push	hl \ pop ix
+	call	basFindCmd
+	jr	z, .skip
+	; not found, try BAS_FINDHOOK
+	ld	ix, (BAS_FINDHOOK)
+	call	callIX
+.skip:
+	; regardless of the result, we need to balance the stack.
 	; Bring back rest of the command string from the stack
 	pop	hl		; <-- lvl 1
+	ret	nz
+	; cmd found, skip whitespace and then jump!
 	call	rdSep
 	jp	(ix)
 

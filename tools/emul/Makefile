@@ -1,10 +1,10 @@
 CFSPACK = ../cfspack/cfspack
-TARGETS = shell/shell zasm/zasm runbin/runbin
+TARGETS = shell/shell bshell/shell zasm/zasm runbin/runbin
 KERNEL = ../../kernel
 APPS = ../../apps
 ZASMBIN = zasm/zasm
 ZASMSH = ../zasm.sh
-SHELLAPPS = $(addprefix cfsin/, zasm ed basic)
+SHELLAPPS = $(addprefix cfsin/, zasm ed)
 CFSIN_CONTENTS = $(SHELLAPPS) cfsin/user.h
 
 .PHONY: all
@@ -17,6 +17,12 @@ shell/shell.bin: $(APPS)/shell/glue.asm $(ZASMBIN)
 shell/kernel-bin.h: shell/glue.asm shell/shell.bin $(ZASMBIN)
 	$(ZASMSH) $(KERNEL) shell/shell.bin < $< | ./bin2c.sh KERNEL | tee $@ > /dev/null
 
+bshell/shell.bin: bshell/glue.asm $(ZASMBIN)
+	$(ZASMSH) $(KERNEL) bshell/user.h $(APPS) < $< | tee $@ > /dev/null
+
+bshell/shell-bin.h: bshell/shell.bin
+	./bin2c.sh KERNEL < $< | tee $@ > /dev/null
+
 zasm/kernel-bin.h: zasm/kernel.bin
 	./bin2c.sh KERNEL < $< | tee $@ > /dev/null
 
@@ -24,6 +30,7 @@ zasm/zasm-bin.h: zasm/zasm.bin
 	./bin2c.sh USERSPACE < $< | tee $@ > /dev/null
 
 shell/shell: shell/shell.c libz80/libz80.o shell/kernel-bin.h 
+bshell/shell: bshell/shell.c libz80/libz80.o bshell/shell-bin.h 
 $(ZASMBIN): zasm/zasm.c libz80/libz80.o zasm/kernel-bin.h zasm/zasm-bin.h $(CFSPACK)
 runbin/runbin: runbin/runbin.c libz80/libz80.o
 $(TARGETS):
@@ -50,4 +57,4 @@ updatebootstrap: $(ZASMBIN) $(INCCFS)
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) $(SHELLAPPS) {zasm,shell}/*-bin.h
+	rm -f $(TARGETS) $(SHELLAPPS) zasm/*-bin.h shell/*-bin.h

@@ -25,6 +25,11 @@ We don't try to emulate real hardware to ease the development of device drivers
 because so far, I don't see the advantage of emulation versus running code on
 the real thing.
 
+## bshell
+
+The `basic` app is on its way to replace the shell. It is wrapped in the z80
+emulator in the same way that the shell is and interacts with `cfsin` similarly.
+
 ## zasm
 
 `zasm/zasm` is `apps/zasm` wrapped in an emulator. It is quite central to the

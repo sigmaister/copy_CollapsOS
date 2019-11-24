@@ -1,4 +1,5 @@
 /shell/shell
+/bshell/shell
 /zasm/zasm
 /runbin/runbin
 /*/*-bin.h
