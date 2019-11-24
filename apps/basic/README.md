@@ -115,5 +115,11 @@ address. For example, `poke 42 0x102+0x40` puts `0x42` in memory address
 0x2a (MSB is ignored) and `doke 42 0x102+0x40` does the same as poke, but also
 puts `0x01` in memory address 0x2b.
 
+**in**: Same thing as `peek`, but for a I/O port. `in 42 a` generates an input
+I/O on port 42 and stores the byte result in `a`.
+
+**out**: Same thing as `poke`, but for a I/O port. `out 42 1+2` generates an
+output I/O on port 42 with value 3.
+
 **sleep**: Sleep a number of "units" specified by the supplied expression. A
 "unit" depends on the CPU clock speed. At 4MHz, it is roughly 8 microseconds.

@@ -32,30 +32,6 @@ rdSep:
 	inc	a	; unset Z
 	ret
 
-; Find the first whitespace in (HL) and returns its index in A
-; Sets Z if whitespace is found, unset if end of string was found.
-; In the case where no whitespace was found, A returns the length of the string.
-fnWSIdx:
-	push	hl
-	push	bc
-	ld	b, 0
-.loop:
-	ld	a, (hl)
-	call	isSep
-	jr	z, .found
-	or	a
-	jr	z, .eos
-	inc	hl
-	inc	b
-	jr	.loop
-.eos:
-	inc	a	; unset Z
-.found:			; Z already set from isSep
-	ld	a, b
-	pop	bc
-	pop	hl
-	ret
-
 ; Advance HL to the next separator or to the end of string.
 toSep:
 	ld	a, (hl)

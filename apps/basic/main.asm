@@ -56,17 +56,17 @@ basCallCmd:
 	; let's see if it's a variable assignment.
 	call	varTryAssign
 	ret	z	; Done!
-	; Second, get cmd length
-	call	fnWSIdx
-	cp	7
-	jp	nc, unsetZ	; Too long, can't possibly fit anything.
-	; A contains whitespace IDX, save it in B
-	ld	b, a
-	ex	de, hl
+	push	de		; --> lvl 1.
+	ld	de, SCRATCHPAD
+	call	rdWord
+	; cmdname to find in (DE)
+	; How lucky, we have a legitimate use of "ex (sp), hl"! We have the
+	; cmd table in the stack, which we want in HL and we have the rest of
+	; the cmdline in (HL), which we want in the stack!
+	ex	(sp), hl
 	inc	hl \ inc hl
 .loop:
-	ld	a, b		; whitespace IDX
-	call	strncmp
+	call	strcmp
 	jr	z, .found
 	ld	a, 8
 	call	addHL
@@ -74,15 +74,14 @@ basCallCmd:
 	cp	0xff
 	jr	nz, .loop
 	; not found
+	pop	hl		; <-- lvl 1
 	jp	unsetZ
 .found:
 	dec	hl \ dec hl
 	call	intoHL
 	push	hl \ pop ix
-	; Bring back command string from DE to HL
-	ex	de, hl
-	ld	a, b	; cmd's length
-	call	addHL
+	; Bring back rest of the command string from the stack
+	pop	hl		; <-- lvl 1
 	call	rdSep
 	jp	(ix)
 
@@ -309,6 +308,36 @@ basDOKE:
 	ld	(ix+1), h
 	ret
 
+basOUT:
+	call	rdExpr
+	ret	nz
+	; out address in IX. Save it for later
+	push	ix		; --> lvl 1
+	call	rdSep
+	call	rdExpr
+	push	ix \ pop hl
+	pop	bc		; <-- lvl 1
+	ret	nz
+	; Out!
+	out	(c), l
+	cp	a		; ensure Z
+	ret
+
+basIN:
+	call	rdExpr
+	ret	nz
+	push	ix \ pop bc
+	ld	d, 0
+	in	e, (c)
+	call	rdSep
+	ld	a, (hl)
+	call	varChk
+	ret	nz		; not in variable range
+	; All good assign
+	call	varAssign
+	cp	a		; ensure Z
+	ret
+
 basSLEEP:
 	call	rdExpr
 	ret	nz
@@ -346,6 +375,10 @@ basCmds2:
 	.db	"deek", 0, 0
 	.dw	basDOKE
 	.db	"doke", 0, 0
+	.dw	basOUT
+	.db	"out", 0, 0, 0
+	.dw	basIN
+	.db	"in", 0, 0, 0, 0
 	.dw	basSLEEP
 	.db	"sleep", 0
 	.db	0xff, 0xff, 0xff	; end of table
