@@ -77,6 +77,16 @@ integer to them. You assign a value to a variable with `=`. For example,
 be used in expressions. For example, `print a-6` will print `40`. All variables
 are initialized to zero on launch.
 
+### Arguments
+
+Some commands take arguments and there are some common patterns regarding them.
+
+One of them is that all commands that "return" something (`input`, `peek`,
+etc.) always to so in variable `A`.
+
+Another is that whenever a number is expected, expressions, including the ones
+with variables in it, work fine.
+
 ### Commands
 
 There are two types of commands: normal and direct-only. The latter can only
@@ -109,26 +119,24 @@ by the next, and so on).
 do nothing. For example, `if 2>1 print 12` prints `12` and `if 2<1 print 12`
 does nothing. The argument for this command is a "thruth expression".
 
-**input**: Prompts the user for a numerical value and puts that value in the
-specified variable. The prompted value is evaluated as an expression and then
-stored where specified. For example, `input x` stores the result of the
-evaluation in variable `x`. Before the variable name, a quoted string literal
-can be specified. In that case, that string will be printed as-is just before
-the prompt.
+**input**: Prompts the user for a numerical value and puts that value in `A`.
+The prompted value is evaluated as an expression and then stored. The command
+takes an optional string literal parameter. If present, that string will be
+printed before asking for input. Unlike a `print` call, there is no CR/LF after
+that print.
 
-**peek/deek**: Put the value at specified memory address into specified
-variable. peek is for a single byte, deek is for a word (little endian). For
-example, `peek 42 a` puts the byte value contained in memory address 0x002a
-into variable `a`. `deek 42 a` does the same as peek, but also puts the value
-of 0x002b into `a`'s MSB.
+**peek/deek**: Put the value at specified memory address into `A`. peek is for
+a single byte, deek is for a word (little endian). For example, `peek 42` puts
+the byte value contained in memory address 0x002a into variable `A`. `deek 42`
+does the same as peek, but also puts the value of 0x002b into `A`'s MSB.
 
 **poke/doke**: Put the value of specified expression into specified memory
 address. For example, `poke 42 0x102+0x40` puts `0x42` in memory address
 0x2a (MSB is ignored) and `doke 42 0x102+0x40` does the same as poke, but also
 puts `0x01` in memory address 0x2b.
 
-**in**: Same thing as `peek`, but for a I/O port. `in 42 a` generates an input
-I/O on port 42 and stores the byte result in `a`.
+**in**: Same thing as `peek`, but for a I/O port. `in 42` generates an input
+I/O on port 42 and stores the byte result in `A`.
 
 **out**: Same thing as `poke`, but for a I/O port. `out 42 1+2` generates an
 output I/O on port 42 with value 3.

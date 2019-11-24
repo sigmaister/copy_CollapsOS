@@ -280,15 +280,9 @@ basINPUT:
 	; If our first arg is a string literal, spit it
 	call	spitQuoted
 	call	rdSep
-	ld	a, (hl)
-	call	varChk
-	ret	nz		; not in variable range
-	push	af		; --> lvl 1. remember var index
 	call	stdioReadLine
 	call	parseExpr
-	push	ix \ pop de
-	pop	af		; <-- lvl 1. restore var index
-	call	varAssign
+	ld	(VAR_TBL), ix
 	call	printcrlf
 	cp	a		; ensure Z
 	ret
@@ -296,9 +290,9 @@ basINPUT:
 basPEEK:
 	call	basDEEK
 	ret	nz
-	ld	d, 0
-	call	varAssign
-	cp	a		; ensure Z
+	; set MSB to 0
+	xor	a		; sets Z
+	ld	(VAR_TBL+1), a
 	ret
 
 basPOKE:
@@ -321,12 +315,7 @@ basDEEK:
 	; peek address in IX. Let's peek and put result in DE
 	ld	e, (ix)
 	ld	d, (ix+1)
-	call	rdSep
-	ld	a, (hl)
-	call	varChk
-	ret	nz		; not in variable range
-	; All good assign
-	call	varAssign
+	ld	(VAR_TBL), de
 	cp	a		; ensure Z
 	ret
 
@@ -356,13 +345,8 @@ basIN:
 	push	ix \ pop bc
 	ld	d, 0
 	in	e, (c)
-	call	rdSep
-	ld	a, (hl)
-	call	varChk
-	ret	nz		; not in variable range
-	; All good assign
-	call	varAssign
-	cp	a		; ensure Z
+	ld	(VAR_TBL), de
+	; Z set from rdExpr
 	ret
 
 basSLEEP:
