@@ -27,6 +27,7 @@ are other recipes related to the RC2014:
 * [Accessing a MicroSD card](sdcard/README.md)
 * [Assembling binaries](zasm/README.md)
 * [Interfacing a PS/2 keyboard](ps2/README.md)
+* [Replace shell by a BASIC interpreter](basic/README.md)
 
 ## Recipe
 
