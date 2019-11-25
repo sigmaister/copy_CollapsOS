@@ -399,6 +399,31 @@ basADDR:
 	.dw	SCRATCHPAD
 	.db	0
 
+basUSR:
+	call	rdExpr
+	ret	nz
+	push	ix \ pop iy
+	; We have our address to call. Now, let's set up our registers.
+	; HL comes from variable H. H's index is 7*2.
+	ld	hl, (VAR_TBL+14)
+	; DE comes from variable D. D's index is 3*2
+	ld	de, (VAR_TBL+6)
+	; BC comes from variable B. B's index is 1*2
+	ld	bc, (VAR_TBL+2)
+	; IX comes from variable X. X's index is 23*2
+	ld	ix, (VAR_TBL+46)
+	; and finally, A
+	ld	a, (VAR_TBL)
+	call	callIY
+	; Same dance, opposite way
+	ld	(VAR_TBL), a
+	ld	(VAR_TBL+46), ix
+	ld	(VAR_TBL+2), bc
+	ld	(VAR_TBL+6), de
+	ld	(VAR_TBL+14), hl
+	cp	a		; USR never errors out
+	ret
+
 ; direct only
 basCmds1:
 	.dw	basBYE
@@ -435,4 +460,6 @@ basCmds2:
 	.db	"sleep", 0
 	.dw	basADDR
 	.db	"addr", 0, 0
+	.dw	basUSR
+	.db	"usr", 0, 0, 0
 	.db	0xff, 0xff, 0xff	; end of table

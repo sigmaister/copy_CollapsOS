@@ -160,6 +160,19 @@ Then, there's the *special stuff*. This is the list of things you can query for:
 
 * `$`: the scratchpad.
 
+**usr**: This calls the memory address specified as an expression argument.
+Before doing so, it sets the registers according to a specific logic: Variable
+`A`'s LSB goes in register `A`, variable `D` goes in register `DE`, `H` in `HL`
+`B` in `BC` and `X` in `IX`. `IY` can't be used because it's used for the jump.
+Then, after the call, the value of the registers are put back into the
+variables following the same logic.
+
+Let's say, for example, that you want to use the kernel's `printstr` to print
+the contents of the scratchpad. First, you would call `addr $` to put the
+address of the scratchpad in `A`, then do `h=a` to have that address in `HL`
+and, if printstr is, for example, the 21st entry in your jump table, you'd do
+`usr 21*3` and see the scratchpad printed!
+
 ## Optional modules
 
 As explained in "glueing" section abolve, this folder contains optional modules.
