@@ -165,6 +165,31 @@ Then, there's the *special stuff*. This is the list of things you can query for:
 As explained in "glueing" section abolve, this folder contains optional modules.
 Here's the documentation for them.
 
+### blk
+
+Block devices commands. Block devices are configured during kernel
+initialization and are referred to by numbers.
+
+**bsel**: Select the active block device. The active block device is the target
+of all commands below. You select it by specifying its number. For example,
+`bsel 0` selects the first configured device. `bsel 1` selects the second.
+
+A freshly selected blkdev begins with its "pointer" at 0.
+
+**seek**: Moves the blkdev "pointer" to the specified offset. The first
+argument is the offset's least significant half (blkdev supports 32-bit
+addressing). Is is interpreted as an unsigned integer.
+
+The second argument is optional and is the most significant half of the address.
+It defaults to 0.
+
+**getb**: Read a byte in active blkdev at current pointer, then advance the
+pointer by one. Read byte goes in `A`.
+
+**putb**: Writes a byte in active blkdev at current pointer, then advance the
+pointer by one. The value of the byte is determined by the expression supplied
+as an argument. Example: `putb 42`.
+
 ### fs
 
 `fs.asm` provides those commands:

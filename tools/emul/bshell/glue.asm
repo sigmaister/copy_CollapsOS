@@ -86,6 +86,7 @@
 .inc "basic/buf.asm"
 .equ	BFS_RAMSTART	BUF_RAMEND
 .inc "basic/fs.asm"
+.inc "basic/blk.asm"
 .equ	BAS_RAMSTART	BFS_RAMEND
 .inc "basic/main.asm"
 
@@ -105,6 +106,9 @@ init:
 
 basFindCmdExtra:
 	ld	hl, basFSCmds
+	call	basFindCmd
+	ret	z
+	ld	hl, basBLKCmds
 	jp	basFindCmd
 
 emulGetC:
