@@ -86,7 +86,6 @@ basFNEW:
 	call	rdSep		; HL now points to filename
 	push	ix \ pop de
 	ld	a, e
-	out	(42), a
 	jp	fsAlloc
 
 ; Deletes filename with specified name
@@ -114,10 +113,17 @@ basPgmHook:
 	inc	hl		; Z preserved in 16-bit
 	inc	de		; Z preserved in 16-bit
 	jr	z, .loop
-	; Ready to jump. Return USER_CODE in IX and basCallCmd will take care
-	; of setting (HL) to the arg string.
-	ld	ix, USER_CODE
+	; Ready to jump. Return .call in IX and basCallCmd will take care
+	; of setting (HL) to the arg string. .call then takes care of wrapping
+	; the USER_CODE call.
+	ld	ix, .call
 	cp	a		; ensure Z
+	ret
+.call:
+	ld	iy, USER_CODE
+	call	callIY
+	call	basR2Var
+	or	a		; Z set only if A is zero
 	ret
 
 basFSCmds:

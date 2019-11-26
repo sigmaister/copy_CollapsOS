@@ -238,3 +238,10 @@ contents. Any line not starting with a number is ignored (not an error).
 is iterated to see if it finds a file with the same name. If it does, it loads
 its contents at `USER_CODE` (from `user.h`) and calls that address, with HL
 pointing to the the remaining args in the command line.
+
+The user code called this way follows the *usr* convention for output, that is,
+it converts all registers at the end of the call and stores them in appropriate
+variables. If `A` is nonzero, an error is considered to have occurred.
+
+It doesn't do var-to-register transfers on input, however. Only HL is passed
+through (with the contents of the command line).

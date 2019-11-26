@@ -415,6 +415,7 @@ basUSR:
 	; and finally, A
 	ld	a, (VAR_TBL)
 	call	callIY
+basR2Var:	; Just send reg to vars. Used in basPgmHook
 	; Same dance, opposite way
 	ld	(VAR_TBL), a
 	ld	(VAR_TBL+46), ix
