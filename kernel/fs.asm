@@ -555,7 +555,7 @@ fsIter:
 	call	nz, callIY
 	call	fsNext
 	jr	z, .loop	; Z set? fsNext was successful
-	or	a		; ensure Z
+	cp	a		; ensure Z
 	ret
 
 ; Delete currently active file
