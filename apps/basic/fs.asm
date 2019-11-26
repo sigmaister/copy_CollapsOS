@@ -77,6 +77,29 @@ basFOPEN:
 	push	de \ pop ix	; IX now points to the file handle.
 	jp	fsOpen
 
+basPgmHook:
+	; Cmd to find is in (DE)
+	ex	de, hl
+	; (HL) is suitable for a direct fsFindFN call
+	call	fsFindFN
+	ret	nz
+	; We have a file! Let's load it in memory
+	ld	ix, BFS_FILE_HDL
+	call	fsOpen
+	ld	hl, 0		; addr that we read in file handle
+	ld	de, USER_CODE	; addr in mem we write to
+.loop:
+	call	fsGetB		; we use Z at end of loop
+	ld	(de), a		; Z preserved
+	inc	hl		; Z preserved in 16-bit
+	inc	de		; Z preserved in 16-bit
+	jr	z, .loop
+	; Ready to jump. Return USER_CODE in IX and basCallCmd will take care
+	; of setting (HL) to the arg string.
+	ld	ix, USER_CODE
+	cp	a		; ensure Z
+	ret
+
 basFSCmds:
 	.dw	basFLS
 	.db	"fls", 0, 0, 0

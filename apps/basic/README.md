@@ -227,3 +227,9 @@ device (bseek, getb, putb).
 **ldbas <fname>**: loads the content of the file specified in the argument
 (as an unquoted filename) and replace the current code listing with this
 contents. Any line not starting with a number is ignored (not an error).
+
+**basPgmHook**: That is not a command, but a routine to hook into
+`BAS_FINDHOOK`. If you do, whenever a command name isn't found, the filesystem
+is iterated to see if it finds a file with the same name. If it does, it loads
+its contents at `USER_CODE` (from `user.h`) and calls that address, with HL
+pointing to the the remaining args in the command line.

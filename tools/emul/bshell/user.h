@@ -1,5 +1,5 @@
 .equ    SHELL_RAMSTART  0x4100
-.equ    USER_CODE       0x4200
+.equ    USER_CODE       0x4200  ; in sync with glue.asm
 
 ; *** JUMP TABLE ***
 .equ	strncmp			0x03

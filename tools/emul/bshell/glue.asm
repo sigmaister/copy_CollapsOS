@@ -3,6 +3,7 @@
 .inc "err.h"
 .inc "ascii.h"
 .equ	RAMSTART	0x4000
+.equ	USER_CODE	0x4200
 .equ	STDIO_PORT	0x00
 .equ	FS_DATA_PORT	0x01
 .equ	FS_ADDR_PORT	0x02
@@ -109,7 +110,9 @@ basFindCmdExtra:
 	call	basFindCmd
 	ret	z
 	ld	hl, basBLKCmds
-	jp	basFindCmd
+	call	basFindCmd
+	ret	z
+	jp	basPgmHook
 
 emulGetC:
 	; Blocks until a char is returned
