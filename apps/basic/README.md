@@ -108,50 +108,53 @@ If `goto` was previously called in direct mode, we start from that line instead.
 
 **clear**: Direct-only. Clears the current code listing.
 
-**print**: Prints the result of the specified expression, then CR/LF. Can be
-given multiple arguments. In that case, all arguments are printed separately
-with a space in between. For example, `print 12 13` prints `12 13<cr><lf>`
+**print <what> [<what>]**: Prints the result of the specified expression,
+then CR/LF.  Can be given multiple arguments. In that case, all arguments are
+printed separately with a space in between. For example, `print 12 13` prints
+`12 13<cr><lf>`
 
 Unlike anywhere else, the `print` command can take a string inside a double
 quote. That string will be printed as-is. For example, `print "foo" 40+2` will
 print `foo 42`.
 
-**goto**: Make the next line to be executed the line number specified as an
-argument. Errors out if line doesn't exist. Argument can be an expression. If
-invoked in direct mode, `run` must be called to actually run the line (followed
-by the next, and so on).
+**goto <lineno>**: Make the next line to be executed the line number
+specified as an argument. Errors out if line doesn't exist. Argument can be
+an expression. If invoked in direct mode, `run` must be called to actually
+run the line (followed by the next, and so on).
 
-**if**: If specified condition is true, execute the rest of the line. Otherwise,
-do nothing. For example, `if 2>1 print 12` prints `12` and `if 2<1 print 12`
-does nothing. The argument for this command is a "thruth expression".
+**if <cond> <cmd>**: If specified condition is true, execute the rest of the
+line. Otherwise, do nothing. For example, `if 2>1 print 12` prints `12` and `if
+2<1 print 12` does nothing. The argument for this command is a "thruth
+expression".
 
-**input**: Prompts the user for a numerical value and puts that value in `A`.
-The prompted value is evaluated as an expression and then stored. The command
-takes an optional string literal parameter. If present, that string will be
-printed before asking for input. Unlike a `print` call, there is no CR/LF after
-that print.
+**input [<prompt>]**: Prompts the user for a numerical value and puts that
+value in `A`. The prompted value is evaluated as an expression and then stored.
+The command takes an optional string literal parameter. If present, that string
+will be printed before asking for input. Unlike a `print` call, there is no
+CR/LF after that print.
 
-**peek/deek**: Put the value at specified memory address into `A`. peek is for
+**peek/deek <addr>**: Put the value at specified memory address into `A`. peek is for
 a single byte, deek is for a word (little endian). For example, `peek 42` puts
 the byte value contained in memory address 0x002a into variable `A`. `deek 42`
 does the same as peek, but also puts the value of 0x002b into `A`'s MSB.
 
-**poke/doke**: Put the value of specified expression into specified memory
-address. For example, `poke 42 0x102+0x40` puts `0x42` in memory address
-0x2a (MSB is ignored) and `doke 42 0x102+0x40` does the same as poke, but also
-puts `0x01` in memory address 0x2b.
+**poke/doke <addr> <val>**: Put the value of specified expression into
+specified memory address. For example, `poke 42 0x102+0x40` puts `0x42` in
+memory address 0x2a (MSB is ignored) and `doke 42 0x102+0x40` does the same
+as poke, but also puts `0x01` in memory address 0x2b.
 
-**in**: Same thing as `peek`, but for a I/O port. `in 42` generates an input
-I/O on port 42 and stores the byte result in `A`.
+**in <port>**: Same thing as `peek`, but for a I/O port. `in 42` generates an
+input I/O on port 42 and stores the byte result in `A`.
 
-**out**: Same thing as `poke`, but for a I/O port. `out 42 1+2` generates an
-output I/O on port 42 with value 3.
+**out <port> <val>**: Same thing as `poke`, but for a I/O port. `out 42 1+2`
+generates an output I/O on port 42 with value 3.
 
-**sleep**: Sleep a number of "units" specified by the supplied expression. A
-"unit" depends on the CPU clock speed. At 4MHz, it is roughly 8 microseconds.
+**sleep <units>**: Sleep a number of "units" specified by the supplied
+expression. A "unit" depends on the CPU clock speed. At 4MHz, it is roughly 8
+microseconds.
 
-**addr**: This very handy returns (in `A`), the address you query for. You can
-query for two types of things: commands or special stuff.
+**addr <what>**: This very handy returns (in `A`), the address you query for.
+You can query for two types of things: commands or special stuff.
 
 If you query for a command, type the name of the command as an argument. The
 address of the associated routine will be returned.
@@ -160,12 +163,12 @@ Then, there's the *special stuff*. This is the list of things you can query for:
 
 * `$`: the scratchpad.
 
-**usr**: This calls the memory address specified as an expression argument.
-Before doing so, it sets the registers according to a specific logic: Variable
-`A`'s LSB goes in register `A`, variable `D` goes in register `DE`, `H` in `HL`
-`B` in `BC` and `X` in `IX`. `IY` can't be used because it's used for the jump.
-Then, after the call, the value of the registers are put back into the
-variables following the same logic.
+**usr <addr>**: This calls the memory address specified as an expression
+argument.  Before doing so, it sets the registers according to a specific
+logic: Variable `A`'s LSB goes in register `A`, variable `D` goes in register
+`DE`, `H` in `HL` `B` in `BC` and `X` in `IX`. `IY` can't be used because
+it's used for the jump.  Then, after the call, the value of the registers are
+put back into the variables following the same logic.
 
 Let's say, for example, that you want to use the kernel's `printstr` to print
 the contents of the scratchpad. First, you would call `addr $` to put the
@@ -183,14 +186,15 @@ Here's the documentation for them.
 Block devices commands. Block devices are configured during kernel
 initialization and are referred to by numbers.
 
-**bsel**: Select the active block device. The active block device is the target
-of all commands below. You select it by specifying its number. For example,
-`bsel 0` selects the first configured device. `bsel 1` selects the second.
+**bsel <blkid>**: Select the active block device. The active block device is
+the target of all commands below. You select it by specifying its number. For
+example, `bsel 0` selects the first configured device. `bsel 1` selects the
+second.
 
 A freshly selected blkdev begins with its "pointer" at 0.
 
-**seek**: Moves the blkdev "pointer" to the specified offset. The first
-argument is the offset's least significant half (blkdev supports 32-bit
+**seek <lsw> <msw>**: Moves the blkdev "pointer" to the specified offset. The
+first argument is the offset's least significant half (blkdev supports 32-bit
 addressing). Is is interpreted as an unsigned integer.
 
 The second argument is optional and is the most significant half of the address.
@@ -199,9 +203,9 @@ It defaults to 0.
 **getb**: Read a byte in active blkdev at current pointer, then advance the
 pointer by one. Read byte goes in `A`.
 
-**putb**: Writes a byte in active blkdev at current pointer, then advance the
-pointer by one. The value of the byte is determined by the expression supplied
-as an argument. Example: `putb 42`.
+**putb <val>**: Writes a byte in active blkdev at current pointer, then
+advance the pointer by one. The value of the byte is determined by the
+expression supplied as an argument. Example: `putb 42`.
 
 ### fs
 
@@ -209,6 +213,17 @@ as an argument. Example: `putb 42`.
 
 **fls**: prints the list of files contained in the active filesystem.
 
-**ldbas**: loads the content of the file specified in the argument (as an
-unquoted filename) and replace the current code listing with this contents. Any
-line not starting with a number is ignored (not an error).
+**fopen <fhandle> <fname>**: Open file "fname" in handle "fhandle". File handles
+are specified in kernel glue code and are in limited number. The kernel glue
+code also maps to blkids through the glue code. So to know what you're doing
+here, you have to look at your glue code.
+
+In the emulated code, there are two file handles. Handle 0 maps to blkid 1 and
+handle 1 maps to blkid 2.
+
+Once a file is opened, you can use the mapped blkid as you would with any block
+device (bseek, getb, putb).
+
+**ldbas <fname>**: loads the content of the file specified in the argument
+(as an unquoted filename) and replace the current code listing with this
+contents. Any line not starting with a number is ignored (not an error).
