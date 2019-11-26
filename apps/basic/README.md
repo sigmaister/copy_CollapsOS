@@ -224,6 +224,11 @@ handle 1 maps to blkid 2.
 Once a file is opened, you can use the mapped blkid as you would with any block
 device (bseek, getb, putb).
 
+**fnew <blkcnt> <fname>**: Allocates space of "blkcnt" blocks (each block is
+0x100 bytes in size) for a new file names "fname". Maximum blkcnt is 0xff.
+
+**fdel <fname>**: Mark file named "fname" as deleted.
+
 **ldbas <fname>**: loads the content of the file specified in the argument
 (as an unquoted filename) and replace the current code listing with this
 contents. Any line not starting with a number is ignored (not an error).

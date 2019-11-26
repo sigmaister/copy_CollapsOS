@@ -4,6 +4,7 @@
 .equ	BFS_FILE_HDL	BFS_RAMSTART
 .equ	BFS_RAMEND	@+FS_HANDLE_SIZE
 
+; Lists filenames in currently active FS
 basFLS:
 	ld	iy, .iter
 	jp	fsIter
@@ -77,6 +78,25 @@ basFOPEN:
 	push	de \ pop ix	; IX now points to the file handle.
 	jp	fsOpen
 
+; Takes one byte block number to allocate as well we one string arg filename
+; and allocates a new file in the current fs.
+basFNEW:
+	call	rdExpr		; file block count
+	ret	nz
+	call	rdSep		; HL now points to filename
+	push	ix \ pop de
+	ld	a, e
+	out	(42), a
+	jp	fsAlloc
+
+; Deletes filename with specified name
+basFDEL:
+	call	fsFindFN
+	ret	nz
+	; Found! delete
+	jp	fsDel
+
+
 basPgmHook:
 	; Cmd to find is in (DE)
 	ex	de, hl
@@ -107,4 +127,8 @@ basFSCmds:
 	.db	"ldbas", 0
 	.dw	basFOPEN
 	.db	"fopen", 0
+	.dw	basFNEW
+	.db	"fnew", 0, 0
+	.dw	basFDEL
+	.db	"fdel", 0, 0
 	.db	0xff, 0xff, 0xff	; end of table
