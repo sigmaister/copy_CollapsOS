@@ -126,16 +126,11 @@ basERR:
 ;
 ; Commands are expected to set Z on success.
 basBYE:
-	ld	hl, .sBye
-	call	printstr
-	call	printcrlf
 	; To quit the loop, let's return the stack to its initial value and
 	; then return.
 	xor	a
 	ld	sp, (BAS_INITSP)
 	ret
-.sBye:
-	.db	"Goodbye!", 0
 
 basLIST:
 	call	bufFirst
@@ -349,6 +344,22 @@ basIN:
 	; Z set from rdExpr
 	ret
 
+basGETC:
+	call	stdioGetC
+	ld	(VAR_TBL), a
+	xor	a
+	ld	(VAR_TBL+1), a
+	ret
+
+basPUTC:
+	call	rdExpr
+	ret	nz
+	push	ix \ pop hl
+	ld	a, l
+	call	stdioPutC
+	xor	a	; set Z
+	ret
+
 basSLEEP:
 	call	rdExpr
 	ret	nz
@@ -457,6 +468,10 @@ basCmds2:
 	.db	"out", 0, 0, 0
 	.dw	basIN
 	.db	"in", 0, 0, 0, 0
+	.dw	basGETC
+	.db	"getc", 0, 0
+	.dw	basPUTC
+	.db	"putc", 0, 0
 	.dw	basSLEEP
 	.db	"sleep", 0
 	.dw	basADDR

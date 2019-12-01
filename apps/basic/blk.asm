@@ -26,6 +26,8 @@ basGETB:
 	call	blkGetB
 	ret	nz
 	ld	(VAR_TBL), a
+	xor	a
+	ld	(VAR_TBL+1), a
 	ret
 
 basPUTB:

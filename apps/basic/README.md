@@ -149,6 +149,11 @@ input I/O on port 42 and stores the byte result in `A`.
 **out <port> <val>**: Same thing as `poke`, but for a I/O port. `out 42 1+2`
 generates an output I/O on port 42 with value 3.
 
+**getc**: Waits for a single character to be typed in the console and then puts
+that value in `A`.
+
+**putc <char>**: Puts the specified character to the console.
+
 **sleep <units>**: Sleep a number of "units" specified by the supplied
 expression. A "unit" depends on the CPU clock speed. At 4MHz, it is roughly 8
 microseconds.
