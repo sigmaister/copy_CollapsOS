@@ -2,7 +2,7 @@
 .inc "fs.h"
 .inc "err.h"
 .inc "ascii.h"
-.equ	RAMSTART	0x4000
+.equ	RAMSTART	0x2000
 .equ	USER_CODE	0x4200
 .equ	STDIO_PORT	0x00
 .equ	FS_DATA_PORT	0x01

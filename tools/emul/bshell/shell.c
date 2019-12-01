@@ -26,8 +26,8 @@
 //#define DEBUG
 #define MAX_FSDEV_SIZE 0x20000
 
-// in sync with shell.asm
-#define RAMSTART 0x4000
+// in sync with glue.asm
+#define RAMSTART 0x2000
 #define STDIO_PORT 0x00
 #define FS_DATA_PORT 0x01
 // Controls what address (24bit) the data port returns. To select an address,
