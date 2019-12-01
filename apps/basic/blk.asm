@@ -38,12 +38,12 @@ basPUTB:
 	jp	blkPutB
 
 basBLKCmds:
+	.db	"bsel", 0
 	.dw	basBSEL
-	.db	"bsel", 0, 0
-	.dw	basBSEEK
 	.db	"bseek", 0
+	.dw	basBSEEK
+	.db	"getb", 0
 	.dw	basGETB
-	.db	"getb", 0, 0
+	.db	"putb", 0
 	.dw	basPUTB
-	.db	"putb", 0, 0
-	.db	0xff, 0xff, 0xff	; end of table
+	.db	0xff		; end of table

@@ -127,14 +127,14 @@ basPgmHook:
 	ret
 
 basFSCmds:
+	.db	"fls", 0
 	.dw	basFLS
-	.db	"fls", 0, 0, 0
-	.dw	basLDBAS
 	.db	"ldbas", 0
-	.dw	basFOPEN
+	.dw	basLDBAS
 	.db	"fopen", 0
+	.dw	basFOPEN
+	.db	"fnew", 0
 	.dw	basFNEW
-	.db	"fnew", 0, 0
+	.db	"fdel", 0
 	.dw	basFDEL
-	.db	"fdel", 0, 0
-	.db	0xff, 0xff, 0xff	; end of table
+	.db	0xff		; end of table

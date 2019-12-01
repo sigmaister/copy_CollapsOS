@@ -52,6 +52,19 @@ strcmp:
 	; early, set otherwise)
 	ret
 
+; Given a string at (HL), move HL until it points to the end of that string.
+strskip:
+	push	af
+	xor	a	; look for null char
+.loop:
+	cp	(hl)
+	jp	z, .found
+	inc	hl
+	jr	.loop
+.found:
+	pop	af
+	ret
+
 ; Returns length of string at (HL) in A.
 ; Doesn't include null termination.
 strlen:

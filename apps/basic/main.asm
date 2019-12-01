@@ -63,19 +63,18 @@ basLoop:
 ; Destroys HL.
 ; Z is set if found, unset otherwise.
 basFindCmd:
-	; cmd table starts with routine pointer, skip
-	inc	hl \ inc hl
 .loop:
 	call	strcmp
-	jr	z, .found
-	ld	a, 8
-	call	addHL
+	call	strskip
+	inc	hl		; point to routine
+	jr	z, .found	; Z from strcmp
+	inc	hl \ inc hl	; skip routine
 	ld	a, (hl)
-	cp	0xff
-	jr	nz, .loop
-	jp	unsetZ
+	inc	a		; was it 0xff?
+	jr	nz, .loop	; no
+	dec	a		; unset Z
+	ret
 .found:
-	dec	hl \ dec hl
 	call	intoHL
 	push	hl \ pop ix
 	ret
@@ -436,46 +435,49 @@ basR2Var:	; Just send reg to vars. Used in basPgmHook
 	cp	a		; USR never errors out
 	ret
 
+; Command table format: Null-terminated string followed by a 2-byte routine
+; pointer.
+
 ; direct only
 basCmds1:
+	.db	"bye", 0
 	.dw	basBYE
-	.db	"bye", 0, 0, 0
+	.db	"list", 0
 	.dw	basLIST
-	.db	"list", 0, 0
+	.db	"run", 0
 	.dw	basRUN
-	.db	"run", 0, 0, 0
-	.dw	bufInit
 	.db	"clear", 0
+	.dw	bufInit
 ; statements
 basCmds2:
-	.dw	basPRINT
 	.db	"print", 0
+	.dw	basPRINT
+	.db	"goto", 0
 	.dw	basGOTO
-	.db	"goto", 0, 0
+	.db	"if", 0
 	.dw	basIF
-	.db	"if", 0, 0, 0, 0
-	.dw	basINPUT
 	.db	"input", 0
+	.dw	basINPUT
+	.db	"peek", 0
 	.dw	basPEEK
-	.db	"peek", 0, 0
+	.db	"poke", 0
 	.dw	basPOKE
-	.db	"poke", 0, 0
+	.db	"deek", 0
 	.dw	basDEEK
-	.db	"deek", 0, 0
+	.db	"doke", 0
 	.dw	basDOKE
-	.db	"doke", 0, 0
+	.db	"out", 0
 	.dw	basOUT
-	.db	"out", 0, 0, 0
+	.db	"in", 0
 	.dw	basIN
-	.db	"in", 0, 0, 0, 0
+	.db	"getc", 0
 	.dw	basGETC
-	.db	"getc", 0, 0
+	.db	"putc", 0
 	.dw	basPUTC
-	.db	"putc", 0, 0
-	.dw	basSLEEP
 	.db	"sleep", 0
+	.dw	basSLEEP
+	.db	"addr", 0
 	.dw	basADDR
-	.db	"addr", 0, 0
+	.db	"usr", 0
 	.dw	basUSR
-	.db	"usr", 0, 0, 0
-	.db	0xff, 0xff, 0xff	; end of table
+	.db	0xff	; end of table
