@@ -126,3 +126,16 @@ You can then include that file in your "user" code, like this:
 
 If you load that code at `0xa000` and call it, it will print "Hello World!" by
 using the `printstr` routine from `core.asm`.
+
+## Doing the same with the BASIC shell
+
+The BASIC shell also has the capacity to load code from serial console but its
+semantic is a bit different from the regular shell. Instead of peeking and
+poking, you use `getc` to send data and then `putc` to send the same data back
+for verification. Then, you can use `poke` to commit it to memory.
+
+There's an upload tool that use these commands and it's `uploadb.py`. It is
+invoked with the same arguments as `upload.py`.
+
+Once your code is uploaded, you will call it with BASIC's `usr` command. See
+BASIC's README for more details.
