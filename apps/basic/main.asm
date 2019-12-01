@@ -31,7 +31,7 @@ basStart:
 	jr	basLoop
 
 .welcome:
-	.db "OK", 0
+	.db "Collapse OS", 0
 
 basLoop:
 	ld	hl, .sPrompt
