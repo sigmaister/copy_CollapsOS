@@ -31,14 +31,17 @@ zasm/zasm-bin.h: zasm/zasm.bin
 
 shell/shell: shell/shell.c libz80/libz80.o shell/kernel-bin.h 
 bshell/shell: bshell/shell.c libz80/libz80.o bshell/shell-bin.h 
-$(ZASMBIN): zasm/zasm.c libz80/libz80.o zasm/kernel-bin.h zasm/zasm-bin.h $(CFSPACK)
+$(ZASMBIN): zasm/zasm.c emul.o libz80/libz80.o zasm/kernel-bin.h zasm/zasm-bin.h $(CFSPACK)
 runbin/runbin: runbin/runbin.c libz80/libz80.o
 $(TARGETS):
-	$(CC) $< libz80/libz80.o -o $@
+	$(CC) $< emul.o libz80/libz80.o -o $@
 
 libz80/libz80.o: libz80/z80.c
 	$(MAKE) -C libz80/codegen opcodes
 	$(CC) -Wall -ansi -g -c -o libz80/libz80.o libz80/z80.c
+
+emul.o: emul.c
+	$(CC) -c -o emul.o emul.c
 
 $(CFSPACK):
 	$(MAKE) -C ../cfspack
@@ -57,4 +60,4 @@ updatebootstrap: $(ZASMBIN) $(INCCFS)
 
 .PHONY: clean
 clean:
-	rm -f $(TARGETS) $(SHELLAPPS) zasm/*-bin.h shell/*-bin.h
+	rm -f $(TARGETS) $(SHELLAPPS) emul.o zasm/*-bin.h shell/*-bin.h

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "../libz80/z80.h"
+#include "../emul.h"
 #include "kernel-bin.h"
 #include "zasm-bin.h"
 
@@ -48,8 +48,6 @@
 // you want to spit this content to stderr.
 //#define VERBOSE
 
-static Z80Context cpu;
-static uint8_t mem[0x10000];
 // STDIN buffer, allows us to seek and tell
 static uint8_t inpt[STDIN_BUFSIZE];
 static int inpt_size;
@@ -61,100 +59,100 @@ static uint32_t fsdev_size = 0;
 static uint32_t fsdev_ptr = 0;
 static uint8_t fsdev_seek_tell_cnt = 0;
 
-static uint8_t io_read(int unused, uint16_t addr)
+static uint8_t iord_stdio()
 {
-    addr &= 0xff;
-    if (addr == STDIO_PORT) {
-        if (inpt_ptr < inpt_size) {
-            return inpt[inpt_ptr++];
-        } else {
-            return 0;
-        }
-    } else if (addr == STDIN_SEEK_PORT) {
-        if (middle_of_seek_tell) {
-            middle_of_seek_tell = 0;
-            return inpt_ptr & 0xff;
-        } else {
-#ifdef DEBUG
-            fprintf(stderr, "tell %d\n", inpt_ptr);
-#endif
-            middle_of_seek_tell = 1;
-            return inpt_ptr >> 8;
-        }
-    } else if (addr == FS_DATA_PORT) {
-        if (fsdev_ptr < fsdev_size) {
-            return fsdev[fsdev_ptr++];
-        } else {
-            return 0;
-        }
-    } else if (addr == FS_SEEK_PORT) {
-        if (fsdev_seek_tell_cnt != 0) {
-            return fsdev_seek_tell_cnt;
-        } else if (fsdev_ptr >= fsdev_size) {
-            return 1;
-        } else {
-            return 0;
-        }
+    if (inpt_ptr < inpt_size) {
+        return inpt[inpt_ptr++];
     } else {
-        fprintf(stderr, "Out of bounds I/O read: %d\n", addr);
         return 0;
     }
 }
 
-static void io_write(int unused, uint16_t addr, uint8_t val)
+static uint8_t iord_stdin_seek()
 {
-    addr &= 0xff;
-    if (addr == STDIO_PORT) {
-// When mem-dumping, we don't output regular stuff.
-#ifndef MEMDUMP
-        putchar(val);
-#endif
-    } else if (addr == STDIN_SEEK_PORT) {
-        if (middle_of_seek_tell) {
-            inpt_ptr |= val;
-            middle_of_seek_tell = 0;
-#ifdef DEBUG
-            fprintf(stderr, "seek %d\n", inpt_ptr);
-#endif
-        } else {
-            inpt_ptr = (val << 8) & 0xff00;
-            middle_of_seek_tell = 1;
-        }
-    } else if (addr == FS_DATA_PORT) {
-        if (fsdev_ptr < fsdev_size) {
-            fsdev[fsdev_ptr++] = val;
-        }
-    } else if (addr == FS_SEEK_PORT) {
-        if (fsdev_seek_tell_cnt == 0) {
-            fsdev_ptr = val << 16;
-            fsdev_seek_tell_cnt = 1;
-        } else if (fsdev_seek_tell_cnt == 1) {
-            fsdev_ptr |= val << 8;
-            fsdev_seek_tell_cnt = 2;
-        } else {
-            fsdev_ptr |= val;
-            fsdev_seek_tell_cnt = 0;
-#ifdef DEBUG
-            fprintf(stderr, "FS seek %d\n", fsdev_ptr);
-#endif
-        }
-    } else if (addr == STDERR_PORT) {
-#ifdef VERBOSE
-        fputc(val, stderr);
-#endif
+    if (middle_of_seek_tell) {
+        middle_of_seek_tell = 0;
+        return inpt_ptr & 0xff;
     } else {
-        fprintf(stderr, "Out of bounds I/O write: %d / %d (0x%x)\n", addr, val, val);
+#ifdef DEBUG
+        fprintf(stderr, "tell %d\n", inpt_ptr);
+#endif
+        middle_of_seek_tell = 1;
+        return inpt_ptr >> 8;
     }
 }
 
-static uint8_t mem_read(int unused, uint16_t addr)
+static uint8_t iord_fsdata()
 {
-    return mem[addr];
+    if (fsdev_ptr < fsdev_size) {
+        return fsdev[fsdev_ptr++];
+    } else {
+        return 0;
+    }
 }
 
-static void mem_write(int unused, uint16_t addr, uint8_t val)
+static uint8_t iord_fsseek()
 {
-    mem[addr] = val;
+    if (fsdev_seek_tell_cnt != 0) {
+        return fsdev_seek_tell_cnt;
+    } else if (fsdev_ptr >= fsdev_size) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void iowr_stdio(uint8_t val)
+{
+// When mem-dumping, we don't output regular stuff.
+#ifndef MEMDUMP
+    putchar(val);
+#endif
+}
+
+static void iowr_stdin_seek(uint8_t val)
+{
+    if (middle_of_seek_tell) {
+        inpt_ptr |= val;
+        middle_of_seek_tell = 0;
+#ifdef DEBUG
+        fprintf(stderr, "seek %d\n", inpt_ptr);
+#endif
+    } else {
+        inpt_ptr = (val << 8) & 0xff00;
+        middle_of_seek_tell = 1;
+    }
+}
+
+static void iowr_fsdata(uint8_t val)
+{
+    if (fsdev_ptr < fsdev_size) {
+        fsdev[fsdev_ptr++] = val;
+    }
+}
+
+static void iowr_fsseek(uint8_t val)
+{
+    if (fsdev_seek_tell_cnt == 0) {
+        fsdev_ptr = val << 16;
+        fsdev_seek_tell_cnt = 1;
+    } else if (fsdev_seek_tell_cnt == 1) {
+        fsdev_ptr |= val << 8;
+        fsdev_seek_tell_cnt = 2;
+    } else {
+        fsdev_ptr |= val;
+        fsdev_seek_tell_cnt = 0;
+#ifdef DEBUG
+        fprintf(stderr, "FS seek %d\n", fsdev_ptr);
+#endif
+    }
+}
+
+static void iowr_stderr(uint8_t val)
+{
+#ifdef VERBOSE
+    fputc(val, stderr);
+#endif
 }
 
 int main(int argc, char *argv[])
@@ -163,12 +161,22 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Too many args\n");
         return 1;
     }
+    Machine *m = emul_init();
+    m->iord[STDIO_PORT] = iord_stdio;
+    m->iord[STDIN_SEEK_PORT] = iord_stdin_seek;
+    m->iord[FS_DATA_PORT] = iord_fsdata;
+    m->iord[FS_SEEK_PORT] = iord_fsseek;
+    m->iowr[STDIO_PORT] = iowr_stdio;
+    m->iowr[STDIN_SEEK_PORT] = iowr_stdin_seek;
+    m->iowr[FS_DATA_PORT] = iowr_fsdata;
+    m->iowr[FS_SEEK_PORT] = iowr_fsseek;
+    m->iowr[STDERR_PORT] = iowr_stderr;
     // initialize memory
     for (int i=0; i<sizeof(KERNEL); i++) {
-        mem[i] = KERNEL[i];
+        m->mem[i] = KERNEL[i];
     }
     for (int i=0; i<sizeof(USERSPACE); i++) {
-        mem[i+USER_CODE] = USERSPACE[i];
+        m->mem[i+USER_CODE] = USERSPACE[i];
     }
     char *init_org = "00";
     if (argc >= 2) {
@@ -178,8 +186,8 @@ int main(int argc, char *argv[])
         }
     }
     // glue.asm knows that it needs to fetch these arguments at this address.
-    mem[0xff00] = init_org[0];
-    mem[0xff01] = init_org[1];
+    m->mem[0xff00] = init_org[0];
+    m->mem[0xff01] = init_org[1];
     fsdev_size = 0;
     if (argc == 3) {
         FILE *fp = fopen(argv[2], "r");
@@ -209,25 +217,18 @@ int main(int argc, char *argv[])
     }
     inpt_size = inpt_ptr;
     inpt_ptr = 0;
-    Z80RESET(&cpu);
-    cpu.ioRead = io_read;
-    cpu.ioWrite = io_write;
-    cpu.memRead = mem_read;
-    cpu.memWrite = mem_write;
 
-    while (!cpu.halted) {
-        Z80Execute(&cpu);
-    }
+    emul_loop();
 #ifdef MEMDUMP
     for (int i=0; i<0x10000; i++) {
         putchar(mem[i]);
     }
 #endif
     fflush(stdout);
-    int res = cpu.R1.br.A;
+    int res = m->cpu.R1.br.A;
     if (res != 0) {
-        int lineno = cpu.R1.wr.HL;
-        int inclineno = cpu.R1.wr.DE;
+        int lineno = m->cpu.R1.wr.HL;
+        int inclineno = m->cpu.R1.wr.DE;
         if (inclineno) {
             fprintf(
                 stderr,
