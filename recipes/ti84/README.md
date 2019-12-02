@@ -8,6 +8,8 @@ screen. With a tiny font, the best we can get is a 24x10 console.
 
 There is, however, a built-in USB controller that might prove very handy.
 
+[Further reading](../../doc/ti8x.md)
+
 ## Recipe
 
 This recipe gets the Collapse OS BASIC shell to run on the TI-84+, using its LCD
