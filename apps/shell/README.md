@@ -1,5 +1,9 @@
 # shell
 
+**This shell is currently being replaced with the
+[BASIC shell](../basic/README.md). While it's still used in many places, it's
+being phased out.**
+
 The shell is a text interface giving you access to commands to control your
 machine. It is not built to be user friendly, but to minimize binary space and
 maximize code simplicity.

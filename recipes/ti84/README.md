@@ -10,7 +10,7 @@ There is, however, a built-in USB controller that might prove very handy.
 
 ## Recipe
 
-This recipe gets the Collapse OS shell to run on the TI-84+, using its LCD
+This recipe gets the Collapse OS BASIC shell to run on the TI-84+, using its LCD
 screen as output and its builtin keyboard as input.
 
 ## Gathering parts
@@ -66,9 +66,19 @@ Press "1" to continue.
 
 When this is done, you can press the ON button to see Collapse OS' prompt!
 
+## Validation errors
+
+Sometimes, when uploading an upgrade file to your calculator, you'll get a
+validation error. You can always try again, but in my own experience, some
+specific binaries will simply always be refused by the calculator. Adding
+random `nop` or reordering lines (when it makes sense, of course) should fix
+the problem.
+
+I'm not sure whether it's a bug with the calculator or with `mktiupgrade`.
+
 ## Usage
 
-The shell works like a normal shell, but with very tight screen space.
+The shell works like a normal BASIC shell, but with very tight screen space.
 
 When pressing a "normal" key, it spits the symbol associated to it depending
 on the current mode. In normal mode, it spits the digit/symbol. In Alpha mode,

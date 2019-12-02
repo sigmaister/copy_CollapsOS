@@ -51,6 +51,7 @@ init:
 
 	call	aciaInit
 	ei
+	call	basInit
 	jp	basStart
 
 
