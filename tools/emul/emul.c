@@ -48,6 +48,7 @@ Machine* emul_init()
 {
     memset(m.mem, 0, 0x10000);
     m.ramstart = 0;
+    m.minsp = 0xffff;
     for (int i=0; i<0x100; i++) {
         m.iord[i] = NULL;
         m.iowr[i] = NULL;
@@ -65,6 +66,10 @@ bool emul_step()
 {
     if (!m.cpu.halted) {
         Z80Execute(&m.cpu);
+        ushort newsp = m.cpu.R1.wr.SP;
+        if (newsp != 0 && newsp < m.minsp) {
+            m.minsp = newsp;
+        }
         return true;
     } else {
         return false;
@@ -74,4 +79,9 @@ bool emul_step()
 void emul_loop()
 {
     while (emul_step());
+}
+
+void emul_printdebug()
+{
+    fprintf(stderr, "Min SP: %04x\n", m.minsp);
 }

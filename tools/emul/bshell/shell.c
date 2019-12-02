@@ -186,5 +186,6 @@ int main()
     termInfo.c_lflag |= ECHO;
     termInfo.c_lflag |= ICANON;
     tcsetattr(0, TCSAFLUSH, &termInfo);
+    emul_printdebug();
     return 0;
 }
