@@ -47,14 +47,26 @@ def main():
 
     for i, c in enumerate(fcontents):
         c = bytes([c])
-        sendcmd(fd, 'getc')
-        os.write(fd, c)
-        os.read(fd, 2) # read prompt
-        sendcmd(fd, 'putc a')
-        r = os.read(fd, 1) # putc result
-        os.read(fd, 2) # read prompt
-        if r != c:
-            print(f"Mismatch at byte {i}! {c} != {r}")
+        print('.', end='', flush=True)
+        for _ in range(5): # try 5 times
+            sendcmd(fd, 'getc')
+            os.write(fd, c)
+            os.read(fd, 2) # read prompt
+            sendcmd(fd, 'print a')
+            s = b''
+            while True:
+                r = os.read(fd, 1) # putc result
+                if not r.isdigit():
+                    break
+                s += r
+            os.read(fd, 3) # read prompt
+            if int(s) == c[0]:
+                break
+            else:
+                print(f"Mismatch at byte {i}! {c} != {r}. Retrying")
+        else:
+            print("Maximum retries reached, abort")
+            return 1
         sendcmd(fd, 'poke m a')
         os.read(fd, 2) # read prompt
         sendcmd(fd, 'm=m+1')
