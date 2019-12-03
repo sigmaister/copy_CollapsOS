@@ -148,6 +148,7 @@ basFindCmdExtra:
 	.dw 0x1e00
 	.db "zasm", 0
 	.dw 0x2300
+	.db 0xff
 
 f0GetB:
 	ld	ix, FS_HANDLES
