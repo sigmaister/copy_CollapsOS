@@ -1,4 +1,4 @@
-.equ    USER_RAMSTART   0xc200
+.equ    USER_CODE   0xc200
 ; Make ed fit in SMS's memory
 .equ    ED_BUF_MAXLINES 0x100
 .equ    ED_BUF_PADMAXLEN 0x800
@@ -22,7 +22,6 @@
 .equ	fsGetB			@+3
 .equ	fsPutB			@+3
 .equ	fsSetSize		@+3
-.equ	parseArgs		@+3
 .equ	printstr		@+3
 .equ	_blkGetB		@+3
 .equ	_blkPutB		@+3

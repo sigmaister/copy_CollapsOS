@@ -1,6 +1,11 @@
+; TODO: This recipe has not been tested since its conversion to the BASIC shell.
+; My PS/2 adapter has been acting up and probably has a loose wire. I need to
+; fix it beore I can test this recipe on real hardware.
+; But theoretically, it works...
+
 ; 8K of onboard RAM
 .equ	RAMSTART	0xc000
-.equ	USER_RAMSTART	0xc200
+.equ	USER_CODE	0xd500
 ; Memory register at the end of RAM. Must not overwrite
 .equ	RAMEND		0xddd0
 
@@ -19,7 +24,6 @@
 	jp	fsGetB
 	jp	fsPutB
 	jp	fsSetSize
-	jp	parseArgs
 	jp	printstr
 	jp	_blkGetB
 	jp	_blkPutB
@@ -70,25 +74,32 @@
 .equ	FS_HANDLE_COUNT	2
 .inc "fs.asm"
 
-; *** Shell ***
+; *** BASIC ***
+
+; RAM space used in different routines for short term processing.
+.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD	FS_RAMEND
 .inc "lib/util.asm"
+.inc "lib/ari.asm"
 .inc "lib/parse.asm"
-.inc "lib/args.asm"
-.inc "lib/stdio.asm"
-.equ	SHELL_RAMSTART	FS_RAMEND
-.equ	SHELL_EXTRA_CMD_COUNT 10
-.inc "shell/main.asm"
-.dw	edCmd, zasmCmd, fnewCmd, fdelCmd, fopnCmd, flsCmd, blkBselCmd
-.dw	blkSeekCmd, blkLoadCmd, blkSaveCmd
+.inc "lib/fmt.asm"
+.equ	EXPR_PARSE	parseLiteralOrVar
+.inc "lib/expr.asm"
+.inc "basic/util.asm"
+.inc "basic/parse.asm"
+.inc "basic/tok.asm"
+.equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
+.inc "basic/var.asm"
+.equ	BUF_RAMSTART	VAR_RAMEND
+.inc "basic/buf.asm"
+.equ	BFS_RAMSTART	BUF_RAMEND
+.inc "basic/fs.asm"
+.inc "basic/blk.asm"
+.equ	BAS_RAMSTART	BFS_RAMEND
+.inc "basic/main.asm"
 
-.inc "shell/blkdev.asm"
-.inc "shell/fs.asm"
-
-.equ	PGM_RAMSTART		SHELL_RAMEND
-.equ	PGM_CODEADDR		USER_RAMSTART
-.inc "shell/pgm.asm"
-
-.out	PGM_RAMEND
+; USER_CODE is set according to this output below.
+.out BAS_RAMEND
 
 init:
 	di
@@ -116,10 +127,27 @@ init:
 	call	kbdInit
 	call	vdpInit
 
-	call	shellInit
-	ld	hl, pgmShellHook
-	ld	(SHELL_CMDHOOK), hl
-	jp	shellLoop
+	call	basInit
+	ld	hl, basFindCmdExtra
+	ld	(BAS_FINDHOOK), hl
+	jp	basStart
+
+basFindCmdExtra:
+	ld	hl, basFSCmds
+	call	basFindCmd
+	ret	z
+	ld	hl, basBLKCmds
+	call	basFindCmd
+	ret	z
+	ld	hl, .mycmds
+	call	basFindCmd
+	ret	z
+	jp	basPgmHook
+.mycmds:
+	.db "ed", 0
+	.dw 0x1e00
+	.db "zasm", 0
+	.dw 0x2300
 
 f0GetB:
 	ld	ix, FS_HANDLES
@@ -137,30 +165,14 @@ f1PutB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
 	jp	fsPutB
 
-edCmd:
-	.db	"ed", 0, 0, 0b1001, 0, 0
-	push	hl \ pop ix
-	ld	l, (ix)
-	ld	h, (ix+1)
-	jp	0x1900
-
-zasmCmd:
-	.db	"zasm", 0b1001, 0, 0
-	push	hl \ pop ix
-	ld	l, (ix)
-	ld	h, (ix+1)
-	jp	0x1d00
-
-; last time I checked, PC at this point was 0x183c. Let's give us a nice margin
+; last time I checked, PC at this point was 0x1df8. Let's give us a nice margin
 ; for the start of ed.
-.fill 0x1900-$
+.fill 0x1e00-$
 .bin "ed.bin"
 
-; Last check: 0x1c4e
-.fill 0x1d00-$
+; Last check: 0x22dd
+.fill 0x2300-$
 .bin "zasm.bin"
 
 .fill 0x7ff0-$
 .db "TMR SEGA", 0x00, 0x00, 0xfb, 0x68, 0x00, 0x00, 0x00, 0x4c
-
-

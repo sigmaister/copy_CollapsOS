@@ -37,7 +37,7 @@ thing!
 
 ## Usage
 
-On boot, you will get a regular Collapse OS shell. See the rest of the
+On boot, you will get a regular Collapse OS BASIC shell. See the rest of the
 documentation for shell usage instructions.
 
 The particularity here is that, unlike with the RC2014, we don't access Collapse
