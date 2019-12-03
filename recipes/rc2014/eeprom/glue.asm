@@ -33,47 +33,56 @@ jp	aciaInt
 .equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
+.inc "lib/args.asm"
 .equ	AT28W_RAMSTART	STDIO_RAMEND
 .inc "at28w/main.asm"
 
-; *** Shell ***
-.inc "lib/util.asm"
-.inc "lib/parse.asm"
-.inc "lib/args.asm"
-.inc "lib/stdio.asm"
-.equ	SHELL_RAMSTART	AT28W_RAMEND
-.equ	SHELL_EXTRA_CMD_COUNT 5
-.inc "shell/main.asm"
-; Extra cmds
-.dw	a28wCmd
-.dw	blkBselCmd, blkSeekCmd, blkLoadCmd, blkSaveCmd
+; *** BASIC ***
 
-.inc "shell/blkdev.asm"
+; RAM space used in different routines for short term processing.
+.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD	AT28W_RAMEND
+.inc "lib/util.asm"
+.inc "lib/ari.asm"
+.inc "lib/parse.asm"
+.inc "lib/fmt.asm"
+.equ	EXPR_PARSE	parseLiteralOrVar
+.inc "lib/expr.asm"
+.inc "basic/util.asm"
+.inc "basic/parse.asm"
+.inc "basic/tok.asm"
+.equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
+.inc "basic/var.asm"
+.equ	BUF_RAMSTART	VAR_RAMEND
+.inc "basic/buf.asm"
+.inc "basic/blk.asm"
+.equ	BAS_RAMSTART	BUF_RAMEND
+.inc "basic/main.asm"
 
 init:
 	di
 	; setup stack
-	ld	hl, RAMEND
-	ld	sp, hl
+	ld	sp, RAMEND
 	im 1
 
 	call	aciaInit
-	call	shellInit
-
 	xor	a
 	ld	de, BLOCKDEV_SEL
 	call	blkSel
 
+	call	basInit
+	ld	hl, basFindCmdExtra
+	ld	(BAS_FINDHOOK), hl
 	ei
-	jp	shellLoop
+	jp	basStart
 
-a28wCmd:
-	.db	"a28w", 0b011, 0b001, 0
-	ld	a, (hl)
-	ld	(AT28W_MAXBYTES), a
-	inc	hl
-	ld	a, (hl)
-	ld	(AT28W_MAXBYTES+1), a
-	jp	at28wInner
-
-
+basFindCmdExtra:
+	ld	hl, basBLKCmds
+	call	basFindCmd
+	ret	z
+	ld	hl, .mycmds
+	jp	basFindCmd
+.mycmds:
+	.db "at28w", 0
+	.dw at28wMain
+	.db 0xff
