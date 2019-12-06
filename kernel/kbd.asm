@@ -65,7 +65,7 @@ kbdGetC:
 	ld	a, (hl)
 	pop	hl		; <-- lvl 1
 	or	a
-	jp	z, unsetZ	; no code. Keep A at 0, but unset Z
+	jr	z, kbdGetC	; no code. Keep A at 0, but unset Z
 	; We have something!
 	cp	a		; ensure Z
 	ret
@@ -85,7 +85,7 @@ kbdGetC:
 	; A scan code over 0x80 is out of bounds or prev KC tell us we should
 	; skip. Ignore.
 	xor	a
-	jp	unsetZ
+	jr	kbdGetC
 .nothing:
 	; We have nothing. Before we go further, we'll wait a bit to give our
 	; device the time to "breathe". When we're in a "nothing" loop, the z80
@@ -97,7 +97,7 @@ kbdGetC:
 	nop
 	djnz	.wait
 	pop	bc
-	jp	unsetZ
+	jr	kbdGetC
 ; Whether KC in A is L or R shift
 .isShift:
 	cp	KBD_KC_LSHIFT
