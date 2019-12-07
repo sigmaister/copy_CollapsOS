@@ -21,25 +21,37 @@ jp	init
 .equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
-; *** Shell ***
+; *** BASIC ***
+
+; RAM space used in different routines for short term processing.
+.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD	STDIO_RAMEND
 .inc "lib/util.asm"
+.inc "lib/ari.asm"
 .inc "lib/parse.asm"
-.inc "lib/args.asm"
-.inc "lib/stdio.asm"
-.equ	SHELL_RAMSTART	STDIO_RAMEND
-.equ	SHELL_EXTRA_CMD_COUNT 0
-.inc "shell/main.asm"
+.inc "lib/fmt.asm"
+.equ	EXPR_PARSE	parseLiteralOrVar
+.inc "lib/expr.asm"
+.inc "basic/util.asm"
+.inc "basic/parse.asm"
+.inc "basic/tok.asm"
+.equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
+.inc "basic/var.asm"
+.equ	BUF_RAMSTART	VAR_RAMEND
+.inc "basic/buf.asm"
+.equ	BAS_RAMSTART	BUF_RAMEND
+.inc "basic/main.asm"
 
 init:
 	di
-	; setup stack
-	ld	hl, RAMEND
-	ld	sp, hl
+	ld	sp, RAMEND
+	im 1
 
 	call	aciaInit
 	call	kbdInit
-	call	shellInit
-	jp	shellLoop
+	call	basInit
+	ei
+	jp	basStart
 
 KBD_FETCHKC:
 	in	a, (KBD_PORT)
