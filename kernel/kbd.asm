@@ -17,9 +17,10 @@
 ; *** Variables ***
 ; Set to previously received scan code
 .equ	KBD_PREV_KC	KBD_RAMSTART
-; Whether Shift key is pressed
-.equ	KBD_SHIFT_ON	KBD_PREV_KC+1
-.equ	KBD_RAMEND	KBD_SHIFT_ON+1
+; Whether Shift key is pressed. When not pressed, holds 0. When pressed, holds
+; 0x80. This allows for quick shifting in the glyph table.
+.equ	KBD_SHIFT_ON	@+1
+.equ	KBD_RAMEND	@+1
 
 kbdInit:
 	xor	a
@@ -45,58 +46,49 @@ kbdGetC:
 	cp	KBD_KC_BREAK
 	jr	z, .break
 	cp	KBD_KC_EXT
-	jr	z, .ignore
+	jr	z, .nothing
 	ex	af, af'		; restore saved KC
+	; A scan code over 0x80 is out of bounds or prev KC tell us we should
+	; skip. Ignore.
 	cp	0x80
-	jr	nc, .ignore
+	jr	nc, .nothing
 	; No need to skip, code within bounds, we have something!
 	call	.isShift
 	jr	z, .shiftPressed
 	; Let's see if there's a ASCII code associated to it.
 	push	hl		; --> lvl 1
 	ld	hl, KBD_SHIFT_ON
-	bit	0, (hl)
+	or	(hl)		; if shift is on, A now ranges in 0x80-0xff.
 	ld	hl, kbdScanCodes	; no flag changed
-	jr	z, .shiftNotPressed
-	; Shift is being pressed. Use Shifted table.
-	ld	hl, kbdScanCodesS
-.shiftNotPressed:
 	call	addHL
 	ld	a, (hl)
 	pop	hl		; <-- lvl 1
 	or	a
-	jr	z, kbdGetC	; no code. Keep A at 0, but unset Z
+	jr	z, kbdGetC	; no code.
 	; We have something!
 	cp	a		; ensure Z
 	ret
 .shiftPressed:
-	ld	a, 1
+	ld	a, 0x80
 	ld	(KBD_SHIFT_ON), a
-	jr	.ignore		; to actual char to return
+	jr	.nothing	; no actual char to return
 .break:
 	ex	af, af'		; restore saved KC
 	call	.isShift
-	jr	nz, .ignore
+	jr	nz, .nothing
 	; We had a shift break, update status
 	xor	a
 	ld	(KBD_SHIFT_ON), a
-	; continue to .ignore
-.ignore:
-	; A scan code over 0x80 is out of bounds or prev KC tell us we should
-	; skip. Ignore.
-	xor	a
-	jr	kbdGetC
+	; continue to .nothing
 .nothing:
 	; We have nothing. Before we go further, we'll wait a bit to give our
 	; device the time to "breathe". When we're in a "nothing" loop, the z80
 	; hammers the device really fast and continuously generates interrupts
 	; on it and it interferes with its other task of reading the keyboard.
-	push	bc
-	ld	b, 0
+	xor	a
 .wait:
-	nop
-	djnz	.wait
-	pop	bc
+	inc	a
+	jr	nz, .wait
 	jr	kbdGetC
 ; Whether KC in A is L or R shift
 .isShift:
@@ -106,7 +98,7 @@ kbdGetC:
 	ret
 
 ; A list of the values associated with the 0x80 possible scan codes of the set
-; 2 of the PS/2 keyboard specs. 0 means no value. That value is a character than
+; 2 of the PS/2 keyboard specs. 0 means no value. That value is a character that
 ; can be read in a GetC routine. No make code in the PS/2 set 2 reaches 0x80.
 kbdScanCodes:
 ; 0x00    1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
@@ -126,8 +118,7 @@ kbdScanCodes:
 ; 0x70 27 = ESC
 .db '0','.','2','5','6','8', 27,  0,  0,  0,'3',  0,  0,'9',  0,  0
 
-; Same values, but shifted
-kbdScanCodesS:
+; Same values, but shifted, exactly 0x80 bytes after kbdScanCodes
 ; 0x00    1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
 .db   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  9,'~',  0
 ; 0x10 9 = TAB
