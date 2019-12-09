@@ -359,6 +359,15 @@ basPUTC:
 	xor	a	; set Z
 	ret
 
+basPUTH:
+	call	rdExpr
+	ret	nz
+	push	ix \ pop hl
+	ld	a, l
+	call	printHex
+	xor	a	; set Z
+	ret
+
 basSLEEP:
 	call	rdExpr
 	ret	nz
@@ -474,6 +483,8 @@ basCmds2:
 	.dw	basGETC
 	.db	"putc", 0
 	.dw	basPUTC
+	.db	"puth", 0
+	.dw	basPUTH
 	.db	"sleep", 0
 	.dw	basSLEEP
 	.db	"addr", 0

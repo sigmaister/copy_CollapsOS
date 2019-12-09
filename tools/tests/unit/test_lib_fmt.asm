@@ -5,7 +5,8 @@ jp	test
 .inc "lib/ari.asm"
 .inc "lib/fmt.asm"
 
-testNum:	.db 1
+stdioPutC:
+	ret
 
 test:
 	ld	sp, 0xffff
@@ -79,6 +80,8 @@ testFmtDecimalS:
 .t2:
 	.dw 0-1234
 	.db "-1234", 0
+
+testNum:	.db 1
 
 nexttest:
 	ld	a, (testNum)

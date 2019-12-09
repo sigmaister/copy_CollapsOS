@@ -149,6 +149,11 @@ that value in `A`.
 
 `putc <char>`: Puts the specified character to the console.
 
+`puth <char>`: Puts the specified character to the console, encoded in two
+hexadecimal digits. For example, `puth 0x42` yields `42`. This is useful for
+spitting binary contents to a console that has special handling of certain
+control characters.
+
 `sleep <units>`: Sleep a number of "units" specified by the supplied
 expression. A "unit" depends on the CPU clock speed. At 4MHz, it is roughly 8
 microseconds.

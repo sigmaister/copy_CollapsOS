@@ -9,7 +9,7 @@ jp	init
 .inc "lib/util.asm"
 .inc "lib/parse.asm"
 .inc "lib/args.asm"
-.inc "lib/stdio.asm"
+.inc "lib/fmt.asm"
 .equ	SHELL_RAMSTART	USER_RAMSTART
 .equ	SHELL_EXTRA_CMD_COUNT	0
 .inc "shell/main.asm"

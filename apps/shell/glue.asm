@@ -17,12 +17,12 @@ jp	init
 .dw	blkBselCmd, blkSeekCmd, blkLoadCmd, blkSaveCmd
 .dw	fsOnCmd, flsCmd, fnewCmd, fdelCmd, fopnCmd
 
-.equ	STDIO_RAMSTART		SHELL_RAMEND
-.inc "lib/stdio.asm"
+.inc "lib/ari.asm"
+.inc "lib/fmt.asm"
 .inc "shell/blkdev.asm"
 .inc "shell/fs.asm"
 
-.equ	PGM_RAMSTART		STDIO_RAMEND
+.equ	PGM_RAMSTART		SHELL_RAMEND
 .equ	PGM_CODEADDR		USER_CODE
 .inc "shell/pgm.asm"
 
