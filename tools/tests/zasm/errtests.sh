@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # no "set -e" because we test errors
 
@@ -6,9 +6,11 @@ ZASM=../../zasm.sh
 
 chkerr() {
     echo "Check that '$1' results in error $2"
-    ${ZASM} <<< $1 > /dev/null
+    ${ZASM} > /dev/null <<XXX
+$1
+XXX
     local res=$?
-    if [[ $res == $2 ]]; then
+    if [ $res = $2 ]; then
         echo "Good!"
     else
         echo "$res != $2"
@@ -18,15 +20,17 @@ chkerr() {
 
 chkoom() {
     echo "Trying OOM error..."
-    local s=""
+    local tmp=$(mktemp)
     # 300 x 27-29 bytes > 8192 bytes. Large enough to smash the pool.
-    for i in {1..300}; do
-        s+=".equ abcdefghijklmnopqrstuvwxyz$i 42"
-        s+=$'\n'
+    local i=0
+    while [ "$i" -lt "300" ]; do
+        echo ".equ abcdefghijklmnopqrstuvwxyz$i 42" >> ${tmp}
+        i=$(($i+1))
     done
-    ${ZASM} <<< "$s" > /dev/null
+    ${ZASM} < ${tmp} > /dev/null
     local res=$?
-    if [[ $res == 23 ]]; then
+    rm ${tmp}
+    if [ $res = 23 ]; then
         echo "Good!"
     else
         echo "$res != 23"
@@ -57,5 +61,5 @@ chkerr ".db 0x100" 20
 # TODO: find out why this tests fails on Travis but not on my machine...
 # chkerr $'nop \ nop \ nop\n.fill 2-$' 20
 chkerr ".inc \"doesnotexist\"" 21
-chkerr "foo:\\foo:" 22
+chkerr 'foo:\\foo:' 22
 chkoom

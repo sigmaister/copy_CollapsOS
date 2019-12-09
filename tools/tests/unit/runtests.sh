@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-set -e
+#!/bin/sh -e
 
 BASE=../../..
 TOOLS=../..
@@ -17,7 +15,7 @@ chk() {
     fi
 }
 
-if [[ ! -z $1 ]]; then
+if [ ! -z $1 ]; then
     chk $1
     exit 0
 fi

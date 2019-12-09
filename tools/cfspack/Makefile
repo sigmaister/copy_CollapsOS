@@ -4,6 +4,11 @@ TARGETS = cfspack cfsunpack
 all: $(TARGETS)
 
 cfspack: cfspack.c
+	$(CC) $(CFLAGS) -o $@ cfspack.c
+
 cfsunpack: cfsunpack.c
-$(TARGETS):
-	$(CC) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ cfsunpack.c
+
+.PHONY: clean
+clean:
+	rm -f $(TARGETS)

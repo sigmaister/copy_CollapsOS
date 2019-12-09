@@ -2,6 +2,6 @@ EMULDIR = ../emul
 
 .PHONY: run
 run:
-	make -C $(EMULDIR) zasm runbin
+	$(MAKE) -C $(EMULDIR) zasm/zasm runbin/runbin
 	cd unit && ./runtests.sh
 	cd zasm && ./runtests.sh

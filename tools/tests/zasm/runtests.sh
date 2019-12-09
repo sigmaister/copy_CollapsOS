@@ -1,6 +1,4 @@
-#!/usr/bin/env bash
-
-set -e
+#!/bin/sh -e
 
 KERNEL=../../../kernel
 APPS=../../../apps
@@ -11,7 +9,7 @@ cmpas() {
     FN=$1
     EXPECTED=$(xxd ${FN}.expected)
     ACTUAL=$(cat ${FN} | $ZASM "${KERNEL}" "${APPS}" | xxd)
-    if [ "$ACTUAL" == "$EXPECTED" ]; then
+    if [ "$ACTUAL" = "$EXPECTED" ]; then
         echo ok
     else
         echo actual
@@ -22,7 +20,7 @@ cmpas() {
     fi
 }
 
-if [[ ! -z $1 ]]; then
+if [ ! -z $1 ]; then
     cmpas $1
     exit 0
 fi
