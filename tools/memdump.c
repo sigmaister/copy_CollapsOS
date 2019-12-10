@@ -50,17 +50,12 @@ int main(int argc, char **argv)
     for (int i=0; i<bytecount; i++) {
         sendcmd(fd, "peek m");
         read(fd, s, 2); // read prompt
-        sendcmd(fd, "print a");
-        for (int j=0; j<3; j++) {
-            read(fd, s+j, 1);
-            s[j+1] = 0; // always null-terminate
-            if (s[j] < '0') {
-                break;
-            }
-        }
-        unsigned char c = strtol(s, NULL, 10);
+        sendcmd(fd, "puth a");
+        read(fd, s, 2); // read hex pair
+        s[2] = 0; // null terminate
+        unsigned char c = strtol(s, NULL, 16);
         putchar(c);
-        read(fd, s, 3); // read \r\n + prompt - last char
+        read(fd, s, 2); // read prompt
         sendcmd(fd, "m=m+1");
         read(fd, s, 2); // read prompt
     }

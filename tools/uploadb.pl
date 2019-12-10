@@ -50,19 +50,15 @@ while (sysread $fh, my $char, 1) {
         sendcmd("getc");
         syswrite $devh, $char;
         sysread $devh, $rd, 2; # read prompt
-        sendcmd("print a");
-        my $s = "";
-        while (1) {
-            sysread $devh, $rd, 1;
-            if ($rd !~ /\d/) { last; }
-            $s .= $rd;
-        }
-        sysread $devh, $rd, 3; # read prompt
-        if ($s == ord($char)) {
+        sendcmd("puth a");
+        sysread $devh, $rd, 2;
+        my $ri = hex($rd);
+        sysread $devh, $rd, 2; # read prompt
+        if ($ri == ord($char)) {
             last;
         } else {
             if ($i < 4) {
-                print "Mismatch at byte ${i}! ${s} != ${ord($char)}. Retrying.\n";
+                print "Mismatch at byte ${i}! ${ri} != ${ord($char)}. Retrying.\n";
             } else {
                 die "Maximum retries reached, abort.\n";
             }
