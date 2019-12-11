@@ -1,5 +1,6 @@
 ; *** Requirements ***
 ; stdioPutC
+; divide
 ;
 
 ; Same as fmtDecimal, but DE is considered a signed number

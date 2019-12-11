@@ -14,7 +14,7 @@
 ; sdcPutB
 ; sdcGetB
 ; printstr
-; printHexPair
+; stdioPutC
 ;
 ; *** Includes ***
 
@@ -23,5 +23,7 @@
 
 jp	sdctMain
 
+.inc "lib/ari.asm"
+.inc "lib/fmt.asm"
 .inc "sdct/main.asm"
 USER_RAMSTART:

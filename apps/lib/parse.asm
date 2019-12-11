@@ -1,3 +1,5 @@
+; *** Requirements ***
+; lib/util
 ; *** Code ***
 
 ; Parse the hex char at A and extract it's 0-15 numerical value. Put the result

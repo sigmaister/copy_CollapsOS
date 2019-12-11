@@ -1,3 +1,6 @@
+; *** Requirements ***
+; lib/parse
+;
 ; *** Consts ***
 ; maximum number of bytes to receive as args in all commands. Determines the
 ; size of the args variable.

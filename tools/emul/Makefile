@@ -5,7 +5,7 @@ APPS = ../../apps
 ZASMBIN = zasm/zasm
 ZASMSH = ../zasm.sh
 SHELLAPPS = zasm ed
-SHELLTGTS = ${SHELLAPPS:S/^/cfsin\//}
+SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
 
@@ -55,7 +55,7 @@ $(CFSPACK):
 
 # -o in sync with USER_CODE in shell/user.h
 $(SHELLTGTS): $(ZASMBIN)
-	$(ZASMSH) -o 42 $(KERNEL) $(APPS) shell/user.h < $(APPS)/${@:T}/glue.asm > $@
+	$(ZASMSH) -o 42 $(KERNEL) $(APPS) shell/user.h < $(APPS)/${@:cfsin/%=%}/glue.asm > $@
 
 cfsin/user.h: shell/user.h
 	cp shell/user.h $@

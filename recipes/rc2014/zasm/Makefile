@@ -1,4 +1,6 @@
-CFSTARGETS = $(addprefix cfsin/, zasm sdct memt at28w user.h)
+SHELLAPPS = zasm sdct memt at28w
+APPTARGETS = ${SHELLAPPS:%=cfsin/%} 
+CFSTARGETS = $(APPTARGETS) cfsin/user.h
 BASE = ../../..
 TOOLS = $(BASE)/tools
 ZASM = $(TOOLS)/zasm.sh
@@ -18,17 +20,8 @@ $(CFSPACK):
 sdcard.cfs: $(CFSTARGETS) $(CFSPACK)
 	$(CFSPACK) cfsin > $@
 
-cfsin/zasm: $(ZASMBIN)
-	$(ZASM) $(KERNEL) $(APPS) user.h < $(APPS)/zasm/glue.asm > $@
-
-cfsin/sdct: $(ZASMBIN)
-	$(ZASM) $(APPS) user.h < $(APPS)/sdct/glue.asm > $@
-
-cfsin/memt: $(ZASMBIN)
-	$(ZASM) $(APPS) user.h < $(APPS)/memt/glue.asm > $@
-
-cfsin/at28w: $(ZASMBIN)
-	$(ZASM) $(APPS) $(KERNEL) user.h < $(APPS)/at28w/glue.asm > $@
+$(APPTARGETS): $(ZASMBIN)
+	$(ZASM) $(KERNEL) $(APPS) user.h < $(APPS)/${@:cfsin/%=%}/glue.asm > $@
 
 cfsin/user.h: user.h
 	cp $< $@
