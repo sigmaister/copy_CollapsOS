@@ -13,13 +13,13 @@ on a real machine, you'll have to make sure to provide these requirements.
 The emulated shell has a `hello.asm` file in its mounted filesystem that is
 ready to compile. It has two file handles 0 and 1, mapped to blk IDs 1 and 2.
 We will open our source file in handle 0 and our dest file in handle 1. Then,
-with the power of the `pgm` module, we'll autoload our newly compiled file and
-execute it!
+with the power of the `fs` module's autoloader, we'll load our newly compiled
+file and execute it!
 
     Collapse OS
     > fnew 1 dest           ; create destination file
-    > fopn 0 hello.asm      ; open source file in handle 0
-    > fopn 1 dest           ; open dest binary in handle 1
+    > fopen 0 hello.asm     ; open source file in handle 0
+    > fopen 1 dest          ; open dest binary in handle 1
     > zasm 1 2              ; assemble source file into binary file
     > dest                  ; call newly compiled file
     Assembled from the shell

@@ -31,25 +31,46 @@ look like:
     .equ	STDIO_PUTC	aciaPutC
     .inc "stdio.asm"
 
-    .equ	SHELL_RAMSTART	STDIO_RAMEND
-    .equ	SHELL_EXTRA_CMD_COUNT 0
-    .inc "shell.asm"
+    ; *** BASIC ***
+
+    ; RAM space used in different routines for short term processing.
+    .equ	SCRATCHPAD_SIZE	0x20
+    .equ	SCRATCHPAD	STDIO_RAMEND
+    .inc "lib/util.asm"
+    .inc "lib/ari.asm"
+    .inc "lib/parse.asm"
+    .inc "lib/fmt.asm"
+    .equ	EXPR_PARSE	parseLiteralOrVar
+    .inc "lib/expr.asm"
+    .inc "basic/util.asm"
+    .inc "basic/parse.asm"
+    .inc "basic/tok.asm"
+    .equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
+    .inc "basic/var.asm"
+    .equ	BUF_RAMSTART	VAR_RAMEND
+    .inc "basic/buf.asm"
+    .equ	BAS_RAMSTART	BUF_RAMEND
+    .inc "basic/main.asm"
 
     init:
         di
         ; setup stack
-        ld	hl, RAMEND
-        ld	sp, hl
+        ld	sp, RAMEND
         im 1
 
         call	aciaInit
-        call	shellInit
+        call	basInit
         ei
-        jp	shellLoop
+        jp  basStart
 
-Once this is written, building it is easy: 
+Once this is written, you can build it with `zasm`, which takes code from stdin
+and spits binary to stdout. Because out code has includes, however, you need
+to supply zasm with a block device containing a CFS containing the files to
+include. This sounds, compicated, but it's managed by the `tools/zasm.sh` shell
+script. The invocation would look like (it builds a CFS with the contents of
+both `kernel/` and `apps/` folders):
 
-    zasm < glue.asm > collapseos.bin
+    tools/zasm.sh kernel/ apps/ < glue.asm > collapseos.bin
 
 ## Building zasm
 
@@ -122,19 +143,23 @@ label at the very end of its source file. This way, it becomes easy for the
 glue code to "graft" entries to the table. This approach, although simple and
 effective, only works for one table per part. But it's often enough.
 
-For example, to define extra commands in the shell:
+For example, to define block devices:
 
     [...]
-    .equ    SHELL_EXTRA_CMD_COUNT 2
-    #include "shell.asm"
-    .dw myCmd1, myCmd2
+    .equ	BLOCKDEV_COUNT		4
+    .inc "blockdev.asm"
+    ; List of devices
+    .dw	fsdevGetB, fsdevPutB
+    .dw	stdoutGetB, stdoutPutB
+    .dw	stdinGetB, stdinPutB
+    .dw	mmapGetB, mmapPutB
     [...]
 
 ### Initialization
 
 Then, finally, comes the `init` code. This can be pretty much anything really
 and this much depends on the part you select. But if you want a shell, you will
-usually end it with `shellLoop`, which never returns.
+usually end it with `basStart`, which never returns.
 
 [rc2014]: https://rc2014.co.uk/
 [zasm]: ../tools/emul/README.md

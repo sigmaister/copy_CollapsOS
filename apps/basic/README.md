@@ -198,7 +198,7 @@ second.
 
 A freshly selected blkdev begins with its "pointer" at 0.
 
-`seek <lsw> <msw>`: Moves the blkdev "pointer" to the specified offset. The
+`bseek <lsw> <msw>`: Moves the blkdev "pointer" to the specified offset. The
 first argument is the offset's least significant half (blkdev supports 32-bit
 addressing). Is is interpreted as an unsigned integer.
 

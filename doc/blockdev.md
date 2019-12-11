@@ -42,71 +42,31 @@ they should try to adhere to the convention, that is:
           
 ## Shell usage
 
-`blockdev.asm` supplies 4 shell commands that you can graft to your shell thus:
-
-    [...]
-    SHELL_EXTRA_CMD_COUNT	.equ	4
-    #include "shell.asm"
-    ; extra commands
-    .dw	blkBselCmd, blkSeekCmd, blkLoadCmd, blkSaveCmd
-    [...]
-
-### bsel
-
-`bsel` select the active block device. This specify a target for `load` and
-`save`. Some applications also use the active blockdev. It receives one
-argument, the device index. `bsel 0` selects the first defined device, `bsel 1`,
-the second, etc. Error `0x04` when argument is out of bounds.
-
-### seek
-
-`seek` receives one word argument and sets the pointer for the currently active
-device to the specified address. Example: `seek 1234`.
-
-The device position is device-specific: if you seek on a device, then switch
-to another device and seek again, your previous position isn't lost. You will
-still be on the same position when you come back.
-
-### load
-
-`load` works a bit like `poke` except that it reads its data from the currently
-active blockdev at its current position. If it hits the end of the blockdev
-before it could load its specified number of bytes, it stops. It only raises an
-error if it couldn't load any byte.
-
-It moves the device's position to the byte after the last loaded byte.
-
-### save
-
-`save` is the opposite of `load`. It writes the specified number of bytes from
-memory to the active blockdev at its current position.
-
-It moves the device's position to the byte after the last written byte.
+`apps/basic/blk.asm` supplies 4 shell commands that you can add to your shell.
+See "Optional Modules/blk" in [the shell doc](../apps/basic/README.md).
 
 ### Example
 
-Let's try an example: You glue yourself a Collapse OS with ACIA as its first
-device and a mmap starting at `0xd000` as your second device. Here's what you
+Let's try an example: You glue yourself a Collapse OS with a mmap starting at
+`0xe000` as your 4th device (like it is in the shell emulator). Here's what you
 could do to copy memory around:
 
-    > mptr d000
-    D000
-    > poke 4
+    > m=0xe000
+    > 10 getc
+    > 20 poke m a
+    > 30 m=m+1
+    > 40 if m<0xe004 goto 10 
+    > run
     [enter "abcd"]
-    > peek 4
-    61626364
-    > mptr c000
-    C000
-    > peek 4
-    [RAM garbage]
-    > bsel 1
-    > load 4
-    [returns immediately]
-    > peek 4
-    61626364
-    > seek 00 0002
-    > load 2
-    > peek 4
-    63646364
-
-Awesome, right?
+    > bsel 3
+    > clear
+    > 10 getb
+    > 20 puth a
+    > run
+    61> run
+    62> run
+    63> run
+    64> bseek 2
+    > run
+    63> run
+    64>

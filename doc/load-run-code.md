@@ -2,7 +2,7 @@
 
 Collapse OS likely runs from ROM code. If you need to fiddle with your machine
 more deeply, you will want to send arbitrary code to it and run it. You can do
-so with the shell's `poke` and `call` commands.
+so with the shell's `poke` and `usr` commands.
 
 For example, let's say that you want to run this simple code that you have
 sitting on your "modern" machine and want to execute on your running Collapse OS
@@ -13,16 +13,18 @@ machine:
     ld (0xa100), a
     ret
 
-(we must always return at the end of code that we call with `call`). This will
+(we must always return at the end of code that we call with `usr`). This will
 increase a number at memory address `0xa100`. First, compile it:
 
     zasm < tosend.asm > tosend.bin
 
 Now, we'll send that code to address `0xa000`:
 
-    > mptr a000
-    A000
-    > poke 8 (resulting binary is 8 bytes long)
+    > m=0xa000
+    > 10 getc
+    > 20 poke m a
+    > 30 if m<0xa008 goto 10
+    (resulting binary is 8 bytes long)
 
 Now, at this point, it's a bit delicate. To pipe your binary to your serial
 connection, you have to close `screen` with CTRL+A then `:quit` to free your
@@ -35,46 +37,45 @@ but if the number of characters sent corresponds to what you gave `poke`, then
 Collapse OS will be waiting for a new command. Go ahead, verify that the
 transfer was successful with:
 
-    peek 8
-    3A00A13C3200A1C9
+    > peek 0a000
+    > puth a
+    3A
+    > peek 0a007
+    > puth a
+    C9
 
 Good! Now, we can try to run it. Before we run it, let's peek at the value at
 `0xa100` (being RAM, it's random):
 
-    > mptr a100
-    A100
-    > peek
+    > peek 0xa100
+    > puth a
     61
 
 So, we'll expect this to become `62` after we run the code. Let's go:
 
-    > mptr a000
-    A000
-    > call 00 0000
-    > mptr a100
-    A100
-    > peek
+    > usr 0xa100
+    > peek 0xa100
+    > puth a
     62
 
 Success!
 
-## The upload.py tool
+## The upload tool
 
 The serial connection is not always 100% reliable and a bad byte can slip in
 when you push your code and that's not fun when you try to debug your code (is
 this bad behavior caused by my logic or by a bad serial upload?). Moreover,
-sending contents bigger than `0xff` bytes can be a hassle.
+sending contents manually can be a hassle.
 
-To this end, there is a `upload.py` file in `tools/` that takes care of loading
-the file and verify the contents. So, instead of doing `mptr a000` followed by
-`poke 8` followed by your `cat` above, you would have done:
+To this end, there is a `upload` file in `tools/` (run `make` to build it) that
+takes care of loading the file and verify the contents. So, instead of doing
+`getc` followed by `poke` followed by your `cat` above, you would have done:
 
-    ./upload.py /dev/ttyUSB0 a000 tosend.bin
+    ./upload /dev/ttyUSB0 a000 tosend.bin
 
-This emits `mptr`, `poke` and `peek` commands and fail appropriately if the
-`peek` doesn't match sent contents. If the file is larger than `0xff` bytes,
-repeat the process until the whole file was sent (file must fit in memory space
-though, of course). Very handy.
+This clears your basic listing and then types in a basic algorithm to receive
+and echo and pre-defined number of bytes. The `upload` tool then sends and read
+each byte, verifying that they're the same. Very handy.
 
 ## Labels in RAM code
 
@@ -126,16 +127,3 @@ You can then include that file in your "user" code, like this:
 
 If you load that code at `0xa000` and call it, it will print "Hello World!" by
 using the `printstr` routine from `core.asm`.
-
-## Doing the same with the BASIC shell
-
-The BASIC shell also has the capacity to load code from serial console but its
-semantic is a bit different from the regular shell. Instead of peeking and
-poking, you use `getc` to send data and then `putc` to send the same data back
-for verification. Then, you can use `poke` to commit it to memory.
-
-There's an upload tool that use these commands and it's `uploadb.py`. It is
-invoked with the same arguments as `upload.py`.
-
-Once your code is uploaded, you will call it with BASIC's `usr` command. See
-BASIC's README for more details.
