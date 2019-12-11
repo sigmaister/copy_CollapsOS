@@ -124,13 +124,6 @@ basERR:
 ; 2 - the beginning of the arg, with whitespace properly skipped.
 ;
 ; Commands are expected to set Z on success.
-basBYE:
-	; To quit the loop, let's return the stack to its initial value and
-	; then return.
-	xor	a
-	ld	sp, (BAS_INITSP)
-	ret
-
 basLIST:
 	call	bufFirst
 	jr	nz, .end
@@ -449,8 +442,6 @@ basR2Var:	; Just send reg to vars. Used in basPgmHook
 
 ; direct only
 basCmds1:
-	.db	"bye", 0
-	.dw	basBYE
 	.db	"list", 0
 	.dw	basLIST
 	.db	"run", 0

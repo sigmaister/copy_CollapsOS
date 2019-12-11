@@ -1,17 +1,9 @@
-; Last check:
-; Kernel size: 0x619
-; Kernel RAM usage: 0x66
-; Shell size: 0x411
-; Shell RAM usage: 0x11
-
 .inc "blkdev.h"
 .inc "fs.h"
 .inc "err.h"
 .inc "ascii.h"
-.equ	RAMSTART	0x4000
-; 0x100 - 0x66 gives us a nice space for the stack.
-.equ	KERNEL_RAMEND	0x4100
-.equ	SHELL_CODE	0x0700
+.equ	RAMSTART	0x2000
+.equ	USER_CODE	0x4200
 .equ	STDIO_PORT	0x00
 .equ	FS_DATA_PORT	0x01
 .equ	FS_ADDR_PORT	0x02
@@ -75,16 +67,52 @@
 .equ	FS_HANDLE_COUNT	2
 .inc "fs.asm"
 
+; *** BASIC ***
+
+; RAM space used in different routines for short term processing.
+.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD	FS_RAMEND
+.inc "lib/util.asm"
+.inc "lib/ari.asm"
+.inc "lib/parse.asm"
+.inc "lib/fmt.asm"
+.equ	EXPR_PARSE	parseLiteralOrVar
+.inc "lib/expr.asm"
+.inc "basic/util.asm"
+.inc "basic/parse.asm"
+.inc "basic/tok.asm"
+.equ	VAR_RAMSTART	SCRATCHPAD+SCRATCHPAD_SIZE
+.inc "basic/var.asm"
+.equ	BUF_RAMSTART	VAR_RAMEND
+.inc "basic/buf.asm"
+.equ	BFS_RAMSTART	BUF_RAMEND
+.inc "basic/fs.asm"
+.inc "basic/blk.asm"
+.equ	BAS_RAMSTART	BFS_RAMEND
+.inc "basic/main.asm"
+
 init:
 	di
 	; setup stack
-	ld	sp, KERNEL_RAMEND
+	ld	sp, 0xffff
 	call	fsInit
 	ld	a, 0	; select fsdev
 	ld	de, BLOCKDEV_SEL
 	call	blkSel
 	call	fsOn
-	call	SHELL_CODE
+	call	basInit
+	ld	hl, basFindCmdExtra
+	ld	(BAS_FINDHOOK), hl
+	jp	basStart
+
+basFindCmdExtra:
+	ld	hl, basFSCmds
+	call	basFindCmd
+	ret	z
+	ld	hl, basBLKCmds
+	call	basFindCmd
+	ret	z
+	jp	basPgmHook
 
 emulGetC:
 	; Blocks until a char is returned
@@ -148,6 +176,3 @@ stdinGetB:
 stdinPutB:
 	ld	ix, STDIN_HANDLE
 	jp	fsPutB
-
-.fill SHELL_CODE-$
-.bin "shell.bin"

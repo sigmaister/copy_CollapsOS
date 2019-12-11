@@ -48,9 +48,9 @@ Compiling and running `hello.asm` is done very much like in
     Collapse OS
     > sdci
     > fson
-    > fopn 0 hello.asm
+    > fopen 0 hello.asm
     > fnew 1 dest
-    > fopn 1 dest
+    > fopen 1 dest
     > zasm 1 2
     > dest
     Assembled from a RC2014
@@ -94,7 +94,7 @@ Now you can write this into your card and boot Collapse OS:
     > fson
     > fopn 0 glue.asm
     > fnew 10 dest
-    > fopn 1 dest
+    > fopen 1 dest
     > zasm 1 2          # This takes a while. About 7 minutes.
     > sdcf              # success! sdcf flushes SD card buffers to the card.
 

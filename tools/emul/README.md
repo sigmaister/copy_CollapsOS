@@ -12,11 +12,11 @@ After that, you can run `make` and it builds all tools.
 
 ## shell
 
-Running `shell/shell` runs the shell in an emulated machine. The goal of this
-machine is not to simulate real hardware, but rather to serve as a development
-platform. What we do here is we emulate the z80 part, the 64K memory space and
-then hook some fake I/Os to stdin, stdout and a small storage device that is
-suitable for Collapse OS's filesystem to run on.
+Running `shell/shell` runs the BASIC shell in an emulated machine. The goal of
+this machine is not to simulate real hardware, but rather to serve as a
+development platform. What we do here is we emulate the z80 part, the 64K
+memory space and then hook some fake I/Os to stdin, stdout and a small storage
+device that is suitable for Collapse OS's filesystem to run on.
 
 Through that, it becomes easier to develop userspace applications for Collapse
 OS.
@@ -24,11 +24,6 @@ OS.
 We don't try to emulate real hardware to ease the development of device drivers
 because so far, I don't see the advantage of emulation versus running code on
 the real thing.
-
-## bshell
-
-The `basic` app is on its way to replace the shell. It is wrapped in the z80
-emulator in the same way that the shell is and interacts with `cfsin` similarly.
 
 ## zasm
 

@@ -1,5 +1,5 @@
 CFSPACK = ../cfspack/cfspack
-TARGETS = shell/shell bshell/shell zasm/zasm runbin/runbin
+TARGETS = shell/shell zasm/zasm runbin/runbin
 KERNEL = ../../kernel
 APPS = ../../apps
 ZASMBIN = zasm/zasm
@@ -13,17 +13,11 @@ OBJS = emul.o libz80/libz80.o
 all: $(TARGETS) $(CFSIN_CONTENTS)
 
 # -o in sync with SHELL_CODE in shell/glue.asm
-shell/shell.bin: $(APPS)/shell/glue.asm $(ZASMBIN)
-	$(ZASMSH) -o 07 $(KERNEL) shell/user.h $(APPS) < $(APPS)/shell/glue.asm | tee $@ > /dev/null
+shell/shell.bin: shell/glue.asm $(ZASMBIN)
+	$(ZASMSH) $(KERNEL) shell/user.h $(APPS) < shell/glue.asm | tee $@ > /dev/null
 
-shell/kernel-bin.h: shell/glue.asm shell/shell.bin $(ZASMBIN)
-	$(ZASMSH) $(KERNEL) shell/shell.bin < shell/glue.asm | ./bin2c.sh KERNEL | tee $@ > /dev/null
-
-bshell/shell.bin: bshell/glue.asm $(ZASMBIN)
-	$(ZASMSH) $(KERNEL) bshell/user.h $(APPS) < bshell/glue.asm | tee $@ > /dev/null
-
-bshell/shell-bin.h: bshell/shell.bin
-	./bin2c.sh KERNEL < bshell/shell.bin | tee $@ > /dev/null
+shell/shell-bin.h: shell/shell.bin
+	./bin2c.sh KERNEL < shell/shell.bin | tee $@ > /dev/null
 
 zasm/kernel-bin.h: zasm/kernel.bin
 	./bin2c.sh KERNEL < zasm/kernel.bin | tee $@ > /dev/null
@@ -31,11 +25,8 @@ zasm/kernel-bin.h: zasm/kernel.bin
 zasm/zasm-bin.h: zasm/zasm.bin
 	./bin2c.sh USERSPACE < zasm/zasm.bin | tee $@ > /dev/null
 
-shell/shell: shell/shell.c $(OBJS) shell/kernel-bin.h 
+shell/shell: shell/shell.c $(OBJS) shell/shell-bin.h 
 	$(CC) shell/shell.c $(OBJS) -o $@
-
-bshell/shell: bshell/shell.c $(OBJS) bshell/shell-bin.h 
-	$(CC) bshell/shell.c $(OBJS) -o $@
 
 $(ZASMBIN): zasm/zasm.c $(OBJS) zasm/kernel-bin.h zasm/zasm-bin.h $(CFSPACK)
 	$(CC) zasm/zasm.c $(OBJS) -o $@
