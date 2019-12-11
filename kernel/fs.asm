@@ -101,8 +101,7 @@ fsInit:
 	xor	a
 	ld	hl, FS_BLK
 	ld	b, FS_RAMEND-FS_BLK
-	call	fill
-	ret
+	jp	fill
 
 ; *** Navigation ***
 
@@ -286,7 +285,7 @@ fsFindFN:
 	call	fsNext
 	jr	z, .loop
 	; End of the chain, not found
-	call	unsetZ
+	; Z already unset
 .end:
 	pop	de
 	ret
@@ -311,7 +310,7 @@ fsIsValid:
 ; Returns whether current block is deleted in Z flag.
 fsIsDeleted:
 	ld	a, (FS_META+FS_META_FNAME_OFFSET)
-	cp	0	; Z flag is our answer
+	or	a	; Z flag is our answer
 	ret
 
 ; *** blkdev methods ***
@@ -508,12 +507,9 @@ fsOn:
 	jr	.end
 .error:
 	; couldn't mount. Let's reset our variables.
-	xor	a
-	ld	b, FS_META-FS_BLK	; reset routine pointers and FS ptrs
-	ld	hl, FS_BLK
-	call	fill
-
+	call	fsInit
 	ld	a, FS_ERR_NO_FS
+	or	a	; unset Z
 .end:
 	pop	bc
 	pop	de
@@ -524,18 +520,16 @@ fsOn:
 fsIsOn:
 	; check whether (FS_BLK) is zero
 	push	hl
-	push	de
 	ld	hl, (FS_BLK)
-	ld	de, 0
-	call	cpHLDE
+	ld	a, h
+	or	l
 	jr	nz, .mounted
-	; if equal, it means our FS is not mounted
-	call	unsetZ
+	; not mounted, unset Z
+	inc	a
 	jr	.end
 .mounted:
 	cp	a	; ensure Z
 .end:
-	pop	de
 	pop	hl
 	ret
 
@@ -545,8 +539,6 @@ fsIsOn:
 ; There are no error condition happening midway. If you get an error, then (IY)
 ; was never called.
 fsIter:
-	call	fsIsOn
-	ret	nz
 	call	fsBegin
 	ret	nz
 .loop:

@@ -621,10 +621,7 @@ sdcCRC:
 	pop	af
 	ret
 
-; *** shell cmds ***
-
 sdcInitializeCmd:
-	.db	"sdci", 0, 0, 0
 	call	sdcInitialize
 	ret	nz
 	call	.setBlkSize
@@ -678,7 +675,6 @@ sdcInitializeCmd:
 
 ; Flush the current SDC buffer if dirty
 sdcFlushCmd:
-	.db	"sdcf", 0, 0, 0
 	ld	hl, SDC_BUFSEC1
 	ld	(SDC_BUFPTR), hl
 	call	sdcWriteBlk
@@ -724,14 +720,11 @@ _sdcPlaceBuf:
 sdcGetB:
 	push	hl
 	call	_sdcPlaceBuf
-	jr	nz, .error
+	jr	nz, .end	; NZ already set
 
 	; This is it!
 	ld	a, (hl)
 	cp	a		; ensure Z
-	jr	.end
-.error:
-	call	unsetZ
 .end:
 	pop	hl
 	ret

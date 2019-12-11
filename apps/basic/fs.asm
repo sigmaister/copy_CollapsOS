@@ -137,4 +137,6 @@ basFSCmds:
 	.dw	basFNEW
 	.db	"fdel", 0
 	.dw	basFDEL
+	.db	"fson", 0
+	.dw	fsOn
 	.db	0xff		; end of table
