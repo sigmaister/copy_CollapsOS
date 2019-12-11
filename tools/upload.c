@@ -7,6 +7,8 @@
 
 /* Push specified file to specified device **running the BASIC shell** and verify
  * that the sent contents is correct.
+ *
+ * Note: running this will clear the current BASIC listing on the other side.
  */
 
 int main(int argc, char **argv)
@@ -24,6 +26,11 @@ int main(int argc, char **argv)
     fseek(fp, 0, SEEK_END);
     unsigned int bytecount = ftell(fp);
     fprintf(stderr, "memptr: 0x%04x bytecount: 0x%04x.\n", memptr, bytecount);
+    if (!bytecount) {
+        // Nothing to read
+        fclose(fp);
+        return 0;
+    }
     if (memptr+bytecount > 0xffff) {
         fprintf(stderr, "memptr+bytecount out of range.\n");
         fclose(fp);
@@ -31,35 +38,40 @@ int main(int argc, char **argv)
     }
     rewind(fp);
     int fd = open(argv[1], O_RDWR|O_NOCTTY);
-    char s[0x10];
+    char s[0x20];
     sprintf(s, "m=0x%04x", memptr);
-    sendcmd(fd, s);
-    read(fd, s, 2); // read prompt
+    sendcmdp(fd, s);
 
+    // Send program
+    sendcmdp(fd, "clear");
+    sendcmdp(fd, "1 getc");
+    sendcmdp(fd, "2 puth a");
+    sendcmdp(fd, "3 poke m a");
+    sendcmdp(fd, "4 m=m+1");
+    sprintf(s, "5 if m<0x%04x goto 1", memptr+bytecount);
+    sendcmdp(fd, s);
+
+    sendcmd(fd, "run");
+    int returncode = 0;
     while (fread(s, 1, 1, fp)) {
         putchar('.');
         fflush(stdout);
         unsigned char c = s[0];
-        sendcmd(fd, "getc");
         write(fd, &c, 1);
-        read(fd, s, 2); // read prompt
-        sendcmd(fd, "puth a");
+        usleep(1000); // let it breathe
         read(fd, s, 2); // read hex pair
         s[2] = 0; // null terminate
         unsigned char c2 = strtol(s, NULL, 16);
-        read(fd, s, 2); // read prompt
         if (c != c2) {
             // mismatch!
             unsigned int pos = ftell(fp);
             fprintf(stderr, "Mismatch at byte %d! %d != %d.\n", pos, c, c2);
-            return 1;
+            // we don't exit now because we need to "consume" our whole program.
+            returncode = 1;
         }
-        sendcmd(fd, "poke m a");
-        read(fd, s, 2); // read prompt
-        sendcmd(fd, "m=m+1");
-        read(fd, s, 2); // read prompt
     }
     printf("Done!\n");
-    return 0;
+    fclose(fp);
+    return returncode;
 }
 

@@ -17,3 +17,10 @@ void sendcmd(int fd, char *cmd)
     usleep(1000);
 }
 
+// Send a cmd and also read the "> " prompt
+void sendcmdp(int fd, char *cmd)
+{
+    char junk[2];
+    sendcmd(fd, cmd);
+    read(fd, &junk, 2);
+}
