@@ -1,8 +1,8 @@
-MEMDUMP_TGT = memdumpb
+MEMDUMP_TGT = memdump
 MEMDUMP_SRC = memdump.c
-BLKDUMP_TGT = blkdumpb
+BLKDUMP_TGT = blkdump
 BLKDUMP_SRC = blkdump.c
-UPLOAD_TGT = uploadb
+UPLOAD_TGT = upload
 UPLOAD_SRC = upload.c
 TARGETS = $(MEMDUMP_TGT) $(BLKDUMP_TGT) $(UPLOAD_TGT)
 OBJS = common.o

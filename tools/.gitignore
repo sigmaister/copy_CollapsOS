@@ -1,4 +1,4 @@
 *.o
-/memdumpb
-/blkdumpb
-/uploadb
+/memdump
+/blkdump
+/upload
