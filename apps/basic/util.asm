@@ -11,5 +11,22 @@ spitQuoted:
 	inc	hl
 	cp	'"'
 	ret	z
+	or	a
+	ret	z
 	call	stdioPutC
+	jr	.loop
+
+; Same as spitQuoted, but without the spitting
+skipQuoted:
+	ld	a, (hl)
+	cp	'"'
+	ret	nz
+	inc	hl
+.loop:
+	ld	a, (hl)
+	inc	hl
+	cp	'"'
+	ret	z
+	or	a
+	ret	z
 	jr	.loop

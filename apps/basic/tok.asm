@@ -56,6 +56,7 @@ toEnd:
 	cp	':'
 	jr	z, .havesep
 	inc	hl
+	call	skipQuoted
 	jr	toEnd
 .havesep:
 	inc	a	; unset Z
