@@ -25,6 +25,16 @@ We don't try to emulate real hardware to ease the development of device drivers
 because so far, I don't see the advantage of emulation versus running code on
 the real thing.
 
+By default, the shell initialized itself with a CFS device containing the
+contents of `cfsin/` at launch (it's packed on the fly). You can specify an
+alternate CFS device file (it has to be packaed already) through the `-f` flag.
+
+By default, the shell runs interactively, but you can also pipe contents through
+stdin instead. The contents will be interpreted exactly as if you had typed it
+yourself and the result will be spit in stdout (it includes your typed in
+contents because the Collapse OS console echoes back every character that is
+sent to it.). This feature is useful for automated tests in `tools/tests/shell`.
+
 ## zasm
 
 `zasm/zasm` is `apps/zasm` wrapped in an emulator. It is quite central to the

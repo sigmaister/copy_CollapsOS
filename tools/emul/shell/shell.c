@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <termios.h>
 #include "../emul.h"
 #include "shell-bin.h"
@@ -135,12 +136,36 @@ static void iowr_fsaddr(uint8_t val)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    FILE *fp = NULL;
+    while (1) {
+        int c = getopt(argc, argv, "f:");
+        if (c < 0) {
+            break;
+        }
+        switch (c) {
+            case 'f':
+                fp = fopen(optarg, "r");
+                if (fp == NULL) {
+                    fprintf(stderr, "Can't open %s\n", optarg);
+                    return 1;
+                }
+                break;
+            default:
+                fprintf(stderr, "Usage: shell [-f fsdev]\n");
+                return 1;
+        }
+    }
     // Setup fs blockdev
-    FILE *fp = popen("../cfspack/cfspack cfsin", "r");
+    if (fp == NULL) {
+        fp = popen("../cfspack/cfspack cfsin", "r");
+        if (fp == NULL) {
+            fprintf(stderr, "Can't initialize filesystem. Leaving blank.\n");
+        }
+    }
     if (fp != NULL) {
-        printf("Initializing filesystem\n");
+        fprintf(stderr, "Initializing filesystem\n");
         int i = 0;
         int c = fgetc(fp);
         while (c != EOF) {
@@ -150,19 +175,20 @@ int main()
         }
         fsdev_size = i;
         pclose(fp);
-    } else {
-        printf("Can't initialize filesystem. Leaving blank.\n");
     }
 
-    // Turn echo off: the shell takes care of its own echoing.
+    bool tty = isatty(fileno(stdin));
     struct termios termInfo;
-    if (tcgetattr(0, &termInfo) == -1) {
-        printf("Can't setup terminal.\n");
-        return 1;
+    if (tty) {
+        // Turn echo off: the shell takes care of its own echoing.
+        if (tcgetattr(0, &termInfo) == -1) {
+            printf("Can't setup terminal.\n");
+            return 1;
+        }
+        termInfo.c_lflag &= ~ECHO;
+        termInfo.c_lflag &= ~ICANON;
+        tcsetattr(0, TCSAFLUSH, &termInfo);
     }
-    termInfo.c_lflag &= ~ECHO;
-    termInfo.c_lflag &= ~ICANON;
-    tcsetattr(0, TCSAFLUSH, &termInfo);
 
 
     Machine *m = emul_init();
@@ -182,10 +208,12 @@ int main()
 
     while (running && emul_step());
 
-    printf("Done!\n");
-    termInfo.c_lflag |= ECHO;
-    termInfo.c_lflag |= ICANON;
-    tcsetattr(0, TCSAFLUSH, &termInfo);
-    emul_printdebug();
+    if (tty) {
+        printf("Done!\n");
+        termInfo.c_lflag |= ECHO;
+        termInfo.c_lflag |= ICANON;
+        tcsetattr(0, TCSAFLUSH, &termInfo);
+        emul_printdebug();
+    }
     return 0;
 }
