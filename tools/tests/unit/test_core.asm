@@ -5,8 +5,6 @@
 
 jp	test
 
-.inc "core.asm"
-
 dummyLabel:
 testNum:	.db 1
 
@@ -48,28 +46,9 @@ test:
 	; test that "@" is updated by a .org directive
 	ld	hl, AFTER_ORG
 	ld	de, 0x1234
-	call	cpHLDE
+	or	a	; clear carry
+	sbc	hl, de
 	jp	nz, fail
-	call	nexttest
-
-	; *** cpHLDE ***
-	ld	hl, 0x42
-	ld	de, 0x42
-	call	cpHLDE
-	jp	nz, fail
-	jp	c, fail
-	call	nexttest
-
-	ld	de, 0x4242
-	call	cpHLDE
-	jp	z, fail
-	jp	nc, fail
-	call	nexttest
-
-	ld	hl, 0x4243
-	call	cpHLDE
-	jp	z, fail
-	jp	c, fail
 	call	nexttest
 
 	; success

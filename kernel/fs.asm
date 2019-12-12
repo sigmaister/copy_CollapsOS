@@ -413,17 +413,17 @@ fsPlaceH:
 ; Sets Z according to whether HL is within bounds for file handle at (IX), that
 ; is, if it is smaller than file size.
 fsWithinBounds:
-	push	de
-	; file size
-	ld	e, (ix+4)
-	ld	d, (ix+5)
-	call	cpHLDE
-	pop	de
-	jr	nc, .outOfBounds	; HL >= DE
+	ld	a, h
+	cp	(ix+5)
+	jr	c, .within	; H < (IX+5)
+	jp	nz, unsetZ	; H > (IX+5)
+	; H == (IX+5)
+	ld	a, l
+	cp	(ix+4)
+	jp	nc, unsetZ	; L >= (IX+4)
+.within:
 	cp	a			; ensure Z
 	ret
-.outOfBounds:
-	jp	unsetZ			; returns
 
 ; Set size of file handle (IX) to value in HL.
 ; This writes directly in handle's metadata.

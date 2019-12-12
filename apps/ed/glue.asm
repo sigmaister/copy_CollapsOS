@@ -33,6 +33,7 @@
 .inc "core.asm"
 .inc "lib/util.asm"
 .inc "lib/parse.asm"
+.inc "ed/util.asm"
 .equ	IO_RAMSTART	USER_RAMSTART
 .inc "ed/io.asm"
 .equ	BUF_RAMSTART	IO_RAMEND

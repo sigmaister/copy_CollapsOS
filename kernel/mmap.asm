@@ -13,8 +13,10 @@
 _mmapAddr:
 	push	de
 	ld	de, MMAP_LEN
-	call	cpHLDE
+	or 	a		; reset carry flag
+	sbc 	hl, de
 	jr	nc, .outOfBounds	; HL >= DE
+	add	hl, de		; old HL value
 	ld	de, MMAP_START
 	add	hl, de
 	cp	a	; ensure Z
