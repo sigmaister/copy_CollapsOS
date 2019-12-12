@@ -17,8 +17,6 @@ replay() {
     fi
 }
 
-../../cfspack/cfspack cfsin > test.cfs
-
 if [ ! -z $1 ]; then
     replay $1
     exit 0
