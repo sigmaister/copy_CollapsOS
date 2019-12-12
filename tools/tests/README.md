@@ -40,3 +40,10 @@ However, there are tricks.
 1. Run `unit/runtests.sh <name of file to test>` to target a specific test unit.
 2. Insert a `halt` to see the value of `A` at any given moment: it will be your
    reported error code (if 0, runbin will report a success).
+
+## shell
+
+Those tests are in the form of shell "replay" files. Every ".replay" file in
+this folder contains the contents to type in the shell. That contents is piped
+through the shell and the output is then compared with the corresponding
+".expected" file. If they match exactly, the test passes.
