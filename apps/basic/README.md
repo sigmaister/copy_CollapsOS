@@ -126,10 +126,13 @@ specified as an argument. Errors out if line doesn't exist. Argument can be
 an expression. If invoked in direct mode, `run` must be called to actually
 run the line (followed by the next, and so on).
 
-`if <cond> <cmd>`: If specified condition is true, execute the rest of the
+`if <cond> <cmds>`: If specified condition is true, execute the rest of the
 line. Otherwise, do nothing. For example, `if 2>1 print 12` prints `12` and `if
 2<1 print 12` does nothing. The argument for this command is a "thruth
 expression".
+
+`while <cond> <cmds>`: As long as specified condition is true, execute specified
+commands repeatedly.
 
 `input [<prompt>]`: Prompts the user for a numerical value and puts that
 value in `A`. The prompted value is evaluated as an expression and then stored.

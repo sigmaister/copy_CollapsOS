@@ -267,14 +267,20 @@ basGOTO:
 	ld	(BAS_PNEXTLN), de
 	ret
 
-basIF:
+; evaluate truth condition at (HL) and set A to its value
+; Z for success (but not truth!)
+_basEvalCond:
 	push	hl	; --> lvl 1. original arg
 	ld	de, SCRATCHPAD
 	call	rdWord
 	ex	de, hl
 	call	parseTruth
 	pop	hl	; <-- lvl 1. restore
-	ret	nz
+	ret
+
+basIF:
+	call	_basEvalCond
+	ret	nz	; error
 	or	a
 	ret	z
 	; expr is true, execute next
@@ -284,6 +290,26 @@ basIF:
 	ret	nz
 	ld	de, basCmds2
 	jp	basCallCmds
+
+basWHILE:
+	push	hl	; --> lvl 1
+	call	_basEvalCond
+	jr	nz, .stop	; error
+	or	a
+	jr	z, .stop
+	ret	z
+	; expr is true, execute next
+	; (HL) back to beginning of args, skip to next arg
+	call	toSepOrEnd
+	call	rdSep
+	ret	nz
+	ld	de, basCmds2
+	call	basCallCmds
+	pop	hl	; <-- lvl 1
+	jr	basWHILE
+.stop:
+	pop	hl	; <-- lvl 1
+	ret
 
 basINPUT:
 	; If our first arg is a string literal, spit it
@@ -478,6 +504,8 @@ basCmds2:
 	.dw	basGOTO
 	.db	"if", 0
 	.dw	basIF
+	.db	"while", 0
+	.dw	basWHILE
 	.db	"input", 0
 	.dw	basINPUT
 	.db	"peek", 0

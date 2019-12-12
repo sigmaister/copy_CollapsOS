@@ -52,21 +52,12 @@ Let's try an example: You glue yourself a Collapse OS with a mmap starting at
 could do to copy memory around:
 
     > m=0xe000
-    > 10 getc
-    > 20 poke m a
-    > 30 m=m+1
-    > 40 if m<0xe004 goto 10 
-    > run
+    > while m<0xe004 getc:poke m a:m=m+1
     [enter "abcd"]
     > bsel 3
-    > clear
-    > 10 getb
-    > 20 puth a
-    > run
-    61> run
-    62> run
-    63> run
-    64> bseek 2
-    > run
-    63> run
+    > i=0
+    > while i<4 getb:puth a:i=i+1
+    61626364> bseek 2
+    > getb:puth a
+    63> getb:puth a
     64>

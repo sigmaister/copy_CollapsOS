@@ -61,6 +61,7 @@
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
 .equ	STDIO_GETC	emulGetC
 .equ	STDIO_PUTC	emulPutC
+.equ	STDIO_BUFSIZE	0x40	; override
 .inc "stdio.asm"
 
 .equ	FS_RAMSTART	STDIO_RAMEND
@@ -70,7 +71,7 @@
 ; *** BASIC ***
 
 ; RAM space used in different routines for short term processing.
-.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD_SIZE	STDIO_BUFSIZE
 .equ	SCRATCHPAD	FS_RAMEND
 .inc "lib/util.asm"
 .inc "lib/ari.asm"

@@ -21,9 +21,7 @@ increase a number at memory address `0xa100`. First, compile it:
 Now, we'll send that code to address `0xa000`:
 
     > m=0xa000
-    > 10 getc
-    > 20 poke m a
-    > 30 if m<0xa008 goto 10
+    > while m<0xa008 getc:poke m a:m=m+1
     (resulting binary is 8 bytes long)
 
 Now, at this point, it's a bit delicate. To pipe your binary to your serial
