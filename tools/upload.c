@@ -5,10 +5,8 @@
 
 #include "common.h"
 
-/* Push specified file to specified device **running the BASIC shell** and verify
+/* Push specified file to specified device running the BASIC shell and verify
  * that the sent contents is correct.
- *
- * Note: running this will clear the current BASIC listing on the other side.
  */
 
 int main(int argc, char **argv)
@@ -38,20 +36,12 @@ int main(int argc, char **argv)
     }
     rewind(fp);
     int fd = open(argv[1], O_RDWR|O_NOCTTY);
-    char s[0x20];
+    char s[0x40];
     sprintf(s, "m=0x%04x", memptr);
     sendcmdp(fd, s);
+    sprintf(s, "while m<0x%04x getc:puth a:poke m a:m=m+1", memptr+bytecount);
+    sendcmd(fd, s);
 
-    // Send program
-    sendcmdp(fd, "clear");
-    sendcmdp(fd, "1 getc");
-    sendcmdp(fd, "2 puth a");
-    sendcmdp(fd, "3 poke m a");
-    sendcmdp(fd, "4 m=m+1");
-    sprintf(s, "5 if m<0x%04x goto 1", memptr+bytecount);
-    sendcmdp(fd, s);
-
-    sendcmd(fd, "run");
     int returncode = 0;
     while (fread(s, 1, 1, fp)) {
         putchar('.');

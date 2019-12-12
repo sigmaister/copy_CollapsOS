@@ -25,7 +25,7 @@ jp	aciaInt
 ; *** BASIC ***
 
 ; RAM space used in different routines for short term processing.
-.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD_SIZE	STDIO_BUFSIZE
 .equ	SCRATCHPAD	STDIO_RAMEND
 .inc "lib/util.asm"
 .inc "lib/ari.asm"

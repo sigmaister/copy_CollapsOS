@@ -1,4 +1,4 @@
-.org    0x9a00
+.org    0x9b00
 
 ; *** JUMP TABLE ***
 .equ    strncmp        0x03

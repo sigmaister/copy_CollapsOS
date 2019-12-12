@@ -1,10 +1,10 @@
 ; classic RC2014 setup (8K ROM + 32K RAM) and a stock Serial I/O module
 ; The RAM module is selected on A15, so it has the range 0x8000-0xffff
 .equ	RAMSTART	0x8000
-; Kernel RAMEND last check: 0x98f3
+; Kernel RAMEND last check: 0x9933
 ; We allocate at least 0x100 bytes for the stack, which is why we have this
 ; threshold.
-.equ	RAMEND		0x9a00
+.equ	RAMEND		0x9b00
 .equ	USER_CODE	RAMEND  ; in sync with user.h
 .equ	ACIA_CTL	0x80	; Control and status. RS off.
 .equ	ACIA_IO		0x81	; Transmit. RS on.
@@ -67,7 +67,7 @@ jp	aciaInt
 ; *** BASIC ***
 
 ; RAM space used in different routines for short term processing.
-.equ	SCRATCHPAD_SIZE	0x20
+.equ	SCRATCHPAD_SIZE	STDIO_BUFSIZE
 .equ	SCRATCHPAD	FS_RAMEND
 .inc "lib/util.asm"
 .inc "lib/ari.asm"

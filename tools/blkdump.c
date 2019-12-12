@@ -21,17 +21,18 @@ int main(int argc, char **argv)
     }
 
     int fd = open(argv[1], O_RDWR|O_NOCTTY);
-    char s[3];
+    char s[0x30];
+    sendcmdp(fd, "i=0");
+    sprintf(s, "while i<0x%04x getb:puth a:i=i+1", bytecount);
+    sendcmd(fd, s);
+
     for (int i=0; i<bytecount; i++) {
-        sendcmd(fd, "getb");
-        read(fd, s, 2); // read prompt
-        sendcmd(fd, "puth a");
         read(fd, s, 2); // read hex pair
         s[2] = 0; // null terminate
         unsigned char c = strtol(s, NULL, 16);
         putchar(c);
-        read(fd, s, 2); // read prompt
     }
+    read(fd, s, 2); // read prompt
     return 0;
 }
 

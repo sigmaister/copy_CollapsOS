@@ -28,22 +28,18 @@ int main(int argc, char **argv)
     }
 
     int fd = open(argv[1], O_RDWR|O_NOCTTY);
-    char s[0x20];
+    char s[0x30];
     sprintf(s, "m=0x%04x", memptr);
+    sendcmdp(fd, s);
+    sprintf(s, "while m<0x%04x peek m:puth a:m=m+1", memptr+bytecount);
     sendcmd(fd, s);
-    read(fd, s, 2); // read prompt
 
     for (int i=0; i<bytecount; i++) {
-        sendcmd(fd, "peek m");
-        read(fd, s, 2); // read prompt
-        sendcmd(fd, "puth a");
         read(fd, s, 2); // read hex pair
         s[2] = 0; // null terminate
         unsigned char c = strtol(s, NULL, 16);
         putchar(c);
-        read(fd, s, 2); // read prompt
-        sendcmd(fd, "m=m+1");
-        read(fd, s, 2); // read prompt
     }
+    read(fd, s, 2); // read prompt
     return 0;
 }

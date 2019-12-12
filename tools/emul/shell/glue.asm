@@ -61,7 +61,6 @@
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
 .equ	STDIO_GETC	emulGetC
 .equ	STDIO_PUTC	emulPutC
-.equ	STDIO_BUFSIZE	0x40	; override
 .inc "stdio.asm"
 
 .equ	FS_RAMSTART	STDIO_RAMEND

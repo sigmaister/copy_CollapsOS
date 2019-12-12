@@ -27,7 +27,7 @@
 ; *** Consts ***
 ; Size of the readline buffer. If a typed line reaches this size, the line is
 ; flushed immediately (same as pressing return).
-.equ	STDIO_BUFSIZE		0x20
+.equ	STDIO_BUFSIZE		0x40
 
 ; *** Variables ***
 ; Line buffer. We read types chars into this buffer until return is pressed
