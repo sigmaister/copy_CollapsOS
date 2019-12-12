@@ -31,11 +31,7 @@ ZASMBIN="${DIR}/emul/zasm/zasm"
 CFSPACK="${DIR}/cfspack/cfspack"
 INCCFS=$(mktemp)
 
-for p in "$@"; do
-    "${CFSPACK}" "${p}" "*.h" >> "${INCCFS}"    
-    "${CFSPACK}" "${p}" "*.asm" >> "${INCCFS}"    
-    "${CFSPACK}" "${p}" "*.bin" >> "${INCCFS}"    
-done
+"${CFSPACK}" -p "*.h" -p "*.asm" -p "*.bin" "$@" > "${INCCFS}" 
 
 "${ZASMBIN}" "${org}" "${INCCFS}"
 RES=$?

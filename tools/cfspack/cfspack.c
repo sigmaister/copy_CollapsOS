@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <string.h>
 #include <fnmatch.h>
@@ -15,6 +17,16 @@ int is_regular_file(char *path)
     struct stat path_stat;
     stat(path, &path_stat);
     return S_ISREG(path_stat.st_mode);
+}
+
+void spitempty()
+{
+    putchar('C');
+    putchar('F');
+    putchar('S');
+    for (int i=0; i<0x20-3; i++) {
+        putchar(0);
+    }
 }
 
 int spitblock(char *fullpath, char *fn)
@@ -65,7 +77,7 @@ int spitblock(char *fullpath, char *fn)
     return 0;
 }
 
-int spitdir(char *path, char *prefix, char *pattern)
+int spitdir(char *path, char *prefix, char **patterns)
 {
     DIR *dp;
     struct dirent *ep;
@@ -100,15 +112,23 @@ int spitdir(char *path, char *prefix, char *pattern)
         }
         strcat(newprefix, ep->d_name);
         if (ep->d_type == DT_DIR) {
-            int r = spitdir(fullpath, newprefix, pattern);
+            int r = spitdir(fullpath, newprefix, patterns);
             if (r != 0) {
                 return r;
             }
         } else {
-            if (pattern) {
-                if (fnmatch(pattern, ep->d_name, 0) != 0) {
-                    continue;
+            char **p = patterns;
+            // if we have no pattern, we match all
+            int matches = (*p) == NULL ? 1 : 0;
+            while (*p) {
+                if (fnmatch(*p, ep->d_name, 0) == 0) {
+                    matches = 1;
+                    break;
                 }
+                p++;
+            }
+            if (!matches) {
+                continue;
             }
 
             int r = spitblock(fullpath, newprefix);
@@ -121,22 +141,46 @@ int spitdir(char *path, char *prefix, char *pattern)
     return 0;
 }
 
+void usage()
+{
+    fprintf(stderr, "Usage: cfspack [-p pattern] [/path/to/dir...]\n");
+}
+
 int main(int argc, char *argv[])
 {
-    if ((argc > 3) || (argc < 2)) {
-        fprintf(stderr, "Usage: cfspack /path/to/dir [pattern] \n");
-        return 1;
+    int patterncount = 0;
+    char **patterns = malloc(sizeof(char**));
+    patterns[0] = NULL;
+    while (1) {
+        int c = getopt(argc, argv, "p:");
+        if (c < 0) {
+            break;
+        }
+        switch (c) {
+            case 'p':
+                patterns[patterncount] = optarg;
+                patterncount++;
+                patterns = realloc(patterns, sizeof(char**)*(patterncount+1));
+                patterns[patterncount] = NULL;
+                break;
+            default:
+                usage();
+                return 1;
+        }
     }
-    char *srcpath = argv[1];
-    char *pattern = NULL;
-    if (argc == 3) {
-        pattern = argv[2];
+    int res = 0;
+    for (int i=optind; i<argc; i++) {
+        if (is_regular_file(argv[i])) {
+            // special case: just one file
+            res = spitblock(argv[i], basename(argv[i]));
+        } else {
+            res = spitdir(argv[i], "", patterns);
+        }
     }
-    if (is_regular_file(srcpath)) {
-        // special case: just one file
-        return spitblock(srcpath, basename(srcpath));
-    } else {
-        return spitdir(srcpath, "", pattern);
+    if (res == 0) {
+        spitempty();
     }
+    free(patterns);
+    return res;
 }
 

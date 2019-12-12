@@ -12,11 +12,15 @@ To pack a directory into a CFS blob, run:
 The blob is spit to stdout. If there are subdirectories, they will be prefixes
 to the filenames under it.
 
-`cfspack` takes an optional second argument, a "fnmatch" pattern. If specified,
-only files patching the pattern will be included.
+`cfspack` takes optional -p pattern arguments. If specified, only files
+matching at least one of the patterns ("fnmatch" style") will be included.
 
 If path is a file, a CFS with a single file will be spit and its name will
 exclude the directory part of that filename.
+
+The chain being spitted is always ended with a "stop block" (a zero-allocation
+block that stops the CFS chain). You can call `cfspack` with no argument to get
+only a stop block.
 
 The program errors out if a file name is too long (> 26 bytes) or too big
 (> 0x10000 - 0x20 bytes).
