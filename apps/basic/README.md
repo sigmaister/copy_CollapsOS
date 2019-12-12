@@ -88,12 +88,21 @@ etc.) always to so in variable `A`.
 Another is that whenever a number is expected, expressions, including the ones
 with variables in it, work fine.
 
+### One-liners
+
+The `:` character, when not inside a `""` literal, allows you to cram more than
+one instruction on the same line.
+
+Things are special with `if`. All commands following a `if` are bound to that
+`if`'s condition. `if 0 foo:bar` doesn't execute `bar`.
+
+Another special thing is `goto`. A `goto` followed by `:` will have the commands
+following the `:` before the goto occurs.
+
 ### Commands
 
 There are two types of commands: normal and direct-only. The latter can only
 be invoked in direct mode, not through a code listing.
-
-`bye`: Direct-only. Quits BASIC
 
 `list`: Direct-only. Prints all lines in the code listing, prefixing them
 with their associated line number.

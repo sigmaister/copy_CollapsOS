@@ -1,10 +1,16 @@
-; Sets Z is A is ' ' or '\t' (whitespace), or ',' (arg sep)
+; Whether A is a separator or end-of-string (null or ':')
+isSepOrEnd:
+	or	a
+	ret	z
+	cp	':'
+	ret	z
+	; continue to isSep
+
+; Sets Z is A is ' ' or '\t' (whitespace)
 isSep:
 	cp	' '
 	ret	z
 	cp	0x09
-	ret	z
-	cp	','
 	ret
 
 ; Expect at least one whitespace (0x20, 0x09) at (HL), and then advance HL
@@ -23,8 +29,8 @@ rdSep:
 	ld	a, (hl)
 	call	isSep
 	jr	z, .loop
-	or	a	; cp 0
-	jp	z, .fail
+	call	isSepOrEnd
+	jp	z, .fail	; unexpected EOL. fail
 	cp	a	; ensure Z
 	ret
 .fail:
@@ -33,12 +39,27 @@ rdSep:
 	ret
 
 ; Advance HL to the next separator or to the end of string.
-toSep:
+toSepOrEnd:
 	ld	a, (hl)
-	call	isSep
+	call	isSepOrEnd
 	ret	z
 	inc	hl
-	jr	toSep
+	jr	toSepOrEnd
+
+; Advance HL to the end of the line, that is, either a null terminating char
+; or the ':'.
+; Sets Z if we met a null char, unset if we met a ':'
+toEnd:
+	ld	a, (hl)
+	or	a
+	ret	z
+	cp	':'
+	jr	z, .havesep
+	inc	hl
+	jr	toEnd
+.havesep:
+	inc	a	; unset Z
+	ret
 
 ; Read (HL) until the next separator and copy it in (DE)
 ; DE is preserved, but HL is advanced to the end of the read word.
@@ -47,9 +68,7 @@ rdWord:
 	push	de
 .loop:
 	ld	a, (hl)
-	call	isSep
-	jr	z, .stop
-	or	a
+	call	isSepOrEnd
 	jr	z, .stop
 	ld	(de), a
 	inc	hl

@@ -46,7 +46,7 @@ basLDBAS:
 	call	parseDecimal
 	jr	nz, .notANumber
 	push	ix \ pop de
-	call	toSep
+	call	toSepOrEnd
 	call	rdSep
 	call	bufAdd
 	pop	hl		; <-- lvl 1

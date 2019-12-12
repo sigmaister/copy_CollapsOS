@@ -41,14 +41,14 @@ basLoop:
 	call	parseDecimal
 	jr	z, .number
 	ld	de, basCmds1
-	call	basCallCmd
+	call	basCallCmds
 	jr	z, basLoop
 	; Error
 	call	basERR
 	jr	basLoop
 .number:
 	push	ix \ pop de
-	call	toSep
+	call	toSepOrEnd
 	call	rdSep
 	call	bufAdd
 	jp	nz, basERR
@@ -110,6 +110,27 @@ basCallCmd:
 	call	rdSep
 	jp	(ix)
 
+; Call a series of ':'-separated commands in (HL) using cmd table in (DE).
+; Stop processing as soon as one command unsets Z.
+basCallCmds:
+	; Commands are not guaranteed at all to preserve HL and DE, so we
+	; preserve them ourselves here.
+	push	hl	; --> lvl 1
+	push	de	; --> lvl 2
+	call	basCallCmd
+	pop	de	; <-- lvl 2
+	pop	hl	; <-- lvl 1
+	ret	nz
+	call	toEnd
+	ret	z	; no more cmds
+	; we met a ':', we have more cmds
+	inc	hl
+	call	basCallCmds
+	; move the the end of the string so that we don't run cmds following a
+	; ':' twice.
+	call	strskip
+	ret
+
 basERR:
 	ld	hl, .sErr
 	call	printstr
@@ -154,7 +175,7 @@ basRUN:
 	call	bufStr
 	ld	de, basCmds2
 	push	ix		; --> lvl 1
-	call	basCallCmd
+	call	basCallCmds
 	pop	ix		; <-- lvl 1
 	jp	nz, .err
 	call	.maybeGOTO
@@ -258,10 +279,11 @@ basIF:
 	ret	z
 	; expr is true, execute next
 	; (HL) back to beginning of args, skip to next arg
-	call	toSep
+	call	toSepOrEnd
 	call	rdSep
+	ret	nz
 	ld	de, basCmds2
-	jp	basCallCmd
+	jp	basCallCmds
 
 basINPUT:
 	; If our first arg is a string literal, spit it
