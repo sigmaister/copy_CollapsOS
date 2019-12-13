@@ -1,6 +1,7 @@
 /shell/shell
 /bshell/shell
 /zasm/zasm
+/zasm/avra
 /runbin/runbin
 /*/*-bin.h
 /*/*.bin

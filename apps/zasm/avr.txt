@@ -1,0 +1,134 @@
+The AVR instruction set is a bit more regular than z80's, which allows us for
+simpler upcode spitting logic (simplicity which is lost when we need to take
+into account all AVR models and instruction constraints on each models). This
+file categorizes all available ops with their opcode signature. X means upcode
+bit.
+
+Categories are in descending order of "popularity"
+
+Mnemonics with "*" are a bit special.
+
+### 16-bit
+
+## Plain
+
+XXXX XXXX XXXX XXXX
+
+BREAK, CLC, CLH, CLI, CLN, CLS, CLT, CLV, CLZ, EICALL, EIJMP, ELPM*, ICALL,
+IJMP, NOP, RET, RETI, SEC, SEH, SEI, SEN, SES, SET, SEV, SEZ, SLEEP, SPM*, WDR
+
+## Rd(5)
+
+XXXX XXXd dddd XXXX
+
+ASR, COM, DEC, ELPM*, INC, LAC, LAS, LAT, LD*, LPM*, LSR, NEG, POP, PUSH, ROR,
+ST*, SWAP, XCH
+
+## Rd(5) + Rr(5)
+
+XXXX XXrd dddd rrrr
+
+ADC, ADD, AND, CLR, CP, CPC, CPSE, EOR, MOV, MUL, OR, ROL*, SBC, SUB,
+TST*
+
+## k(7)
+
+XXXX XXkk kkkk kXXX
+
+BRCC, BRCS, BREQ, BRGE, BRHC, BRHS, BRID, BRIE, BRLO, BRLT, BRMI, BRNE, BRPL,
+BRSH, BRTC, BRTS, BRVC, BRVS 
+
+## Rd(4) + K(8)
+
+XXXX KKKK dddd KKKK
+
+ANDI, CBR*, CPI, LDI, ORI, SBCI, SBR, SUBI
+
+## Rd(5) + bit
+
+XXXX XXXd dddd Xbbb
+
+BLD, BST, SBRC, SBRS
+
+## A(5) + bit
+
+XXXX XXXX AAAA Abbb
+
+CBI, SBI, SBIC, SBIS
+
+## Rd(3) + Rr(3)
+
+XXXX XXXX Xddd Xrrr
+
+FMUL, FMULS, FMULSU, MULSU
+
+## Rd(4) + Rr(4)
+
+XXXX XXXX dddd rrrr
+
+MOVW, MULS
+
+## Rd(5) + A(6)
+
+XXXX XAAd dddd AAAA
+
+IN, OUT
+
+## Rd(4) + k(7)
+
+XXXX Xkkk dddd kkkk
+
+LDS*, STS*
+
+## Rd(2) + K
+
+XXXX XXXX KKdd KKKK
+
+ADIW, SBIW
+
+## Rd(4)
+
+XXXX XXXX dddd XXXX
+
+SER
+
+## K(4)
+
+XXXX XXXX KKKK XXXX
+
+DES
+
+## k(12)
+
+XXXX kkkk kkkk kkkk
+
+RCALL, RJMP
+
+## SREG
+
+XXXX XXXX Xsss XXXX
+
+BCLR, BSET
+
+## SREG + k(7)
+
+XXXX XXkk kkkk ksss
+
+BRBC, BRBS
+
+### 32-bit
+
+## k(22)
+
+XXXX XXXk kkkk XXXk
+kkkk kkkk kkkk kkkk
+
+CALL, JMP
+
+## Rd(5) + k(16)
+
+XXXX XXXd dddd XXXX
+kkkk kkkk kkkk kkkk
+
+LDS*, STS*
+

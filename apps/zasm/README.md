@@ -165,4 +165,17 @@ using `IX` and `IY` as 8-bit registers. We used to support them, but because
 this makes our code incompatible with Z80-compatible CPUs such as the Z180, we
 prefer to avoid these in our code.
 
+## AVR assembler
+
+`zasm` can be configured, at compile time, to be a AVR assembler instead of a
+z80 assembler. Directives, literals, symbols, they're all the same, it's just
+instructions and their arguments that change.
+
+Instructions and their arguments have a ayntax that is similar to other AVR
+assemblers: registers are referred to as `rXX`, mnemonics are the same,
+arguments are separated by commas.
+
+To assemble an AVR assembler, use the `gluea.asm` file instead of the regular
+one.
+
 [libz80]: https://github.com/ggambetta/libz80

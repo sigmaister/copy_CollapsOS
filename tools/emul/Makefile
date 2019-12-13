@@ -3,6 +3,7 @@ TARGETS = shell/shell zasm/zasm runbin/runbin
 KERNEL = ../../kernel
 APPS = ../../apps
 ZASMBIN = zasm/zasm
+AVRABIN = zasm/avra
 ZASMSH = ../zasm.sh
 SHELLAPPS = zasm ed
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
@@ -10,7 +11,7 @@ CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
 
 .PHONY: all
-all: $(TARGETS) $(CFSIN_CONTENTS)
+all: $(TARGETS) $(AVRABIN) $(CFSIN_CONTENTS)
 
 # -o in sync with SHELL_CODE in shell/glue.asm
 shell/shell.bin: shell/glue.asm $(ZASMBIN)
@@ -19,17 +20,26 @@ shell/shell.bin: shell/glue.asm $(ZASMBIN)
 shell/shell-bin.h: shell/shell.bin
 	./bin2c.sh KERNEL < shell/shell.bin | tee $@ > /dev/null
 
+shell/shell: shell/shell.c $(OBJS) shell/shell-bin.h 
+	$(CC) shell/shell.c $(OBJS) -o $@
+
 zasm/kernel-bin.h: zasm/kernel.bin
 	./bin2c.sh KERNEL < zasm/kernel.bin | tee $@ > /dev/null
 
 zasm/zasm-bin.h: zasm/zasm.bin
 	./bin2c.sh USERSPACE < zasm/zasm.bin | tee $@ > /dev/null
 
-shell/shell: shell/shell.c $(OBJS) shell/shell-bin.h 
-	$(CC) shell/shell.c $(OBJS) -o $@
-
 $(ZASMBIN): zasm/zasm.c $(OBJS) zasm/kernel-bin.h zasm/zasm-bin.h $(CFSPACK)
 	$(CC) zasm/zasm.c $(OBJS) -o $@
+
+zasm/avra.bin: $(ZASMBIN)
+	$(ZASMSH) $(KERNEL) $(APPS) zasm/user.h < $(APPS)/zasm/gluea.asm > $@
+
+zasm/avra-bin.h: zasm/avra.bin
+	./bin2c.sh USERSPACE < zasm/avra.bin | tee $@ > /dev/null
+
+$(AVRABIN): zasm/zasm.c $(OBJS) zasm/kernel-bin.h zasm/avra-bin.h
+	$(CC) -D AVRA zasm/zasm.c $(OBJS) -o $@
 
 runbin/runbin: runbin/runbin.c $(OBJS)
 	$(CC) runbin/runbin.c $(OBJS) -o $@
@@ -52,7 +62,7 @@ cfsin/user.h: shell/user.h
 	cp shell/user.h $@
 
 .PHONY: updatebootstrap
-updatebootstrap: $(ZASMBIN) $(INCCFS)
+updatebootstrap: $(ZASMBIN)
 	$(ZASMSH) $(KERNEL) < zasm/glue.asm > zasm/kernel.bin
 	$(ZASMSH) $(KERNEL) $(APPS) zasm/user.h < $(APPS)/zasm/glue.asm > zasm/zasm.bin
 

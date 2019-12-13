@@ -76,6 +76,35 @@ strncmpI:
 	; early, set otherwise)
 	ret
 
+; strcmp, then next. Same thing as strcmp, but case insensitive and if strings
+; are not equal, make HL point to the character right after the null
+; termination. We assume that the haystack (HL), has uppercase chars.
+strcmpIN:
+	push	de		; --> lvl 1
+	push	hl		; --> lvl 2
+
+.loop:
+	ld	a, (de)
+	call	upcase
+	cp	(hl)
+	jr	nz, .notFound	; not equal? break early.
+	or	a		; If our chars are null, stop the cmp
+	jr	z, .found
+	inc	hl
+	inc	de
+	jr	.loop
+.found:
+	pop	hl		; <-- lvl 2
+	pop	de		; <-- lvl 1
+	; Z already set
+	ret
+.notFound:
+	; Not found, we skip the string
+	call	strskip
+	pop	de		; <-- lvl 2, junk
+	pop	de		; <-- lvl 1
+	ret
+
 ; If string at (HL) starts with ( and ends with ), "enter" into the parens
 ; (advance HL and put a null char at the end of the string) and set Z.
 ; Otherwise, do nothing and reset Z.

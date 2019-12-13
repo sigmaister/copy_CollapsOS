@@ -60,6 +60,12 @@ Those binaries can be updated with the `make updatebootstrap` command. If they
 are up-to date and that zasm isn't broken, this command should output the same
 binary as before.
 
+## avra
+
+In the `zasm` folder, there's also `avra` which is a zasm compiled as an AVR
+assembler. It works the same way as zasm except it expects AVR mnemonics and
+spits AVR binaries.
+
 ## runbin
 
 This is a very simple tool that reads binary z80 code from stdin, loads it in

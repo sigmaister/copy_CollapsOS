@@ -3,7 +3,11 @@
 #include <string.h>
 #include "../emul.h"
 #include "kernel-bin.h"
+#ifdef AVRA
+#include "avra-bin.h"
+#else
 #include "zasm-bin.h"
+#endif
 
 /* zasm reads from a specified blkdev, assemble the file and writes the result
  * in another specified blkdev. In our emulator layer, we use stdin and stdout
