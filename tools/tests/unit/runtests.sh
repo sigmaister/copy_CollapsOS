@@ -1,4 +1,6 @@
-#!/bin/sh -e
+#!/usr/bin/env bash
+set -e
+# TODO: find POSIX substitute to that PIPESTATUS thing
 
 BASE=../../..
 TOOLS=../..

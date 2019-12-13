@@ -417,26 +417,6 @@ matchArg:
 	dec	hl
 	ret
 
-; Compare primary row at (DE) with ID in A. Sets Z flag if there's a match.
-matchPrimaryRow:
-	push	hl
-	push	ix
-	push	de \ pop ix
-	cp	(ix)
-	jr	nz, .end
-	; name matches, let's see the rest
-	ld	hl, INS_CURARG1
-	ld	a, (ix+1)
-	call	matchArg
-	jr	nz, .end
-	ld	hl, INS_CURARG2
-	ld	a, (ix+2)
-	call	matchArg
-.end:
-	pop	ix
-	pop	hl
-	ret
-
 ; *** Special opcodes ***
 ; The special upcode handling routines below all have the same signature.
 ; Instruction row is at IX and we're expected to perform the same task as
@@ -574,16 +554,13 @@ handleRST:
 	ld	c, 0
 	ret
 
-; Compute the upcode for argspec row at (DE) and arguments in curArg{1,2} and
+; Compute the upcode for argspec row at (IX) and arguments in curArg{1,2} and
 ; writes the resulting upcode to IO.
 ; A is zero, with Z set, on success. A is non-zero, with Z unset, on error.
 spitUpcode:
-	push	ix
 	push	de
 	push	hl
 	push	bc
-	; First, let's go in IX mode. It's easier to deal with offsets here.
-	push	de \ pop ix
 
 	; before we begin, are we in a 'l' argspec? Is it flagged for IX/IY
 	; acceptance? If yes, a 'x' or 'y' instruction? Check this on both
@@ -823,7 +800,6 @@ spitUpcode:
 	pop	bc
 	pop	hl
 	pop	de
-	pop	ix
 	ret
 .checkCB:
 	ld	a, (INS_UPCODE)
@@ -876,7 +852,7 @@ parseInstruction:
 	push	bc
 	push	hl
 	push	de
-	; A is reused in matchPrimaryRow but that register is way too changing.
+	; A is reused in .matchPrimaryRow but that register is way too changing.
 	; Let's keep a copy in a more cosy register.
 	ld	c, a
 	xor	a
@@ -899,24 +875,24 @@ parseInstruction:
 	; To speed up things a little, we use a poor man's indexing. Full
 	; bisecting would involve too much complexity.
 	ld	a, c			; recall A param
-	ld	de, instrTBl
+	ld	ix, instrTBl
 	cp	I_EX
 	jr	c, .loop
-	ld	de, instrTBlEX
+	ld	ix, instrTBlEX
 	cp	I_LD
 	jr	c, .loop
-	ld	de, instrTBlLD
+	ld	ix, instrTBlLD
 	cp	I_RET
 	jr	c, .loop
-	ld	de, instrTBlRET
+	ld	ix, instrTBlRET
 .loop:
 	ld	a, c			; recall A param
-	call	matchPrimaryRow
+	call	.matchPrimaryRow
 	jr	z, .match
-	ld	a, INSTR_TBL_ROWSIZE
-	call	addDE
-	ld	a, (de)
-	cp	0xff
+	ld	de, INSTR_TBL_ROWSIZE
+	add	ix, de
+	ld	a, 0xff
+	cp	(ix)
 	jr	nz, .loop
 	; No signature match
 	ld	a, ERR_BAD_ARG
@@ -935,6 +911,19 @@ parseInstruction:
 	pop	hl
 	pop	bc
 	ret
+
+; Compare primary row at (IX) with ID in A. Sets Z flag if there's a match.
+.matchPrimaryRow:
+	cp	(ix)
+	ret	nz
+	; name matches, let's see the rest
+	ld	hl, INS_CURARG1
+	ld	a, (ix+1)
+	call	matchArg
+	ret	nz
+	ld	hl, INS_CURARG2
+	ld	a, (ix+2)
+	jp	matchArg
 
 
 ; In instruction metadata below, argument types arge indicated with a single

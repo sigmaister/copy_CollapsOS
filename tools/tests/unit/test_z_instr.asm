@@ -46,15 +46,15 @@ runTests:
 	halt
 
 testSpitUpcode:
-	ld	ix, .t1
+	ld	iy, .t1
 	call	.test
-	ld	ix, .t2
+	ld	iy, .t2
 	call	.test
-	ld	ix, .t3
+	ld	iy, .t3
 	call	.test
-	ld	ix, .t4
+	ld	iy, .t4
 	call	.test
-	ld	ix, .t5
+	ld	iy, .t5
 	call	.test
 	ret
 
@@ -66,36 +66,36 @@ testSpitUpcode:
 	ld	(SPITBOWL+1), a
 	ld	(SPITBOWL+2), a
 	ld	(SPITBOWL+3), a
-	push	ix \ pop de
-	call	intoDE
-	ld	a, (ix+2)
+	push	iy \ pop ix
+	call	intoIX
+	ld	a, (iy+2)
 	ld	(INS_CURARG1), a
-	ld	a, (ix+3)
+	ld	a, (iy+3)
 	ld	(INS_CURARG1+1), a
-	ld	a, (ix+4)
+	ld	a, (iy+4)
 	ld	(INS_CURARG1+2), a
-	ld	a, (ix+5)
+	ld	a, (iy+5)
 	ld	(INS_CURARG2), a
-	ld	a, (ix+6)
+	ld	a, (iy+6)
 	ld	(INS_CURARG2+1), a
-	ld	a, (ix+7)
+	ld	a, (iy+7)
 	ld	(INS_CURARG2+2), a
 	call	spitUpcode
 	jp	nz, fail
 	ld	a, (SPITCNT)
-	cp	(ix+8)
+	cp	(iy+8)
 	jp	nz, fail
 	ld	a, (SPITBOWL)
-	cp	(ix+9)
+	cp	(iy+9)
 	jp	nz, fail
 	ld	a, (SPITBOWL+1)
-	cp	(ix+10)
+	cp	(iy+10)
 	jp	nz, fail
 	ld	a, (SPITBOWL+2)
-	cp	(ix+11)
+	cp	(iy+11)
 	jp	nz, fail
 	ld	a, (SPITBOWL+3)
-	cp	(ix+12)
+	cp	(iy+12)
 	jp	nz, fail
 	jp	nexttest
 
