@@ -842,6 +842,7 @@ spitUpcode:
 	ret
 
 ; Parse argument in (HL) and place it in (DE)
+; DE is not preserved
 ; Sets Z on success, reset on error.
 processArg:
 	call	parseArg
@@ -852,15 +853,20 @@ processArg:
 	; We don't use the space allocated to store those numbers in any other
 	; occasion, we store IX there unconditonally, LSB first.
 	inc	de
-	push	hl
-		push	ix \ pop hl
-		call	writeHLinDE
-	pop	hl
-	cp	a		; ensure Z is set
+	ex	(sp), ix	; (SP) is kept in IX and will be restored
+	ex	(sp), hl	; old HL is on (SP)
+	ld	a, l
+	ld	(de), a
+	inc	de
+	ld	a, h
+	ld	(de), a
+	ex	(sp), hl	; restore old HL from (SP)
+	ex	(sp), ix	; restore old (SP) from IX
+	cp	a		; ensure Z
 	ret
 .error:
 	ld	a, ERR_BAD_ARG
-	call	unsetZ
+	or	a		; unset Z
 	ret
 
 ; Parse instruction specified in A (I_* const) with args in I/O and write
@@ -880,14 +886,14 @@ parseInstruction:
 	jr	nz, .nomorearg
 	ld	de, INS_CURARG1
 	call	processArg
-	jr	nz, .error	; A is set to error
+	jr	nz, .end	; A is set to error, Z is unset
 	call	readComma
 	jr	nz, .nomorearg
 	call	readWord
 	jr	nz, .badfmt
 	ld	de, INS_CURARG2
 	call	processArg
-	jr	nz, .error	; A is set to error
+	jr	nz, .end	; A is set to error, Z is unset
 .nomorearg:
 	; Parsing done, no error, let's move forward to instr row matching!
 	; To speed up things a little, we use a poor man's indexing. Full
@@ -914,7 +920,8 @@ parseInstruction:
 	jr	nz, .loop
 	; No signature match
 	ld	a, ERR_BAD_ARG
-	jr	.error
+	or	a	; unset Z
+	jr	.end
 .match:
 	; We have our matching instruction row. We're getting pretty near our
 	; goal here!
@@ -923,9 +930,6 @@ parseInstruction:
 .badfmt:
 	; Z already unset
 	ld	a, ERR_BAD_FMT
-.error:
-	; A is set to error already
-	call	unsetZ
 .end:
 	pop	de
 	pop	hl

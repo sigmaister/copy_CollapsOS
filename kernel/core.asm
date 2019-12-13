@@ -57,17 +57,6 @@ intoIX:
 	pop 	ix
 	ret
 
-; Write the contents of HL in (DE)
-; de and hl are preserved, so no pushing/popping necessary
-writeHLinDE:
-	ex	de, hl
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	dec	hl
-	ex	de, hl
-	ret
-
 ; Call the method (IX) is a pointer to. In other words, call intoIX before
 ; callIX
 callIXI:

@@ -82,31 +82,17 @@ blkSet:
 	push	af
 	push	de
 	push	hl
+	push	bc
 
-	; Write GETC
-	push	hl		; <|
-	call	intoHL		;  |
-	call	writeHLinDE	;  |
-	inc	de		;  |
-	inc	de		;  |
-	pop	hl		; <|
-	inc	hl
-	inc	hl
-	; Write PUTC
-	call	intoHL
-	call	writeHLinDE
-	inc	de
-	inc	de
+	ld	bc, 4
+	ldir
 	; Initialize pos
+	ld	b, 4
 	xor	a
-	ld	(de), a
-	inc	de
-	ld	(de), a
-	inc	de
-	ld	(de), a
-	inc	de
-	ld	(de), a
+	ex	de, hl
+	call	fill
 
+	pop	bc
 	pop	hl
 	pop	de
 	pop	af
