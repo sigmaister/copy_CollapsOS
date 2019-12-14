@@ -9,3 +9,6 @@ bar:
 brbs 6, foo
 ori r22, 0x34+4
 sbrs r1, 3
+rjmp	foo
+rcall	baz
+baz:

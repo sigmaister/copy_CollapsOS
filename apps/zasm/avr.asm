@@ -59,8 +59,11 @@ instrNames:
 .db "BST", 0
 .db "SBRC", 0
 .db "SBRS", 0
+.equ	I_RCALL	42
+.db "RCALL", 0
+.db "RJMP", 0
 ; no arg (from here, instrUpMasks2)
-.equ	I_BREAK	42
+.equ	I_BREAK	44
 .db "BREAK", 0
 .db "CLC", 0
 .db "CLH", 0
@@ -88,7 +91,7 @@ instrNames:
 .db "SLEEP", 0
 .db "WDR", 0
 ; Rd(5)
-.equ	I_ASR	68
+.equ	I_ASR	70
 .db "ASR", 0
 .db "COM", 0
 .db "DEC", 0
@@ -137,6 +140,9 @@ instrUpMasks1:
 .db 0b11111010			; BST
 .db 0b11111100			; SBRC
 .db 0b11111110			; SBRS
+; k(12): XXXXkkkk kkkkkkkk
+.db 0b11010000			; RCALL
+.db 0b11000000			; RJMP
 
 ; 16-bit constant masks associated with each instruction. In the same order as
 ; in instrNames
@@ -231,8 +237,10 @@ parseInstruction:
 	jr	c, .spitRd5Rr5
 	cp	I_BLD
 	jr	c, .spitRdK8
-	cp	I_BREAK
+	cp	I_RCALL
 	jr	c, .spitRdBit
+	cp	I_BREAK
+	jr	c, .spitK12
 	cp	I_ASR
 	jr	c, .spitNoArg
 	; spitRd5
@@ -242,7 +250,7 @@ parseInstruction:
 	; continue to .spitNoArg
 .spitNoArg:
 	call	.getUp2
-	jr	.spit
+	jp	.spit
 
 .spitRd5Rr5:
 	call	.readR5
@@ -275,7 +283,6 @@ parseInstruction:
 	call	readWord
 	call	parseExpr
 	ret	nz
-	ld	a, c
 	ld	a, 0xff
 	call	.IX2A
 	ret	nz
@@ -305,6 +312,36 @@ parseInstruction:
 	call	ioPutB
 	call	.getUp1
 	jr	.spitMSB
+
+.spitK12:
+	; Let's deal with the upcode constant before we destroy DE below
+	call	.getUp1
+	ld	b, (hl)
+	call	readWord
+	call	parseExpr
+	ret	nz
+	push	ix \ pop hl
+	; We're doing the same dance as in .BR. See comments there.
+	ld	de, 0xfff
+	add	hl, de
+	jp	c, unsetZ	; Carry? number is way too high.
+	ex	de, hl
+	call	zasmGetPC	; --> HL
+	inc	hl \ inc hl
+	ex	de, hl
+	sbc	hl, de
+	jp	c, unsetZ	; Carry? error
+	ld	de, 0xfff
+	sbc	hl, de
+	; We're within bounds! Now, divide by 2
+	ld	a, l
+	rr	h \ rra
+	; LSB in A, spit
+	call	ioPutB
+	ld	a, h
+	and	0xf
+	or	b
+	jp	ioPutB
 
 .spit:
 	; LSB is spit *before* MSB
