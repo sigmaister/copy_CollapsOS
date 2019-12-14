@@ -8,11 +8,10 @@
 ; categories, and then alphabetically. Categories are ordered so that the 8bit
 ; opcodes come first, then the 16bit ones. 0xff ends the chain
 instrNames:
-; Branching instructions. They are all shortcuts to BRBC/BRBS. Their respective
-; bits are listed in instrBRBits. These are not in alphabetical order, but
-; rather in "bit order". All "bit set" instructions first (10th bit clear), then
-; all "bit clear" ones (10th bit set). Inside this order, they're then in "sss"
-; order (bit number alias for BRBC/BRBS)
+; Branching instructions. They are all shortcuts to BRBC/BRBS. These are not in
+; alphabetical order, but rather in "bit order". All "bit set" instructions
+; first (10th bit clear), then all "bit clear" ones (10th bit set). Inside this
+; order, they're then in "sss" order (bit number alias for BRBC/BRBS).
 .db "BRCS", 0
 .db "BREQ", 0
 .db "BRMI", 0
@@ -184,25 +183,6 @@ instrUpMasks2:
 .db 0b10010100, 0b00000111	; ROR
 .db 0b10010100, 0b00000010	; SWAP
 .db 0b10010010, 0b00000100	; XCH
-
-instrBRBits:
-; 1st bit is 3rd bit of MSB and the other 3 are the lower bits of LSB
-.db 0b0000	; BRCS
-.db 0b0001	; BREQ
-.db 0b0010	; BRMI
-.db 0b0011	; BRVS
-.db 0b0100	; BRLT
-.db 0b0101	; BRHS
-.db 0b0110	; BRTS
-.db 0b0111	; BRIE
-.db 0b1000	; BRCC
-.db 0b1001	; BRNE
-.db 0b1010	; BRPL
-.db 0b1011	; BRVC
-.db 0b1100	; BRGE
-.db 0b1101	; BRHC
-.db 0b1110	; BRTC
-.db 0b1111	; BRID
 
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
