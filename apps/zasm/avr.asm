@@ -55,8 +55,13 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
+.equ	I_BLD	38
+.db "BLD", 0
+.db "BST", 0
+.db "SBRC", 0
+.db "SBRS", 0
 ; no arg (from here, instrUpMasks2)
-.equ	I_BREAK	38
+.equ	I_BREAK	42
 .db "BREAK", 0
 .db "CLC", 0
 .db "CLH", 0
@@ -84,7 +89,7 @@ instrNames:
 .db "SLEEP", 0
 .db "WDR", 0
 ; Rd(5)
-.equ	I_ASR	64
+.equ	I_ASR	68
 .db "ASR", 0
 .db "COM", 0
 .db "DEC", 0
@@ -119,7 +124,7 @@ instrUpMasks1:
 .db 0b00101000			; OR
 .db 0b00001000			; SBC
 .db 0b00011000			; SUB
-; Rd(5) + K(8): XXXXKKKK ddddKKKK
+; Rd(4) + K(8): XXXXKKKK ddddKKKK
 .db 0b01110000			; ANDI
 .db 0b00110000			; CPI
 .db 0b11100000			; LDI
@@ -127,6 +132,12 @@ instrUpMasks1:
 .db 0b01000000			; SBCI
 .db 0b01100000			; SBR
 .db 0b01010000			; SUBI
+; Rd(5) + bit: XXXXXXXd ddddXbbb: lonely bit in LSB is 0 in all cases, so we
+; ignore it.
+.db 0b11111000			; BLD
+.db 0b11111010			; BST
+.db 0b11111100			; SBRC
+.db 0b11111110			; SBRS
 
 ; 16-bit constant masks associated with each instruction. In the same order as
 ; in instrNames
@@ -231,27 +242,29 @@ getInstID:
 parseInstruction:
 	; BC, during .spit, is ORred to the spitted opcode.
 	ld	bc, 0
+	; Save Instr ID in D, which is less volatile than A. In almost all
+	; cases, we fetch the opcode constant at the end of the processing.
+	ld	d, a
 	cp	I_ADC
 	jp	c, .BR
 	cp	I_ANDI
 	jr	c, .spitRd5Rr5
-	cp	I_BREAK
+	cp	I_BLD
 	jr	c, .spitRdK8
+	cp	I_BREAK
+	jr	c, .spitRdBit
 	cp	I_ASR
 	jr	c, .spitNoArg
 	; spitRd5
-	ld	d, a		; save A for later
 	call	.readR5
 	ret	nz
 	call	.placeRd
-	ld	a, d		; restore A
 	; continue to .spitNoArg
 .spitNoArg:
 	call	.getUp2
 	jr	.spit
 
 .spitRd5Rr5:
-	ld	d, a		; save A for later
 	call	.readR5
 	ret	nz
 	call	.placeRd
@@ -270,13 +283,11 @@ parseInstruction:
 	rra \ rra \ rra
 	or	b
 	ld	b, a
-	ld	a, d		; restore A
 	call	.getUp1
 	; now that's our MSB
 	jr	.spitMSB
 
 .spitRdK8:
-	ld	d, a		; save A for later
 	call	.readR4
 	ret	nz
 	call	.placeRd
@@ -299,9 +310,20 @@ parseInstruction:
 	and	0xf0
 	rra \ rra \ rra \ rra
 	ld	b, a
-	ld	a, d		; restore A
 	call	.getUp1
-	; now that's our MSB
+	jr	.spitMSB
+
+.spitRdBit:
+	call	.readR5
+	ret	nz
+	call	.placeRd
+	call	readComma
+	ret	nz
+	call	.readBit
+	ret	nz
+	; LSB is in A and is ready to go
+	call	ioPutB
+	call	.getUp1
 	jr	.spitMSB
 
 .spit:
@@ -378,13 +400,8 @@ parseInstruction:
 	; upcode becomes 0b111101
 	inc	b
 .rdBRBS:
-	call	readWord
+	call	.readBit
 	ret	nz
-	call	parseExpr
-	ld	a, 7
-	call	.IX2A
-	ret	nz
-	ld	c, a
 	call	readComma
 	ret	nz
 	jr	.spitBR2
@@ -398,14 +415,16 @@ parseInstruction:
 	ld	c, a
 	ret
 
-; Fetch a 8-bit upcode specified by instr index in A and set that upcode in HL
+; Fetch a 8-bit upcode specified by instr index in D and set that upcode in HL
 .getUp1:
+	ld	a, d
 	sub	I_ADC
 	ld	hl, instrUpMasks1
 	jp	addHL
 
-; Fetch a 16-bit upcode specified by instr index in A and set that upcode in HL
+; Fetch a 16-bit upcode specified by instr index in D and set that upcode in HL
 .getUp2:
+	ld	a, d
 	sub	I_BREAK
 	sla	a	; A * 2
 	ld	hl, instrUpMasks2
@@ -434,6 +453,17 @@ parseInstruction:
 	ld	a, 31
 	jr	.IX2A
 
+.readBit:
+	call	readWord
+	ret	nz
+	call	parseExpr
+	ld	a, 7
+	call	.IX2A
+	ret	nz
+	or	c
+	ld	c, a
+	cp	a		; ensure Z
+	ret
 
 ; Put IX's LSB into A and, additionally, ensure that the new value is <=
 ; than what was previously in A.
