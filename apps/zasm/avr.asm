@@ -8,8 +8,32 @@
 ; categories, and then alphabetically. Categories are ordered so that the 8bit
 ; opcodes come first, then the 16bit ones. 0xff ends the chain
 instrNames:
+; Branching instructions. They are all shortcuts to BRBC/BRBS. Their respective
+; bits are listed in instrBRBits. These are not in alphabetical order, but
+; rather in "bit order". All "bit set" instructions first (10th bit clear), then
+; all "bit clear" ones (10th bit set). Inside this order, they're then in "sss"
+; order (bit number alias for BRBC/BRBS)
+.db "BRCS", 0
+.db "BREQ", 0
+.db "BRMI", 0
+.db "BRVS", 0
+.db "BRLT", 0
+.db "BRHS", 0
+.db "BRTS", 0
+.db "BRIE", 0
+.db "BRCC", 0
+.db "BRNE", 0
+.db "BRPL", 0
+.db "BRVC", 0
+.db "BRGE", 0
+.db "BRHC", 0
+.db "BRTC", 0
+.db "BRID", 0
+.equ	I_BRBS	16
+.db "BRBS", 0
+.db "BRBC", 0
 ; Rd(5) + Rr(5)
-.equ	I_ADC	0
+.equ	I_ADC	18
 .db "ADC", 0
 .db "ADD", 0
 .db "AND", 0
@@ -24,7 +48,7 @@ instrNames:
 .db "SBC", 0
 .db "SUB", 0
 ; no arg
-.equ	I_BREAK	13
+.equ	I_BREAK	31
 .db "BREAK", 0
 .db "CLC", 0
 .db "CLH", 0
@@ -52,7 +76,7 @@ instrNames:
 .db "SLEEP", 0
 .db "WDR", 0
 ; Rd(5)
-.equ	I_ASR	39
+.equ	I_ASR	57
 .db "ASR", 0
 .db "COM", 0
 .db "DEC", 0
@@ -134,6 +158,25 @@ instrUpMasks2:
 .db 0b10010100, 0b00000010	; SWAP
 .db 0b10010010, 0b00000100	; XCH
 
+instrBRBits:
+; 1st bit is 3rd bit of MSB and the other 3 are the lower bits of LSB
+.db 0b0000	; BRCS
+.db 0b0001	; BREQ
+.db 0b0010	; BRMI
+.db 0b0011	; BRVS
+.db 0b0100	; BRLT
+.db 0b0101	; BRHS
+.db 0b0110	; BRTS
+.db 0b0111	; BRIE
+.db 0b1000	; BRCC
+.db 0b1001	; BRNE
+.db 0b1010	; BRPL
+.db 0b1011	; BRVC
+.db 0b1100	; BRGE
+.db 0b1101	; BRHC
+.db 0b1110	; BRTC
+.db 0b1111	; BRID
+
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
 ; there's a match.
@@ -172,6 +215,8 @@ getInstID:
 parseInstruction:
 	; BC, during .spit, is ORred to the spitted opcode.
 	ld	bc, 0
+	cp	I_ADC
+	jp	c, .BR
 	cp	I_BREAK
 	jr	c, .spitRd5Rr5
 	cp	I_ASR
@@ -207,8 +252,7 @@ parseInstruction:
 	or	b
 	ld	b, a
 	ld	a, d		; restore A
-	ld	hl, instrUpMasks1
-	call	addHL
+	call	.getUp1
 	; now that's our MSB
 	jr	.spitMSB
 .spit:
@@ -225,6 +269,77 @@ parseInstruction:
 	xor	a		; ensure Z, set success
 	ret
 
+; Spit a branching mnemonic.
+.BR:
+	; While we have our index in A, let's settle B straight: Our base
+	; upcode is 0b11110000 for "bit set" types and 0b11110100 for "bit
+	; clear" types. However, we'll have 2 left shift operation done on B
+	; later on, so we need those bits shifted right.
+	ld	b, 0b111100
+	cp	I_BRBS
+	jr	z, .rdBRBS
+	jr	nc, .rdBRBC
+	; We have an alias. Our "sss" value is index & 0b111
+	; Before we get rid of that 3rd bit, let's see, is it set? if yes, we'll
+	; want to increase B
+	bit	3, a
+	jr	z, .skip1	; 3rd bit unset
+	inc	b
+.skip1:
+	and	0b111
+	ld	c, a
+.spitBR2:
+	call	readWord
+	ret	nz
+	call	parseExpr
+	ret	nz
+	; IX contains an absolute value. Turn this into a -64/+63 relative
+	; value by subtracting PC from it. However, before we do that, let's
+	; add 0x7f to it, which we'll remove later. This will simplify bounds
+	; checks. (we use 7f instead of 3f because we deal in bytes here, not
+	; in words)
+	push	ix \ pop hl
+	ld	de, 0x7f
+	add	hl, de		; Carry cleared
+	ex	de, hl
+	call	zasmGetPC	; --> HL
+	; The relative value is actually not relative to current PC, but to
+	; PC after the execution of this branching op. Increase HL by 2.
+	inc	hl \ inc hl
+	ex	de, hl
+	sbc	hl, de
+	jp	c, unsetZ	; Carry? error
+	ld	de, 0x7f
+	sbc	hl, de
+	; We're within bounds! However, our value in L is the number of
+	; relative *bytes*. The value we put there is the number of words.
+	; Thefore, relevant bits are 7:1
+	ld	a, l
+	sla	a \ rl b
+	sla	a \ rl b
+	; k is now shifted by 3, two of those bits being in B. Let's OR A and
+	; C and we have our LSB ready to go.
+	or	c
+	call	ioPutB
+	; Good! MSB now. B is already good to go.
+	ld	a, b
+	jp	ioPutB
+.rdBRBC:
+	; In addition to reading "sss", we also need to inc B so that our base
+	; upcode becomes 0b111101
+	inc	b
+.rdBRBS:
+	call	readWord
+	ret	nz
+	call	parseExpr
+	ld	a, 7
+	call	.IX2A
+	ret	nz
+	ld	c, a
+	call	readComma
+	ret	nz
+	jr	.spitBR2
+
 ; local routines
 ; place number in A in BC at position .......d dddd....
 ; BC is assumed to be 0
@@ -233,6 +348,13 @@ parseInstruction:
 	rl	b
 	ld	c, a
 	ret
+
+; Fetch a 8-bit upcode specified by instr index in A and set that upcode in HL
+.getUp1:
+	sub	I_ADC
+	ld	hl, instrUpMasks1
+	jp	addHL
+
 ; Fetch a 16-bit upcode specified by instr index in A and set that upcode in HL
 .getUp2:
 	sub	I_BREAK
@@ -251,13 +373,19 @@ parseInstruction:
 	inc	hl
 	call	parseDecimal
 	ret	nz
+	ld	a, 31
+	jr	.IX2A
+
+; Put IX's LSB into A and, additionally, ensure that the new value is <=
+; than what was previously in A.
+; Z for success.
+.IX2A:
 	push	ix \ pop hl
+	cp	l
+	jp	c, unsetZ	; A < L
 	ld	a, h
 	or	a
 	ret	nz		; should be zero
 	ld	a, l
-	cp	32
-	jp	nc, unsetZ	; must be < 32
-	; we're good!
-	cp	a		; ensure Z
+	; Z set from "or a"
 	ret

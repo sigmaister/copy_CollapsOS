@@ -51,6 +51,12 @@ test:
 	jp	nz, fail
 	call	nexttest
 
+	; test that AND affects the Z flag
+	ld	a, 0x69
+	and	0x80
+	jp	nz, fail
+	call	nexttest
+
 	; success
 	xor	a
 	halt
