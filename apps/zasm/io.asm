@@ -80,8 +80,10 @@ ioGetB:
 	call	ioInInclude
 	jr	z, .normalmode
 	; We're in "include mode", read from FS
+	push	ix		; --> lvl 1
 	ld	ix, IO_INCLUDE_BLK
 	call	_blkGetB
+	pop	ix		; <-- lvl 1
 	jr	nz, .includeEOF
 	cp	0x0a		; newline
 	ret	nz		; not newline? nothing to do
@@ -111,9 +113,11 @@ ioGetB:
 	; continue on to "normal" reading. We don't want to return our zero
 .normalmode:
 	; normal mode, read from IN stream
+	push	ix		; --> lvl 1
 	ld	ix, IO_IN_BLK
 	call	_blkGetB
-	cp	0x0a		; newline
+	pop	ix		; <-- lvl 1
+	cp	LF		; newline
 	ret	nz		; not newline? return
 	; inc current lineno
 	push	hl
@@ -128,10 +132,6 @@ ioGetB:
 	xor	a
 	ld	(IO_PUTBACK_BUF), a
 	pop	af
-	ret
-
-_callIX:
-	jp	(ix)
 	ret
 
 ; Put back non-zero character A into the "ioGetB stack". The next ioGetB call,

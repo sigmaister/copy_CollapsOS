@@ -244,8 +244,9 @@ parseInstruction:
 	cp	I_ASR
 	jr	c, .spitNoArg
 	; spitRd5
-	call	.readR5
-	ret	nz
+	ld	ix, argSpecs	; 'R', 0
+	call	_parseArgs
+	ld	a, h
 	call	.placeRd
 	; continue to .spitNoArg
 .spitNoArg:
@@ -253,19 +254,18 @@ parseInstruction:
 	jp	.spit
 
 .spitRd5Rr5:
-	call	.readR5
+	ld	ix, argSpecs+2	; 'R', 'R'
+	call	_parseArgs
 	ret	nz
+	ld	a, h
 	call	.placeRd
-	call	readComma
-	call	.readR5
-	ret	nz
-	push	af		; --> lvl 1
+	ld	a, l
 	; let's start with the 4 lower bits
 	and	0xf
 	or	c
 	; We now have our LSB in A. Let's spit it now.
 	call	ioPutB
-	pop	af		; <-- lvl 1
+	ld	a, l
 	; and now that last high bit, currently bit 4, which must become bit 1
 	and	0b00010000
 	rra \ rra \ rra
@@ -276,23 +276,18 @@ parseInstruction:
 	jr	.spitMSB
 
 .spitRdK8:
-	call	.readR4
+	ld	ix, argSpecs+6		; 'r', 8
+	call	_parseArgs
 	ret	nz
+	ld	a, h		; Rd
 	call	.placeRd
-	call	readComma
-	call	readWord
-	call	parseExpr
-	ret	nz
-	ld	a, 0xff
-	call	.IX2A
-	ret	nz
-	push	af		; --> lvl 1
+	ld	a, l		; K
 	; let's start with the 4 lower bits
 	and	0xf
 	or	c
 	; We now have our LSB in A. Let's spit it now.
 	call	ioPutB
-	pop	af		; <-- lvl 1
+	ld	a, l
 	; and now those high 4 bits
 	and	0xf0
 	rra \ rra \ rra \ rra
@@ -301,13 +296,12 @@ parseInstruction:
 	jr	.spitMSB
 
 .spitRdBit:
-	call	.readR5
+	ld	ix, argSpecs+8		; 'R', 'b'
+	call	_parseArgs
 	ret	nz
+	ld	a, h
 	call	.placeRd
-	call	readComma
-	ret	nz
-	call	.readBit
-	ret	nz
+	or	l
 	; LSB is in A and is ready to go
 	call	ioPutB
 	call	.getUp1
@@ -321,7 +315,7 @@ parseInstruction:
 	call	parseExpr
 	ret	nz
 	push	ix \ pop hl
-	; We're doing the same dance as in .BR. See comments there.
+	; We're doing the same dance as in _readk7. See comments there.
 	ld	de, 0xfff
 	add	hl, de
 	jp	c, unsetZ	; Carry? number is way too high.
@@ -375,39 +369,24 @@ parseInstruction:
 	inc	b
 .skip1:
 	and	0b111
-	ld	c, a
+	ld	c, a		; can't store in H now, (HL) is used
+	ld	ix, argSpecs+4	; 7, 0
+	call	_parseArgs
+	ret	nz
+	; ok, now we can
+	ld	l, h		; k in L
+	ld	h, c		; bit in H
 .spitBR2:
-	call	readWord
-	ret	nz
-	call	parseExpr
-	ret	nz
-	; IX contains an absolute value. Turn this into a -64/+63 relative
-	; value by subtracting PC from it. However, before we do that, let's
-	; add 0x7f to it, which we'll remove later. This will simplify bounds
-	; checks. (we use 7f instead of 3f because we deal in bytes here, not
-	; in words)
-	push	ix \ pop hl
-	ld	de, 0x7f
-	add	hl, de		; Carry cleared
-	ex	de, hl
-	call	zasmGetPC	; --> HL
-	; The relative value is actually not relative to current PC, but to
-	; PC after the execution of this branching op. Increase HL by 2.
-	inc	hl \ inc hl
-	ex	de, hl
-	sbc	hl, de
-	jp	c, unsetZ	; Carry? error
-	ld	de, 0x7f
-	sbc	hl, de
-	; We're within bounds! However, our value in L is the number of
-	; relative *bytes*. The value we put there is the number of words.
-	; Thefore, relevant bits are 7:1
+	; bit in H, k in L.
+	; Our value in L is the number of relative *bytes*. The value we put
+	; there is the number of words. Therefore, relevant bits are 7:1
 	ld	a, l
 	sla	a \ rl b
 	sla	a \ rl b
+	and	0b11111000
 	; k is now shifted by 3, two of those bits being in B. Let's OR A and
-	; C and we have our LSB ready to go.
-	or	c
+	; H and we have our LSB ready to go.
+	or	h
 	call	ioPutB
 	; Good! MSB now. B is already good to go.
 	ld	a, b
@@ -417,10 +396,10 @@ parseInstruction:
 	; upcode becomes 0b111101
 	inc	b
 .rdBRBS:
-	call	.readBit
+	ld	ix, argSpecs+10		; bit + k(7)
+	call	_parseArgs
 	ret	nz
-	call	readComma
-	ret	nz
+	; bit in H, k in L.
 	jr	.spitBR2
 
 ; local routines
@@ -447,8 +426,141 @@ parseInstruction:
 	ld	hl, instrUpMasks2
 	jp	addHL
 
-.readR4:
-	call	.readR5
+; Argspecs: two bytes describing the arguments that are accepted. Possible
+; values:
+;
+; 0 - None
+; 7 - a k(7) address, relative to PC, *in bytes* (divide by 2 before writing)
+; 8 - a K(8) value
+; 'a' - A 5-bit I/O port value
+; 'A' - A 6-bit I/O port value
+; 'b' - a 0-7 bit value
+; 'R' - an r5 value: r0-r31
+; 'r' - an r4 value: r16-r31
+;
+; All arguments accept expressions, even 'r' ones: in 'r' args, we start by
+; looking if the arg starts with 'r' or 'R'. If yes, it's a simple 'rXX' value,
+; if not, we try parsing it as an expression and validate that it falls in the
+; correct 0-31 or 16-31 range
+argSpecs:
+	.db	'R', 0		; Rd(5)
+	.db	'R', 'R'	; Rd(5) + Rr(5)
+	.db	7, 0		; k(7)
+	.db	'r', 8		; Rd(4) + K(8)
+	.db	'R', 'b'	; Rd(5) + bit
+	.db	'b', 7		; bit + k(7)
+
+; Parse arguments in (HL) according to specs in IX
+; Puts the results in HL (which is not needed anymore after the parsing).
+; First arg in H, second in L.
+; This routine is not used in all cases, some ops don't fit this pattern well
+; and thus parse their args themselves.
+; Z for success.
+_parseArgs:
+	; For the duration of the routine, our final value will be in DE, and
+	; then placed in HL at the end.
+	push	de
+	call	readWord
+	jr	nz, .end
+	ld	a, (ix)
+	call	.parse
+	jr	nz, .end
+	ld	d, a
+	ld	a, (ix+1)
+	or	a
+	jr	z, .end		; no arg
+	call	readComma
+	jr	nz, .end
+	call	readWord
+	jr	nz, .end
+	ld	a, (ix+1)
+	call	.parse
+	jr	nz, .end
+	; we're done with (HL) now
+	ld	l, a
+	cp	a		; ensure Z
+.end:
+	ld	h, d
+	pop	de
+	ret
+
+; Parse a single arg specified in A and returns its value in A
+; Z for success
+.parse:
+	cp	'R'
+	jr	z, _readR5
+	cp	'r'
+	jr	z, _readR4
+	cp	'b'
+	jr	z, _readBit
+	cp	7
+	jr	z, _readk7
+	cp	8
+	jr	z, _readK8
+	ret			; something's wrong
+
+_readBit:
+	push	ix
+	call	parseExpr
+	ld	a, 7
+	call	_IX2A
+	jr	nz, .end
+	or	c
+	ld	c, a
+	cp	a		; ensure Z
+.end:
+	pop	ix
+	ret
+
+_readk7:
+	push	hl
+	push	de
+	push	ix
+	call	parseExpr
+	jr	nz, .end
+	; IX contains an absolute value. Turn this into a -64/+63 relative
+	; value by subtracting PC from it. However, before we do that, let's
+	; add 0x7f to it, which we'll remove later. This will simplify bounds
+	; checks. (we use 7f instead of 3f because we deal in bytes here, not
+	; in words)
+	push	ix \ pop hl
+	ld	de, 0x7f
+	add	hl, de		; Carry cleared
+	ex	de, hl
+	call	zasmGetPC	; --> HL
+	; The relative value is actually not relative to current PC, but to
+	; PC after the execution of this branching op. Increase HL by 2.
+	inc	hl \ inc hl
+	ex	de, hl
+	sbc	hl, de
+	jp	c, .err	; Carry? error
+	ld	de, 0x7f
+	sbc	hl, de
+	; We're within bounds! However, our value in L is the number of
+	; relative *bytes*.
+	ld	a, l
+	cp	a		; ensure Z
+.end:
+	pop	ix
+	pop	de
+	pop	hl
+	ret
+.err:
+	call	unsetZ
+	jr	.end
+
+_readK8:
+	push	ix
+	call	parseExpr
+	jr	nz, .end
+	ld	a, 0xff
+	call	_IX2A
+.end:
+	pop	ix
+	ret
+
+_readR4:
+	call	_readR5
 	ret	nz
 	; has to be in the 16-31 range
 	sub	0x10
@@ -458,34 +570,25 @@ parseInstruction:
 
 ; read a rXX argument and return register number in A.
 ; Set Z for success.
-.readR5:
-	call	readWord
+_readR5:
+	push	ix
 	ld	a, (hl)
 	call	upcase
 	cp	'R'
-	ret	nz		; not a register
+	jr	nz, .end		; not a register
 	inc	hl
 	call	parseDecimal
-	ret	nz
+	jr	nz, .end
 	ld	a, 31
-	jr	.IX2A
-
-.readBit:
-	call	readWord
-	ret	nz
-	call	parseExpr
-	ld	a, 7
-	call	.IX2A
-	ret	nz
-	or	c
-	ld	c, a
-	cp	a		; ensure Z
+	call	_IX2A
+.end:
+	pop	ix
 	ret
 
 ; Put IX's LSB into A and, additionally, ensure that the new value is <=
 ; than what was previously in A.
 ; Z for success.
-.IX2A:
+_IX2A:
 	push	ix \ pop hl
 	cp	l
 	jp	c, unsetZ	; A < L
@@ -495,3 +598,5 @@ parseInstruction:
 	ld	a, l
 	; Z set from "or a"
 	ret
+
+

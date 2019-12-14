@@ -155,8 +155,7 @@ readComma:
 	cp	','
 	ret	z
 	call	ioPutBack
-	call	unsetZ
-	ret
+	jp	unsetZ
 
 ; Read ioGetB until we reach the beginning of next line, skipping comments if
 ; necessary. This skips all whitespace, \n, \r, comments until we reach the
