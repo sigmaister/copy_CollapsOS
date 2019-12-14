@@ -178,4 +178,17 @@ arguments are separated by commas.
 To assemble an AVR assembler, use the `gluea.asm` file instead of the regular
 one.
 
+Note about AVR and PC: In most assemblers, arithmetics for instructions
+addresses have words (two bytes) as their basic unit because AVR instructions
+are either 16bit in length or 32bit in length. All addresses constants in
+upcodes are in words. However, in zasm's core logic, PC is in bytes (because z80
+upcodes can be 1 byte).
+
+The AVR assembler, of course, correctly translates byte PCs to words when
+writing upcodes, however, when you write your expressions, you need to remember
+to treat with bytes. For example, in a traditional AVR assembler, jumping to
+the instruction after the "foo" label would be "rjmp foo+1". In zasm, it's
+"rjmp foo+2". If your expression results in an odd number, the low bit of your
+number will be ignored.
+
 [libz80]: https://github.com/ggambetta/libz80

@@ -32,7 +32,7 @@ instrNames:
 .equ	I_BRBS	16
 .db "BRBS", 0
 .db "BRBC", 0
-; Rd(5) + Rr(5)
+; Rd(5) + Rr(5) (from here, instrUpMasks1)
 .equ	I_ADC	18
 .db "ADC", 0
 .db "ADD", 0
@@ -47,8 +47,16 @@ instrNames:
 .db "OR", 0
 .db "SBC", 0
 .db "SUB", 0
-; no arg
-.equ	I_BREAK	31
+.equ	I_ANDI	31
+.db "ANDI", 0
+.db "CPI", 0
+.db "LDI", 0
+.db "ORI", 0
+.db "SBCI", 0
+.db "SBR", 0
+.db "SUBI", 0
+; no arg (from here, instrUpMasks2)
+.equ	I_BREAK	38
 .db "BREAK", 0
 .db "CLC", 0
 .db "CLH", 0
@@ -76,7 +84,7 @@ instrNames:
 .db "SLEEP", 0
 .db "WDR", 0
 ; Rd(5)
-.equ	I_ASR	57
+.equ	I_ASR	64
 .db "ASR", 0
 .db "COM", 0
 .db "DEC", 0
@@ -111,6 +119,14 @@ instrUpMasks1:
 .db 0b00101000			; OR
 .db 0b00001000			; SBC
 .db 0b00011000			; SUB
+; Rd(5) + K(8): XXXXKKKK ddddKKKK
+.db 0b01110000			; ANDI
+.db 0b00110000			; CPI
+.db 0b11100000			; LDI
+.db 0b01100000			; ORI
+.db 0b01000000			; SBCI
+.db 0b01100000			; SBR
+.db 0b01010000			; SUBI
 
 ; 16-bit constant masks associated with each instruction. In the same order as
 ; in instrNames
@@ -217,8 +233,10 @@ parseInstruction:
 	ld	bc, 0
 	cp	I_ADC
 	jp	c, .BR
-	cp	I_BREAK
+	cp	I_ANDI
 	jr	c, .spitRd5Rr5
+	cp	I_BREAK
+	jr	c, .spitRdK8
 	cp	I_ASR
 	jr	c, .spitNoArg
 	; spitRd5
@@ -231,6 +249,7 @@ parseInstruction:
 .spitNoArg:
 	call	.getUp2
 	jr	.spit
+
 .spitRd5Rr5:
 	ld	d, a		; save A for later
 	call	.readR5
@@ -255,6 +274,36 @@ parseInstruction:
 	call	.getUp1
 	; now that's our MSB
 	jr	.spitMSB
+
+.spitRdK8:
+	ld	d, a		; save A for later
+	call	.readR4
+	ret	nz
+	call	.placeRd
+	call	readComma
+	call	readWord
+	call	parseExpr
+	ret	nz
+	ld	a, c
+	ld	a, 0xff
+	call	.IX2A
+	ret	nz
+	push	af		; --> lvl 1
+	; let's start with the 4 lower bits
+	and	0xf
+	or	c
+	; We now have our LSB in A. Let's spit it now.
+	call	ioPutB
+	pop	af		; <-- lvl 1
+	; and now those high 4 bits
+	and	0xf0
+	rra \ rra \ rra \ rra
+	ld	b, a
+	ld	a, d		; restore A
+	call	.getUp1
+	; now that's our MSB
+	jr	.spitMSB
+
 .spit:
 	; LSB is spit *before* MSB
 	inc	hl
@@ -362,6 +411,15 @@ parseInstruction:
 	ld	hl, instrUpMasks2
 	jp	addHL
 
+.readR4:
+	call	.readR5
+	ret	nz
+	; has to be in the 16-31 range
+	sub	0x10
+	jp	c, unsetZ
+	cp	a	; ensure Z
+	ret
+
 ; read a rXX argument and return register number in A.
 ; Set Z for success.
 .readR5:
@@ -375,6 +433,7 @@ parseInstruction:
 	ret	nz
 	ld	a, 31
 	jr	.IX2A
+
 
 ; Put IX's LSB into A and, additionally, ensure that the new value is <=
 ; than what was previously in A.
