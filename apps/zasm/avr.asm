@@ -36,6 +36,8 @@ instrNames:
 .db "ADC", 0
 .db "ADD", 0
 .db "AND", 0
+.db "BLD", 0
+.db "BST", 0
 .db "CLR", 0
 .db "CP", 0
 .db "CPC", 0
@@ -45,8 +47,10 @@ instrNames:
 .db "MUL", 0
 .db "OR", 0
 .db "SBC", 0
+.db "SBRC", 0
+.db "SBRS", 0
 .db "SUB", 0
-.equ	I_ANDI	31
+.equ	I_ANDI	35
 .db "ANDI", 0
 .db "CPI", 0
 .db "LDI", 0
@@ -54,11 +58,6 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_BLD	38
-.db "BLD", 0
-.db "BST", 0
-.db "SBRC", 0
-.db "SBRS", 0
 .equ	I_RCALL	42
 .db "RCALL", 0
 .db "RJMP", 0
@@ -134,10 +133,12 @@ instrNames:
 
 ; In the same order as in instrNames
 instrTbl:
-; Rd(5) + Rd(5): XXXXXXrd ddddrrrr
+; Rd(5) + Rd(5) (0x02) and Rd(5) + bit (0x05) (same processing)
 .db 0x02, 0b00011100, 0x00		; ADC
 .db 0x02, 0b00001100, 0x00		; ADD
 .db 0x02, 0b00100000, 0x00		; AND
+.db 0x05, 0b11111000, 0x00		; BLD
+.db 0x05, 0b11111010, 0x00		; BST
 .db 0x41, 0b00100100, 0x00		; CLR	(Rr copies Rd)
 .db 0x02, 0b00010100, 0x00		; CP
 .db 0x02, 0b00000100, 0x00		; CPC
@@ -147,6 +148,8 @@ instrTbl:
 .db 0x02, 0b10011100, 0x00		; MUL
 .db 0x02, 0b00101000, 0x00		; OR
 .db 0x02, 0b00001000, 0x00		; SBC
+.db 0x05, 0b11111100, 0x00		; SBRC
+.db 0x05, 0b11111110, 0x00		; SBRS
 .db 0x02, 0b00011000, 0x00		; SUB
 ; Rd(4) + K(8): XXXXKKKK ddddKKKK
 .db 0x04, 0b01110000, 0x00		; ANDI
@@ -156,12 +159,6 @@ instrTbl:
 .db 0x04, 0b01000000, 0x00		; SBCI
 .db 0x04, 0b01100000, 0x00		; SBR
 .db 0x04, 0b01010000, 0x00		; SUBI
-; Rd(5) + bit: XXXXXXXd ddddXbbb: lonely bit in LSB is 0 in all cases, so we
-; ignore it.
-.db 0x05, 0b11111000, 0x00		; BLD
-.db 0x05, 0b11111010, 0x00		; BST
-.db 0x05, 0b11111100, 0x00		; SBRC
-.db 0x05, 0b11111110, 0x00		; SBRS
 ; k(12): XXXXkkkk kkkkkkkk
 .db 0x00, 0b11010000, 0x00		; RCALL
 .db 0x00, 0b11000000, 0x00		; RJMP
@@ -298,10 +295,8 @@ parseInstruction:
 	ld	a, e		; InstrID
 	cp	I_ANDI
 	jr	c, .spitRd5Rr5
-	cp	I_BLD
-	jr	c, .spitRdK8
 	cp	I_RCALL
-	jr	c, .spitRdBit
+	jr	c, .spitRdK8
 	cp	I_IN
 	jr	c, .spitK12
 	cp	I_BREAK
@@ -313,6 +308,8 @@ parseInstruction:
 	call	.placeRd
 	jp	.spit
 .spitRd5Rr5:
+	; This is used for both Rd(5) + Rr(5) and Rd(5) + bit because the same
+	; logic works for both cases.
 	ld	a, h
 	call	.placeRd
 	ld	a, l
@@ -344,14 +341,6 @@ parseInstruction:
 	rra \ rra \ rra \ rra
 	ld	b, a
 	jp	.spitMSB
-
-.spitRdBit:
-	ld	a, h
-	call	.placeRd
-	or	l
-	; LSB is in A and is ready to go
-	call	ioPutB
-	jr	.spitMSB
 
 .spitK12:
 	; Let's deal with the upcode constant before we destroy IX below
