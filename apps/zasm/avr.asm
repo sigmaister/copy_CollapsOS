@@ -259,20 +259,23 @@ parseInstruction:
 	sla	a		; A * 2
 	call	addHL		; (HL) is our row
 	ld	a, (hl)
-	push	hl		; --> lvl 1
+	push	hl \ pop ix	; IX is now our tblrow
 	ld	hl, 0
 	or	a
 	jr	z, .noarg
+	and	0xf		; lower nibble
 	dec	a		; argspec index is 1-based
 	ld	hl, argSpecs
 	sla	a		; A * 2
 	call	addHL		; (HL) is argspec row
-	push	hl \ pop ix
+	ld	d, (hl)
+	inc	hl
+	ld	a, (hl)
+	ld	h, d
+	ld	l, a		; H and L contain specs now
 	call	_parseArgs
-.noarg:
-	pop	ix		; <-- lvl 1, IX is now our tblrow
 	ret	nz
-
+.noarg:
 	; *** Step 3: place arguments in binary upcode and spit.
 	; (IX) is table row
 	; Parse arg values now in H and L
@@ -417,7 +420,8 @@ parseInstruction:
 .skip1:
 	and	0b111
 	ld	c, a		; can't store in H now, (HL) is used
-	ld	ix, argSpecs+4	; 7, 0
+	ld	h, 7
+	ld	l, 0
 	call	_parseArgs
 	ret	nz
 	; ok, now we can
@@ -443,7 +447,8 @@ parseInstruction:
 	; upcode becomes 0b111101
 	inc	b
 .rdBRBS:
-	ld	ix, argSpecs+10		; bit + k(7)
+	ld	h, 'b'
+	ld	l, 7
 	call	_parseArgs
 	ret	nz
 	; bit in H, k in L.
@@ -484,8 +489,9 @@ argSpecs:
 	.db	'A', 'R'	; A(6) + Rr(5)
 	.db	'R', 'A'	; Rd(5) + A(6)
 
-; Parse arguments from I/O according to specs in IX
-; Puts the results in HL (which is not needed anymore after the parsing).
+; Parse arguments from I/O according to specs in HL
+; H for first spec, L for second spec
+; Puts the results in HL
 ; First arg in H, second in L.
 ; This routine is not used in all cases, some ops don't fit this pattern well
 ; and thus parse their args themselves.
@@ -494,20 +500,21 @@ _parseArgs:
 	; For the duration of the routine, our final value will be in DE, and
 	; then placed in HL at the end.
 	push	de
+	ex	de, hl		; argspecs now in DE
 	call	readWord
 	jr	nz, .end
-	ld	a, (ix)
+	ld	a, d
 	call	.parse
 	jr	nz, .end
 	ld	d, a
-	ld	a, (ix+1)
+	ld	a, e
 	or	a
 	jr	z, .end		; no arg
 	call	readComma
 	jr	nz, .end
 	call	readWord
 	jr	nz, .end
-	ld	a, (ix+1)
+	ld	a, e
 	call	.parse
 	jr	nz, .end
 	; we're done with (HL) now
