@@ -129,6 +129,8 @@ instrNames:
 ;        AVR's mnemonics has those args reversed for more consistency
 ;        (destination is always the first arg). The goal of this flag is to
 ;        allow this kind of syntactic sugar with minimal complexity.
+;
+; Bit 6: Second arg is a copy of the first
 
 ; In the same order as in instrNames
 instrTbl:
@@ -136,7 +138,7 @@ instrTbl:
 .db 0x02, 0b00011100, 0x00		; ADC
 .db 0x02, 0b00001100, 0x00		; ADD
 .db 0x02, 0b00100000, 0x00		; AND
-.db 0x02, 0b00100100, 0x00		; CLR
+.db 0x41, 0b00100100, 0x00		; CLR	(Rr copies Rd)
 .db 0x02, 0b00010100, 0x00		; CP
 .db 0x02, 0b00000100, 0x00		; CPC
 .db 0x02, 0b00010000, 0x00		; CPSE
@@ -291,6 +293,8 @@ parseInstruction:
 	; InstrID is E
 	bit	7, (ix)
 	call	nz, .swapHL	; Bit 7 set, swap H and L again!
+	bit	6, (ix)
+	call	nz, .cpHintoL	; Bit 6 set, copy H into L
 	ld	a, e		; InstrID
 	cp	I_ANDI
 	jr	c, .spitRd5Rr5
@@ -472,6 +476,10 @@ parseInstruction:
 	ld	a, h
 	ld	h, l
 	ld	l, a
+	ret
+
+.cpHintoL:
+	ld	l, h
 	ret
 
 ; Argspecs: two bytes describing the arguments that are accepted. Possible

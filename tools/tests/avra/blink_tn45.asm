@@ -25,7 +25,7 @@ main:
         ori     r16, 0x05	; CS00 + CS02 = 1024 prescaler
         out     TCCR0B, r16
 
-	;clr	r1
+	clr	r1
 
 loop:
 	in	r16, TIFR	; TIFR0
