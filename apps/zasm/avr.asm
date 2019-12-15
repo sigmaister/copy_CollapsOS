@@ -31,7 +31,7 @@ instrNames:
 .equ	I_BRBS	16
 .db "BRBS", 0
 .db "BRBC", 0
-; Rd(5) + Rr(5) (from here, instrUpMasks1)
+; Rd(5) + Rr(5) (from here, instrTbl8)
 .equ	I_ADC	18
 .db "ADC", 0
 .db "ADD", 0
@@ -66,7 +66,7 @@ instrNames:
 .db "IN", 0
 .equ	I_OUT	45
 .db "OUT", 0
-; no arg (from here, instrUpMasks2)
+; no arg (from here, instrTbl16)
 .equ	I_BREAK	46
 .db "BREAK", 0
 .db "CLC", 0
@@ -112,90 +112,95 @@ instrNames:
 .db "XCH", 0
 .db 0xff
 
+; Instruction table
+;
+; A table row starts with the "argspecs+flags" byte, followed by two upcode
+; bytes.
+;
+; The argspecs+flags byte is separated in two nibbles: Low nibble is a 4bit
+; index (1-based, 0 means no arg) in the argSpecs table. High nibble is for
+; flags. Meaning:
+;
+; (None for now)
 
-; 8-bit constant masks associated with each instruction. In the same order as
-; in instrNames
-instrUpMasks1:
+; In the same order as in instrNames
+instrTbl:
 ; Rd(5) + Rd(5): XXXXXXrd ddddrrrr
-.db 0b00011100			; ADC
-.db 0b00001100			; ADD
-.db 0b00100000			; AND
-.db 0b00100100			; CLR
-.db 0b00010100			; CP
-.db 0b00000100			; CPC
-.db 0b00010000			; CPSE
-.db 0b00100100			; EOR
-.db 0b00101100			; MOV
-.db 0b10011100			; MUL
-.db 0b00101000			; OR
-.db 0b00001000			; SBC
-.db 0b00011000			; SUB
+.db 0x02, 0b00011100, 0x00		; ADC
+.db 0x02, 0b00001100, 0x00		; ADD
+.db 0x02, 0b00100000, 0x00		; AND
+.db 0x02, 0b00100100, 0x00		; CLR
+.db 0x02, 0b00010100, 0x00		; CP
+.db 0x02, 0b00000100, 0x00		; CPC
+.db 0x02, 0b00010000, 0x00		; CPSE
+.db 0x02, 0b00100100, 0x00		; EOR
+.db 0x02, 0b00101100, 0x00		; MOV
+.db 0x02, 0b10011100, 0x00		; MUL
+.db 0x02, 0b00101000, 0x00		; OR
+.db 0x02, 0b00001000, 0x00		; SBC
+.db 0x02, 0b00011000, 0x00		; SUB
 ; Rd(4) + K(8): XXXXKKKK ddddKKKK
-.db 0b01110000			; ANDI
-.db 0b00110000			; CPI
-.db 0b11100000			; LDI
-.db 0b01100000			; ORI
-.db 0b01000000			; SBCI
-.db 0b01100000			; SBR
-.db 0b01010000			; SUBI
+.db 0x04, 0b01110000, 0x00		; ANDI
+.db 0x04, 0b00110000, 0x00		; CPI
+.db 0x04, 0b11100000, 0x00		; LDI
+.db 0x04, 0b01100000, 0x00		; ORI
+.db 0x04, 0b01000000, 0x00		; SBCI
+.db 0x04, 0b01100000, 0x00		; SBR
+.db 0x04, 0b01010000, 0x00		; SUBI
 ; Rd(5) + bit: XXXXXXXd ddddXbbb: lonely bit in LSB is 0 in all cases, so we
 ; ignore it.
-.db 0b11111000			; BLD
-.db 0b11111010			; BST
-.db 0b11111100			; SBRC
-.db 0b11111110			; SBRS
+.db 0x05, 0b11111000, 0x00		; BLD
+.db 0x05, 0b11111010, 0x00		; BST
+.db 0x05, 0b11111100, 0x00		; SBRC
+.db 0x05, 0b11111110, 0x00		; SBRS
 ; k(12): XXXXkkkk kkkkkkkk
-.db 0b11010000			; RCALL
-.db 0b11000000			; RJMP
+.db 0x00, 0b11010000, 0x00		; RCALL
+.db 0x00, 0b11000000, 0x00		; RJMP
 ; IN and OUT
-.db 0b10110000			; IN
-.db 0b10111000			; OUT
-
-; 16-bit constant masks associated with each instruction. In the same order as
-; in instrNames
-instrUpMasks2:
+.db 0x08, 0b10110000, 0x00		; IN
+.db 0x07, 0b10111000, 0x00		; OUT
 ; no arg
-.db 0b10010101, 0b10011000	; BREAK
-.db 0b10010100, 0b10001000	; CLC
-.db 0b10010100, 0b11011000	; CLH
-.db 0b10010100, 0b11111000	; CLI
-.db 0b10010100, 0b10101000	; CLN
-.db 0b10010100, 0b11001000	; CLS
-.db 0b10010100, 0b11101000	; CLT
-.db 0b10010100, 0b10111000	; CLV
-.db 0b10010100, 0b10011000	; CLZ
-.db 0b10010101, 0b00011001	; EICALL
-.db 0b10010100, 0b00011001	; EIJMP
-.db 0b10010101, 0b00001001	; ICALL
-.db 0b10010100, 0b00001001	; IJMP
-.db 0b00000000, 0b00000000	; NOP
-.db 0b10010101, 0b00001000	; RET
-.db 0b10010101, 0b00011000	; RETI
-.db 0b10010100, 0b00001000	; SEC
-.db 0b10010100, 0b01011000	; SEH
-.db 0b10010100, 0b01111000	; SEI
-.db 0b10010100, 0b00101000	; SEN
-.db 0b10010100, 0b01001000	; SES
-.db 0b10010100, 0b01101000	; SET
-.db 0b10010100, 0b00111000	; SEV
-.db 0b10010100, 0b00011000	; SEZ
-.db 0b10010101, 0b10001000	; SLEEP
-.db 0b10010101, 0b10101000	; WDR
+.db 0x00, 0b10010101, 0b10011000	; BREAK
+.db 0x00, 0b10010100, 0b10001000	; CLC
+.db 0x00, 0b10010100, 0b11011000	; CLH
+.db 0x00, 0b10010100, 0b11111000	; CLI
+.db 0x00, 0b10010100, 0b10101000	; CLN
+.db 0x00, 0b10010100, 0b11001000	; CLS
+.db 0x00, 0b10010100, 0b11101000	; CLT
+.db 0x00, 0b10010100, 0b10111000	; CLV
+.db 0x00, 0b10010100, 0b10011000	; CLZ
+.db 0x00, 0b10010101, 0b00011001	; EICALL
+.db 0x00, 0b10010100, 0b00011001	; EIJMP
+.db 0x00, 0b10010101, 0b00001001	; ICALL
+.db 0x00, 0b10010100, 0b00001001	; IJMP
+.db 0x00, 0b00000000, 0b00000000	; NOP
+.db 0x00, 0b10010101, 0b00001000	; RET
+.db 0x00, 0b10010101, 0b00011000	; RETI
+.db 0x00, 0b10010100, 0b00001000	; SEC
+.db 0x00, 0b10010100, 0b01011000	; SEH
+.db 0x00, 0b10010100, 0b01111000	; SEI
+.db 0x00, 0b10010100, 0b00101000	; SEN
+.db 0x00, 0b10010100, 0b01001000	; SES
+.db 0x00, 0b10010100, 0b01101000	; SET
+.db 0x00, 0b10010100, 0b00111000	; SEV
+.db 0x00, 0b10010100, 0b00011000	; SEZ
+.db 0x00, 0b10010101, 0b10001000	; SLEEP
+.db 0x00, 0b10010101, 0b10101000	; WDR
 ; Rd(5): XXXXXXXd ddddXXXX
-.db 0b10010100, 0b00000101	; ASR
-.db 0b10010100, 0b00000000	; COM
-.db 0b10010100, 0b00001010	; DEC
-.db 0b10010100, 0b00000011	; INC
-.db 0b10010010, 0b00000110	; LAC
-.db 0b10010010, 0b00000101	; LAS
-.db 0b10010010, 0b00000111	; LAT
-.db 0b10010100, 0b00000110	; LSR
-.db 0b10010100, 0b00000001	; NEG
-.db 0b10010000, 0b00001111	; POP
-.db 0b10010010, 0b00001111	; PUSH
-.db 0b10010100, 0b00000111	; ROR
-.db 0b10010100, 0b00000010	; SWAP
-.db 0b10010010, 0b00000100	; XCH
+.db 0x01, 0b10010100, 0b00000101	; ASR
+.db 0x01, 0b10010100, 0b00000000	; COM
+.db 0x01, 0b10010100, 0b00001010	; DEC
+.db 0x01, 0b10010100, 0b00000011	; INC
+.db 0x01, 0b10010010, 0b00000110	; LAC
+.db 0x01, 0b10010010, 0b00000101	; LAS
+.db 0x01, 0b10010010, 0b00000111	; LAT
+.db 0x01, 0b10010100, 0b00000110	; LSR
+.db 0x01, 0b10010100, 0b00000001	; NEG
+.db 0x01, 0b10010000, 0b00001111	; POP
+.db 0x01, 0b10010010, 0b00001111	; PUSH
+.db 0x01, 0b10010100, 0b00000111	; ROR
+.db 0x01, 0b10010100, 0b00000010	; SWAP
+.db 0x01, 0b10010010, 0b00000100	; XCH
 
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
@@ -233,13 +238,46 @@ getInstID:
 ; resulting opcode(s) in I/O.
 ; Sets Z on success. On error, A contains an error code (ERR_*)
 parseInstruction:
-	; BC, during .spit, is ORred to the spitted opcode.
+	; *** Step 1: initialization
+	; Except setting up our registers, we also check if our index < I_ADC.
+	; If we are, we skip regular processing for the .BR processing, which
+	; is a bit special.
+	; During this processing, BC is used as the "upcode WIP" register. It's
+	; there that we send our partial values until they're ready to spit to
+	; I/O.
 	ld	bc, 0
-	; Save Instr ID in D, which is less volatile than A. In almost all
-	; cases, we fetch the opcode constant at the end of the processing.
-	ld	d, a
+	ld	e, a		; Let's keep that instrID somewhere safe
+	; First, let's fetch our table row
 	cp	I_ADC
-	jp	c, .BR
+	jp	c, .BR		; BR is special, no table row
+
+	; *** Step 2: parse arguments
+	sub	I_ADC		; Adjust index for table
+	; Our row is at instrTbl + (A * 3)
+	ld	hl, instrTbl
+	call	addHL
+	sla	a		; A * 2
+	call	addHL		; (HL) is our row
+	ld	a, (hl)
+	push	hl		; --> lvl 1
+	ld	hl, 0
+	or	a
+	jr	z, .noarg
+	dec	a		; argspec index is 1-based
+	ld	hl, argSpecs
+	sla	a		; A * 2
+	call	addHL		; (HL) is argspec row
+	push	hl \ pop ix
+	call	_parseArgs
+.noarg:
+	pop	ix		; <-- lvl 1, IX is now our tblrow
+	ret	nz
+
+	; *** Step 3: place arguments in binary upcode and spit.
+	; (IX) is table row
+	; Parse arg values now in H and L
+	; InstrID is E
+	ld	a, e		; InstrID
 	cp	I_ANDI
 	jr	c, .spitRd5Rr5
 	cp	I_BLD
@@ -252,21 +290,12 @@ parseInstruction:
 	cp	I_OUT
 	jp	z, .spitOUT
 	cp	I_ASR
-	jr	c, .spitNoArg
+	jp	c, .spit	; no arg
 	; spitRd5
-	ld	ix, argSpecs	; 'R', 0
-	call	_parseArgs
 	ld	a, h
 	call	.placeRd
-	; continue to .spitNoArg
-.spitNoArg:
-	call	.getUp2
 	jp	.spit
-
 .spitRd5Rr5:
-	ld	ix, argSpecs+2	; 'R', 'R'
-	call	_parseArgs
-	ret	nz
 	ld	a, h
 	call	.placeRd
 	ld	a, l
@@ -281,14 +310,9 @@ parseInstruction:
 	rra \ rra \ rra
 	or	b
 	ld	b, a
-	call	.getUp1
-	; now that's our MSB
 	jp	.spitMSB
 
 .spitRdK8:
-	ld	ix, argSpecs+6		; 'r', 8
-	call	_parseArgs
-	ret	nz
 	ld	a, h		; Rd
 	call	.placeRd
 	ld	a, l		; K
@@ -302,25 +326,19 @@ parseInstruction:
 	and	0xf0
 	rra \ rra \ rra \ rra
 	ld	b, a
-	call	.getUp1
 	jp	.spitMSB
 
 .spitRdBit:
-	ld	ix, argSpecs+8		; 'R', 'b'
-	call	_parseArgs
-	ret	nz
 	ld	a, h
 	call	.placeRd
 	or	l
 	; LSB is in A and is ready to go
 	call	ioPutB
-	call	.getUp1
 	jr	.spitMSB
 
 .spitK12:
-	; Let's deal with the upcode constant before we destroy DE below
-	call	.getUp1
-	ld	b, (hl)
+	; Let's deal with the upcode constant before we destroy IX below
+	ld	b, (ix+1)
 	call	readWord
 	call	parseExpr
 	ret	nz
@@ -348,18 +366,11 @@ parseInstruction:
 	jp	ioPutB
 
 .spitOUT:
-	ld	ix, argSpecs+12		; 'A', 'R'
-	call	_parseArgs
-	ret	nz
 	ld	a, h
 	ld	h, l
 	ld	l, a
-	jr	.spitINOUT
+	; Continue to spitIN
 .spitIN:
-	ld	ix, argSpecs+14		; 'R', 'A'
-	call	_parseArgs
-	ret	nz
-.spitINOUT:
 	; Rd in H, A in L
 	ld	a, h
 	call	.placeRd
@@ -374,18 +385,14 @@ parseInstruction:
 	and	0b110
 	or	b
 	ld	b, a
-	; MSB is almost ready
-	call	.getUp1
 	jr	.spitMSB
 .spit:
 	; LSB is spit *before* MSB
-	inc	hl
-	ld	a, (hl)
+	ld	a, (ix+2)
 	or	c
 	call	ioPutB
-	dec	hl
 .spitMSB:
-	ld	a, (hl)
+	ld	a, (ix+1)
 	or	b
 	call	ioPutB
 	xor	a		; ensure Z, set success
@@ -451,21 +458,6 @@ parseInstruction:
 	ld	c, a
 	ret
 
-; Fetch a 8-bit upcode specified by instr index in D and set that upcode in HL
-.getUp1:
-	ld	a, d
-	sub	I_ADC
-	ld	hl, instrUpMasks1
-	jp	addHL
-
-; Fetch a 16-bit upcode specified by instr index in D and set that upcode in HL
-.getUp2:
-	ld	a, d
-	sub	I_BREAK
-	sla	a	; A * 2
-	ld	hl, instrUpMasks2
-	jp	addHL
-
 ; Argspecs: two bytes describing the arguments that are accepted. Possible
 ; values:
 ;
@@ -492,7 +484,7 @@ argSpecs:
 	.db	'A', 'R'	; A(6) + Rr(5)
 	.db	'R', 'A'	; Rd(5) + A(6)
 
-; Parse arguments in (HL) according to specs in IX
+; Parse arguments from I/O according to specs in IX
 ; Puts the results in HL (which is not needed anymore after the parsing).
 ; First arg in H, second in L.
 ; This routine is not used in all cases, some ops don't fit this pattern well
