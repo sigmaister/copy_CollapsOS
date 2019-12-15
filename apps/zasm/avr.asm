@@ -121,7 +121,14 @@ instrNames:
 ; index (1-based, 0 means no arg) in the argSpecs table. High nibble is for
 ; flags. Meaning:
 ;
-; (None for now)
+; Bit 7: Arguments swapped. For example, if we have this bit set on the argspec
+;        row 'A', 'R', then what will actually be read is 'R', 'A'. The
+;        arguments destination will be, hum, de-swapped, that is, 'A' is going
+;        in H and 'R' is going in L. This is used, for example, with IN and OUT.
+;        IN has a Rd(5), A(6) signature. OUT could have the same signature, but
+;        AVR's mnemonics has those args reversed for more consistency
+;        (destination is always the first arg). The goal of this flag is to
+;        allow this kind of syntactic sugar with minimal complexity.
 
 ; In the same order as in instrNames
 instrTbl:
@@ -157,8 +164,8 @@ instrTbl:
 .db 0x00, 0b11010000, 0x00		; RCALL
 .db 0x00, 0b11000000, 0x00		; RJMP
 ; IN and OUT
-.db 0x08, 0b10110000, 0x00		; IN
-.db 0x07, 0b10111000, 0x00		; OUT
+.db 0x07, 0b10110000, 0x00		; IN
+.db 0x87, 0b10111000, 0x00		; OUT (args reversed)
 ; no arg
 .db 0x00, 0b10010101, 0b10011000	; BREAK
 .db 0x00, 0b10010100, 0b10001000	; CLC
@@ -273,6 +280,8 @@ parseInstruction:
 	ld	a, (hl)
 	ld	h, d
 	ld	l, a		; H and L contain specs now
+	bit	7, (ix)
+	call	nz, .swapHL	; Bit 7 set, swap H and L
 	call	_parseArgs
 	ret	nz
 .noarg:
@@ -280,6 +289,8 @@ parseInstruction:
 	; (IX) is table row
 	; Parse arg values now in H and L
 	; InstrID is E
+	bit	7, (ix)
+	call	nz, .swapHL	; Bit 7 set, swap H and L again!
 	ld	a, e		; InstrID
 	cp	I_ANDI
 	jr	c, .spitRd5Rr5
@@ -289,9 +300,8 @@ parseInstruction:
 	jr	c, .spitRdBit
 	cp	I_IN
 	jr	c, .spitK12
-	jp	z, .spitIN
-	cp	I_OUT
-	jp	z, .spitOUT
+	cp	I_BREAK
+	jp	c, .spitINOUT
 	cp	I_ASR
 	jp	c, .spit	; no arg
 	; spitRd5
@@ -368,12 +378,7 @@ parseInstruction:
 	or	b
 	jp	ioPutB
 
-.spitOUT:
-	ld	a, h
-	ld	h, l
-	ld	l, a
-	; Continue to spitIN
-.spitIN:
+.spitINOUT:
 	; Rd in H, A in L
 	ld	a, h
 	call	.placeRd
@@ -463,6 +468,12 @@ parseInstruction:
 	ld	c, a
 	ret
 
+.swapHL:
+	ld	a, h
+	ld	h, l
+	ld	l, a
+	ret
+
 ; Argspecs: two bytes describing the arguments that are accepted. Possible
 ; values:
 ;
@@ -486,7 +497,6 @@ argSpecs:
 	.db	'r', 8		; Rd(4) + K(8)
 	.db	'R', 'b'	; Rd(5) + bit
 	.db	'b', 7		; bit + k(7)
-	.db	'A', 'R'	; A(6) + Rr(5)
 	.db	'R', 'A'	; Rd(5) + A(6)
 
 ; Parse arguments from I/O according to specs in HL
