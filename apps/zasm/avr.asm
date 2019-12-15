@@ -134,23 +134,23 @@ instrNames:
 ; In the same order as in instrNames
 instrTbl:
 ; Rd(5) + Rd(5) (0x02) and Rd(5) + bit (0x05) (same processing)
-.db 0x02, 0b00011100, 0x00		; ADC
-.db 0x02, 0b00001100, 0x00		; ADD
-.db 0x02, 0b00100000, 0x00		; AND
-.db 0x05, 0b11111000, 0x00		; BLD
-.db 0x05, 0b11111010, 0x00		; BST
-.db 0x41, 0b00100100, 0x00		; CLR	(Rr copies Rd)
-.db 0x02, 0b00010100, 0x00		; CP
-.db 0x02, 0b00000100, 0x00		; CPC
-.db 0x02, 0b00010000, 0x00		; CPSE
-.db 0x02, 0b00100100, 0x00		; EOR
-.db 0x02, 0b00101100, 0x00		; MOV
-.db 0x02, 0b10011100, 0x00		; MUL
-.db 0x02, 0b00101000, 0x00		; OR
-.db 0x02, 0b00001000, 0x00		; SBC
-.db 0x05, 0b11111100, 0x00		; SBRC
-.db 0x05, 0b11111110, 0x00		; SBRS
-.db 0x02, 0b00011000, 0x00		; SUB
+.db 0x02, 0b00011100, 0x00		; ADC Rd, Rr
+.db 0x02, 0b00001100, 0x00		; ADD Rd, Rr
+.db 0x02, 0b00100000, 0x00		; AND Rd, Rr
+.db 0x05, 0b11111000, 0x00		; BLD Rd, b
+.db 0x05, 0b11111010, 0x00		; BST Rd, b
+.db 0x41, 0b00100100, 0x00		; CLR Rd (Bit 6)
+.db 0x02, 0b00010100, 0x00		; CP Rd, Rr
+.db 0x02, 0b00000100, 0x00		; CPC Rd, Rr
+.db 0x02, 0b00010000, 0x00		; CPSE Rd, Rr
+.db 0x02, 0b00100100, 0x00		; EOR Rd, Rr
+.db 0x02, 0b00101100, 0x00		; MOV Rd, Rr
+.db 0x02, 0b10011100, 0x00		; MUL Rd, Rr
+.db 0x02, 0b00101000, 0x00		; OR Rd, Rr
+.db 0x02, 0b00001000, 0x00		; SBC Rd, Rr
+.db 0x05, 0b11111100, 0x00		; SBRC Rd, b
+.db 0x05, 0b11111110, 0x00		; SBRS Rd, b
+.db 0x02, 0b00011000, 0x00		; SUB Rd, Rr
 ; Rd(4) + K(8): XXXXKKKK ddddKKKK
 .db 0x04, 0b01110000, 0x00		; ANDI
 .db 0x04, 0b00110000, 0x00		; CPI
@@ -164,7 +164,7 @@ instrTbl:
 .db 0x00, 0b11000000, 0x00		; RJMP
 ; IN and OUT
 .db 0x07, 0b10110000, 0x00		; IN
-.db 0x87, 0b10111000, 0x00		; OUT (args reversed)
+.db 0x87, 0b10111000, 0x00		; OUT (Bit 7)
 ; no arg
 .db 0x00, 0b10010101, 0b10011000	; BREAK
 .db 0x00, 0b10010100, 0b10001000	; CLC
@@ -304,43 +304,20 @@ parseInstruction:
 	cp	I_ASR
 	jp	c, .spit	; no arg
 	; spitRd5
-	ld	a, h
 	call	.placeRd
 	jp	.spit
 .spitRd5Rr5:
 	; This is used for both Rd(5) + Rr(5) and Rd(5) + bit because the same
 	; logic works for both cases.
-	ld	a, h
 	call	.placeRd
-	ld	a, l
-	; let's start with the 4 lower bits
-	and	0xf
-	or	c
-	; We now have our LSB in A. Let's spit it now.
-	call	ioPutB
-	ld	a, l
-	; and now that last high bit, currently bit 4, which must become bit 1
-	and	0b00010000
-	rra \ rra \ rra
-	or	b
-	ld	b, a
-	jp	.spitMSB
+	call	.placeRr
+	jr	.spit
 
 .spitRdK8:
-	ld	a, h		; Rd
 	call	.placeRd
-	ld	a, l		; K
-	; let's start with the 4 lower bits
-	and	0xf
-	or	c
-	; We now have our LSB in A. Let's spit it now.
-	call	ioPutB
-	ld	a, l
-	; and now those high 4 bits
-	and	0xf0
-	rra \ rra \ rra \ rra
-	ld	b, a
-	jp	.spitMSB
+	call	.placeRr
+	rr	b		; K(8) start at B's 1st bit, not 2nd
+	jr	.spit
 
 .spitK12:
 	; Let's deal with the upcode constant before we destroy IX below
@@ -373,7 +350,6 @@ parseInstruction:
 
 .spitINOUT:
 	; Rd in H, A in L
-	ld	a, h
 	call	.placeRd
 	ld	a, l
 	and	0xf
@@ -453,12 +429,29 @@ parseInstruction:
 	jr	.spitBR2
 
 ; local routines
-; place number in A in BC at position .......d dddd....
+; place number in H in BC at position .......d dddd....
 ; BC is assumed to be 0
 .placeRd:
-	sla a \ rla \ rla \ rla	; last RLA might set carry
+	sla h \ rl h \ rl h \ rl h	; last RL H might set carry
 	rl	b
+	ld	c, h
+	ret
+
+; place number in L in BC at position ...rrrr. ....rrrr
+; BC is assumed to be either 0 or to be set by .placeRd, that is, that the
+; high 4 bits of C and lowest bit of B will be preserved.
+.placeRr:
+	; let's start with the 4 lower bits
+	ld	a, l
+	and	0x0f
+	or	c
 	ld	c, a
+	ld	a, l
+	; and now those high 4 bits which go in B.
+	and	0xf0
+	rra \ rra \ rra
+	or	b
+	ld	b, a
 	ret
 
 .swapHL:
