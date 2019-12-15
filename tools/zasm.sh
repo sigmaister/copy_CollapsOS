@@ -6,15 +6,22 @@
 # binary. For example, "zasm.sh -o 4f < foo.asm" assembles foo.asm as if it
 # started with the line ".org 0x4f00".
 
+# The -a flag makes us switch to the AVR assembler
+
 # readlink -f doesn't work with macOS's implementation
 # so, if we can't get readlink -f to work, try python with a realpath implementation
 ABS_PATH=$(readlink -f "$0" || python -c "import os; print(os.path.realpath('$0'))")
+DIR=$(dirname "${ABS_PATH}")
+ZASMBIN="${DIR}/emul/zasm/zasm"
 
-usage() { echo "Usage: $0 [-o <hexorg>] <paths-to-include>..." 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-a] [-o <hexorg>] <paths-to-include>..." 1>&2; exit 1; }
 
 org='00'
-while getopts ":o:" opt; do
+while getopts ":ao:" opt; do
     case "${opt}" in
+        a)
+            ZASMBIN="${DIR}/emul/zasm/avra"
+            ;;
         o)
             org=${OPTARG}
             ;;
@@ -26,8 +33,6 @@ done
 shift $((OPTIND-1))
 
 # wrapper around ./emul/zasm/zasm that prepares includes CFS prior to call
-DIR=$(dirname "${ABS_PATH}")
-ZASMBIN="${DIR}/emul/zasm/zasm"
 CFSPACK="${DIR}/cfspack/cfspack"
 INCCFS=$(mktemp)
 

@@ -1,11 +1,12 @@
 #!/bin/sh -e
 
-AVRA=../../emul/zasm/avra
+ZASM=../../zasm.sh
+AVRINC=../../../avr
 
 cmpas() {
     FN=$1
     EXPECTED=$(xxd ${FN%.*}.expected)
-    ACTUAL=$(cat ${FN} | $AVRA | xxd)
+    ACTUAL=$(cat ${FN} | "${ZASM}" -a "${AVRINC}" | xxd)
     if [ "$ACTUAL" = "$EXPECTED" ]; then
         echo ok
     else
