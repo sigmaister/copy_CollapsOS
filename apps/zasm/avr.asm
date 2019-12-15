@@ -62,8 +62,12 @@ instrNames:
 .equ	I_RCALL	42
 .db "RCALL", 0
 .db "RJMP", 0
+.equ	I_IN	44
+.db "IN", 0
+.equ	I_OUT	45
+.db "OUT", 0
 ; no arg (from here, instrUpMasks2)
-.equ	I_BREAK	44
+.equ	I_BREAK	46
 .db "BREAK", 0
 .db "CLC", 0
 .db "CLH", 0
@@ -91,7 +95,7 @@ instrNames:
 .db "SLEEP", 0
 .db "WDR", 0
 ; Rd(5)
-.equ	I_ASR	70
+.equ	I_ASR	72
 .db "ASR", 0
 .db "COM", 0
 .db "DEC", 0
@@ -143,6 +147,9 @@ instrUpMasks1:
 ; k(12): XXXXkkkk kkkkkkkk
 .db 0b11010000			; RCALL
 .db 0b11000000			; RJMP
+; IN and OUT
+.db 0b10110000			; IN
+.db 0b10111000			; OUT
 
 ; 16-bit constant masks associated with each instruction. In the same order as
 ; in instrNames
@@ -239,8 +246,11 @@ parseInstruction:
 	jr	c, .spitRdK8
 	cp	I_RCALL
 	jr	c, .spitRdBit
-	cp	I_BREAK
+	cp	I_IN
 	jr	c, .spitK12
+	jp	z, .spitIN
+	cp	I_OUT
+	jp	z, .spitOUT
 	cp	I_ASR
 	jr	c, .spitNoArg
 	; spitRd5
@@ -273,7 +283,7 @@ parseInstruction:
 	ld	b, a
 	call	.getUp1
 	; now that's our MSB
-	jr	.spitMSB
+	jp	.spitMSB
 
 .spitRdK8:
 	ld	ix, argSpecs+6		; 'r', 8
@@ -293,7 +303,7 @@ parseInstruction:
 	rra \ rra \ rra \ rra
 	ld	b, a
 	call	.getUp1
-	jr	.spitMSB
+	jp	.spitMSB
 
 .spitRdBit:
 	ld	ix, argSpecs+8		; 'R', 'b'
@@ -337,6 +347,36 @@ parseInstruction:
 	or	b
 	jp	ioPutB
 
+.spitOUT:
+	ld	ix, argSpecs+12		; 'A', 'R'
+	call	_parseArgs
+	ret	nz
+	ld	a, h
+	ld	h, l
+	ld	l, a
+	jr	.spitINOUT
+.spitIN:
+	ld	ix, argSpecs+14		; 'R', 'A'
+	call	_parseArgs
+	ret	nz
+.spitINOUT:
+	; Rd in H, A in L
+	ld	a, h
+	call	.placeRd
+	ld	a, l
+	and	0xf
+	or	c
+	; LSB ready
+	call	ioPutB
+	; The two high bits of A go in bits 3:1 of MSB
+	ld	a, l
+	rra \ rra \ rra
+	and	0b110
+	or	b
+	ld	b, a
+	; MSB is almost ready
+	call	.getUp1
+	jr	.spitMSB
 .spit:
 	; LSB is spit *before* MSB
 	inc	hl
@@ -449,6 +489,8 @@ argSpecs:
 	.db	'r', 8		; Rd(4) + K(8)
 	.db	'R', 'b'	; Rd(5) + bit
 	.db	'b', 7		; bit + k(7)
+	.db	'A', 'R'	; A(6) + Rr(5)
+	.db	'R', 'A'	; Rd(5) + A(6)
 
 ; Parse arguments in (HL) according to specs in IX
 ; Puts the results in HL (which is not needed anymore after the parsing).
@@ -493,24 +535,43 @@ _parseArgs:
 	jr	z, _readR4
 	cp	'b'
 	jr	z, _readBit
+	cp	'A'
+	jr	z, _readA6
 	cp	7
 	jr	z, _readk7
 	cp	8
 	jr	z, _readK8
 	ret			; something's wrong
 
-_readBit:
+; Read expr and return success only if result in under number given in A
+; Z for success
+_readExpr:
 	push	ix
+	push	bc
+	ld	b, a
 	call	parseExpr
-	ld	a, 7
+	jr	nz, .end
+	ld	a, b
 	call	_IX2A
 	jr	nz, .end
 	or	c
 	ld	c, a
 	cp	a		; ensure Z
 .end:
+	pop	bc
 	pop	ix
 	ret
+
+_readBit:
+	ld	a, 7
+	jr	_readExpr
+
+_readA6:
+	ld	a, 0x3f
+
+_readK8:
+	ld	a, 0xff
+	jr	_readExpr
 
 _readk7:
 	push	hl
@@ -548,16 +609,6 @@ _readk7:
 .err:
 	call	unsetZ
 	jr	.end
-
-_readK8:
-	push	ix
-	call	parseExpr
-	jr	nz, .end
-	ld	a, 0xff
-	call	_IX2A
-.end:
-	pop	ix
-	ret
 
 _readR4:
 	call	_readR5

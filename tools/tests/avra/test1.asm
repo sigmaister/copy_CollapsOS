@@ -12,3 +12,5 @@ sbrs r1, 3
 rjmp	foo
 rcall	baz
 baz:
+out	0x2e, r12
+in	r0, 0x9
