@@ -160,8 +160,8 @@ instrTbl:
 .db 0x04, 0b01100000, 0x00		; SBR
 .db 0x04, 0b01010000, 0x00		; SUBI
 ; k(12): XXXXkkkk kkkkkkkk
-.db 0x00, 0b11010000, 0x00		; RCALL
-.db 0x00, 0b11000000, 0x00		; RJMP
+.db 0x08, 0b11010000, 0x00		; RCALL k
+.db 0x08, 0b11000000, 0x00		; RJMP k
 ; IN and OUT
 .db 0x07, 0b10110000, 0x00		; IN
 .db 0x87, 0b10111000, 0x00		; OUT (Bit 7)
@@ -298,7 +298,7 @@ parseInstruction:
 	cp	I_RCALL
 	jr	c, .spitRdK8
 	cp	I_IN
-	jr	c, .spitK12
+	jr	c, .spitk12
 	cp	I_BREAK
 	jp	c, .spitINOUT
 	cp	I_ASR
@@ -319,13 +319,8 @@ parseInstruction:
 	rr	b		; K(8) start at B's 1st bit, not 2nd
 	jr	.spit
 
-.spitK12:
-	; Let's deal with the upcode constant before we destroy IX below
-	ld	b, (ix+1)
-	call	readWord
-	call	parseExpr
-	ret	nz
-	push	ix \ pop hl
+.spitk12:
+	; k(12) in HL
 	; We're doing the same dance as in _readk7. See comments there.
 	ld	de, 0xfff
 	add	hl, de
@@ -341,12 +336,12 @@ parseInstruction:
 	; We're within bounds! Now, divide by 2
 	ld	a, l
 	rr	h \ rra
-	; LSB in A, spit
-	call	ioPutB
+	; LSB in A
+	ld	c, a
 	ld	a, h
 	and	0xf
-	or	b
-	jp	ioPutB
+	ld	b, a
+	jr	.spit
 
 .spitINOUT:
 	; Rd in H, A in L
@@ -473,6 +468,7 @@ parseInstruction:
 ; 'a' - A 5-bit I/O port value
 ; 'A' - A 6-bit I/O port value
 ; 'b' - a 0-7 bit value
+; 'D' - A double-length number which will fill whole HL.
 ; 'R' - an r5 value: r0-r31
 ; 'r' - an r4 value: r16-r31
 ;
@@ -488,6 +484,7 @@ argSpecs:
 	.db	'R', 'b'	; Rd(5) + bit
 	.db	'b', 7		; bit + k(7)
 	.db	'R', 'A'	; Rd(5) + A(6)
+	.db	'D', 0		; K(12)
 
 ; Parse arguments from I/O according to specs in HL
 ; H for first spec, L for second spec
@@ -540,6 +537,8 @@ _parseArgs:
 	jr	z, _readk7
 	cp	8
 	jr	z, _readK8
+	cp	'D'
+	jr	z, _readDouble
 	ret			; something's wrong
 
 ; Read expr and return success only if result in under number given in A
@@ -571,6 +570,17 @@ _readA6:
 _readK8:
 	ld	a, 0xff
 	jr	_readExpr
+
+_readDouble:
+	push	ix
+	call	parseExpr
+	jr	nz, .end
+	push	ix \ pop hl
+	; HL is already set. For good measure, let's set A to HL's MSB
+	ld	a, h
+.end:
+	pop	ix
+	ret
 
 _readk7:
 	push	hl
