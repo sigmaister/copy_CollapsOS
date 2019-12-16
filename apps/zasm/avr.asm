@@ -36,53 +36,49 @@ instrNames:
 .db "ADC", 0
 .db "ADD", 0
 .db "AND", 0
+.db "ASR", 0
 .db "BLD", 0
-.db "BST", 0
-.db "CLR", 0
-.db "CP", 0
-.db "CPC", 0
-.db "CPSE", 0
-.db "EOR", 0
-.db "MOV", 0
-.db "MUL", 0
-.db "OR", 0
-.db "SBC", 0
-.db "SBRC", 0
-.db "SBRS", 0
-.db "SUB", 0
-.equ	I_ANDI	35
-.db "ANDI", 0
-.db "CPI", 0
-.db "LDI", 0
-.db "ORI", 0
-.db "SBCI", 0
-.db "SBR", 0
-.db "SUBI", 0
-.equ	I_RCALL	42
-.db "RCALL", 0
-.db "RJMP", 0
-.equ	I_IN	44
-.db "IN", 0
-.equ	I_OUT	45
-.db "OUT", 0
-; no arg (from here, instrTbl16)
-.equ	I_BREAK	46
 .db "BREAK", 0
+.db "BST", 0
 .db "CLC", 0
 .db "CLH", 0
 .db "CLI", 0
 .db "CLN", 0
+.db "CLR", 0
 .db "CLS", 0
 .db "CLT", 0
 .db "CLV", 0
 .db "CLZ", 0
+.db "COM", 0
+.db "CP", 0
+.db "CPC", 0
+.db "CPSE", 0
+.db "DEC", 0
 .db "EICALL", 0
 .db "EIJMP", 0
+.db "EOR", 0
 .db "ICALL", 0
 .db "IJMP", 0
+.db "IN", 0
+.db "INC", 0
+.db "LAC", 0
+.db "LAS", 0
+.db "LAT", 0
+.db "LSR", 0
+.db "MOV", 0
+.db "MUL", 0
+.db "NEG", 0
 .db "NOP", 0
+.db "OR", 0
+.db "OUT", 0
+.db "POP", 0
+.db "PUSH", 0
 .db "RET", 0
 .db "RETI", 0
+.db "ROR", 0
+.db "SBC", 0
+.db "SBRC", 0
+.db "SBRS", 0
 .db "SEC", 0
 .db "SEH", 0
 .db "SEI", 0
@@ -92,23 +88,21 @@ instrNames:
 .db "SEV", 0
 .db "SEZ", 0
 .db "SLEEP", 0
-.db "WDR", 0
-; Rd(5)
-.equ	I_ASR	72
-.db "ASR", 0
-.db "COM", 0
-.db "DEC", 0
-.db "INC", 0
-.db "LAC", 0
-.db "LAS", 0
-.db "LAT", 0
-.db "LSR", 0
-.db "NEG", 0
-.db "POP", 0
-.db "PUSH", 0
-.db "ROR", 0
+.db "SUB", 0
 .db "SWAP", 0
+.db "WDR", 0
 .db "XCH", 0
+.equ	I_ANDI	77
+.db "ANDI", 0
+.db "CPI", 0
+.db "LDI", 0
+.db "ORI", 0
+.db "SBCI", 0
+.db "SBR", 0
+.db "SUBI", 0
+.equ	I_RCALL	84
+.db "RCALL", 0
+.db "RJMP", 0
 .db 0xff
 
 ; Instruction table
@@ -133,24 +127,68 @@ instrNames:
 
 ; In the same order as in instrNames
 instrTbl:
-; Rd(5) + Rd(5) (0x02) and Rd(5) + bit (0x05) (same processing)
+; Regular processing: Rd with second arg having its 4 low bits placed in C's
+; 3:0 bits and the 4 high bits being place in B's 4:1 bits
+; No args are also there.
 .db 0x02, 0b00011100, 0x00		; ADC Rd, Rr
 .db 0x02, 0b00001100, 0x00		; ADD Rd, Rr
 .db 0x02, 0b00100000, 0x00		; AND Rd, Rr
+.db 0x01, 0b10010100, 0b00000101	; ASR Rd
 .db 0x05, 0b11111000, 0x00		; BLD Rd, b
+.db 0x00, 0b10010101, 0b10011000	; BREAK
 .db 0x05, 0b11111010, 0x00		; BST Rd, b
+.db 0x00, 0b10010100, 0b10001000	; CLC
+.db 0x00, 0b10010100, 0b11011000	; CLH
+.db 0x00, 0b10010100, 0b11111000	; CLI
+.db 0x00, 0b10010100, 0b10101000	; CLN
 .db 0x41, 0b00100100, 0x00		; CLR Rd (Bit 6)
+.db 0x00, 0b10010100, 0b11001000	; CLS
+.db 0x00, 0b10010100, 0b11101000	; CLT
+.db 0x00, 0b10010100, 0b10111000	; CLV
+.db 0x00, 0b10010100, 0b10011000	; CLZ
+.db 0x01, 0b10010100, 0b00000000	; COM Rd
 .db 0x02, 0b00010100, 0x00		; CP Rd, Rr
 .db 0x02, 0b00000100, 0x00		; CPC Rd, Rr
 .db 0x02, 0b00010000, 0x00		; CPSE Rd, Rr
+.db 0x01, 0b10010100, 0b00001010	; DEC Rd
+.db 0x00, 0b10010101, 0b00011001	; EICALL
+.db 0x00, 0b10010100, 0b00011001	; EIJMP
 .db 0x02, 0b00100100, 0x00		; EOR Rd, Rr
+.db 0x00, 0b10010101, 0b00001001	; ICALL
+.db 0x00, 0b10010100, 0b00001001	; IJMP
+.db 0x07, 0b10110000, 0x00		; IN Rd, A
+.db 0x01, 0b10010100, 0b00000011	; INC Rd
+.db 0x01, 0b10010010, 0b00000110	; LAC Rd
+.db 0x01, 0b10010010, 0b00000101	; LAS Rd
+.db 0x01, 0b10010010, 0b00000111	; LAT Rd
+.db 0x01, 0b10010100, 0b00000110	; LSR Rd
+.db 0x00, 0b00000000, 0b00000000	; NOP
 .db 0x02, 0b00101100, 0x00		; MOV Rd, Rr
 .db 0x02, 0b10011100, 0x00		; MUL Rd, Rr
+.db 0x01, 0b10010100, 0b00000001	; NEG Rd
 .db 0x02, 0b00101000, 0x00		; OR Rd, Rr
+.db 0x87, 0b10111000, 0x00		; OUT A, Rr (Bit 7)
+.db 0x01, 0b10010000, 0b00001111	; POP Rd
+.db 0x01, 0b10010010, 0b00001111	; PUSH Rd
+.db 0x00, 0b10010101, 0b00001000	; RET
+.db 0x00, 0b10010101, 0b00011000	; RETI
+.db 0x01, 0b10010100, 0b00000111	; ROR Rd
 .db 0x02, 0b00001000, 0x00		; SBC Rd, Rr
 .db 0x05, 0b11111100, 0x00		; SBRC Rd, b
 .db 0x05, 0b11111110, 0x00		; SBRS Rd, b
+.db 0x00, 0b10010100, 0b00001000	; SEC
+.db 0x00, 0b10010100, 0b01011000	; SEH
+.db 0x00, 0b10010100, 0b01111000	; SEI
+.db 0x00, 0b10010100, 0b00101000	; SEN
+.db 0x00, 0b10010100, 0b01001000	; SES
+.db 0x00, 0b10010100, 0b01101000	; SET
+.db 0x00, 0b10010100, 0b00111000	; SEV
+.db 0x00, 0b10010100, 0b00011000	; SEZ
+.db 0x00, 0b10010101, 0b10001000	; SLEEP
 .db 0x02, 0b00011000, 0x00		; SUB Rd, Rr
+.db 0x01, 0b10010100, 0b00000010	; SWAP Rd
+.db 0x00, 0b10010101, 0b10101000	; WDR
+.db 0x01, 0b10010010, 0b00000100	; XCH Rd
 ; Rd(4) + K(8): XXXXKKKK ddddKKKK
 .db 0x04, 0b01110000, 0x00		; ANDI
 .db 0x04, 0b00110000, 0x00		; CPI
@@ -162,51 +200,6 @@ instrTbl:
 ; k(12): XXXXkkkk kkkkkkkk
 .db 0x08, 0b11010000, 0x00		; RCALL k
 .db 0x08, 0b11000000, 0x00		; RJMP k
-; IN and OUT
-.db 0x07, 0b10110000, 0x00		; IN
-.db 0x87, 0b10111000, 0x00		; OUT (Bit 7)
-; no arg
-.db 0x00, 0b10010101, 0b10011000	; BREAK
-.db 0x00, 0b10010100, 0b10001000	; CLC
-.db 0x00, 0b10010100, 0b11011000	; CLH
-.db 0x00, 0b10010100, 0b11111000	; CLI
-.db 0x00, 0b10010100, 0b10101000	; CLN
-.db 0x00, 0b10010100, 0b11001000	; CLS
-.db 0x00, 0b10010100, 0b11101000	; CLT
-.db 0x00, 0b10010100, 0b10111000	; CLV
-.db 0x00, 0b10010100, 0b10011000	; CLZ
-.db 0x00, 0b10010101, 0b00011001	; EICALL
-.db 0x00, 0b10010100, 0b00011001	; EIJMP
-.db 0x00, 0b10010101, 0b00001001	; ICALL
-.db 0x00, 0b10010100, 0b00001001	; IJMP
-.db 0x00, 0b00000000, 0b00000000	; NOP
-.db 0x00, 0b10010101, 0b00001000	; RET
-.db 0x00, 0b10010101, 0b00011000	; RETI
-.db 0x00, 0b10010100, 0b00001000	; SEC
-.db 0x00, 0b10010100, 0b01011000	; SEH
-.db 0x00, 0b10010100, 0b01111000	; SEI
-.db 0x00, 0b10010100, 0b00101000	; SEN
-.db 0x00, 0b10010100, 0b01001000	; SES
-.db 0x00, 0b10010100, 0b01101000	; SET
-.db 0x00, 0b10010100, 0b00111000	; SEV
-.db 0x00, 0b10010100, 0b00011000	; SEZ
-.db 0x00, 0b10010101, 0b10001000	; SLEEP
-.db 0x00, 0b10010101, 0b10101000	; WDR
-; Rd(5): XXXXXXXd ddddXXXX
-.db 0x01, 0b10010100, 0b00000101	; ASR
-.db 0x01, 0b10010100, 0b00000000	; COM
-.db 0x01, 0b10010100, 0b00001010	; DEC
-.db 0x01, 0b10010100, 0b00000011	; INC
-.db 0x01, 0b10010010, 0b00000110	; LAC
-.db 0x01, 0b10010010, 0b00000101	; LAS
-.db 0x01, 0b10010010, 0b00000111	; LAT
-.db 0x01, 0b10010100, 0b00000110	; LSR
-.db 0x01, 0b10010100, 0b00000001	; NEG
-.db 0x01, 0b10010000, 0b00001111	; POP
-.db 0x01, 0b10010010, 0b00001111	; PUSH
-.db 0x01, 0b10010100, 0b00000111	; ROR
-.db 0x01, 0b10010100, 0b00000010	; SWAP
-.db 0x01, 0b10010010, 0b00000100	; XCH
 
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
@@ -268,7 +261,7 @@ parseInstruction:
 	push	hl \ pop ix	; IX is now our tblrow
 	ld	hl, 0
 	or	a
-	jr	z, .noarg
+	jr	z, .spit	; No arg? spit right away
 	and	0xf		; lower nibble
 	dec	a		; argspec index is 1-based
 	ld	hl, argSpecs
@@ -283,7 +276,6 @@ parseInstruction:
 	call	nz, .swapHL	; Bit 7 set, swap H and L
 	call	_parseArgs
 	ret	nz
-.noarg:
 	; *** Step 3: place arguments in binary upcode and spit.
 	; (IX) is table row
 	; Parse arg values now in H and L
@@ -294,21 +286,13 @@ parseInstruction:
 	call	nz, .cpHintoL	; Bit 6 set, copy H into L
 	ld	a, e		; InstrID
 	cp	I_ANDI
-	jr	c, .spitRd5Rr5
+	jr	c, .spitRegular
 	cp	I_RCALL
 	jr	c, .spitRdK8
-	cp	I_IN
-	jr	c, .spitk12
-	cp	I_BREAK
-	jp	c, .spitINOUT
-	cp	I_ASR
-	jp	c, .spit	; no arg
-	; spitRd5
-	call	.placeRd
-	jp	.spit
-.spitRd5Rr5:
-	; This is used for both Rd(5) + Rr(5) and Rd(5) + bit because the same
-	; logic works for both cases.
+	jr	.spitk12
+.spitRegular:
+	; Regular process which places H and L, ORring it with upcode. Works
+	; in most cases.
 	call	.placeRd
 	call	.placeRr
 	jr	.spit
@@ -343,21 +327,6 @@ parseInstruction:
 	ld	b, a
 	jr	.spit
 
-.spitINOUT:
-	; Rd in H, A in L
-	call	.placeRd
-	ld	a, l
-	and	0xf
-	or	c
-	; LSB ready
-	call	ioPutB
-	; The two high bits of A go in bits 3:1 of MSB
-	ld	a, l
-	rra \ rra \ rra
-	and	0b110
-	or	b
-	ld	b, a
-	jr	.spitMSB
 .spit:
 	; LSB is spit *before* MSB
 	ld	a, (ix+2)
@@ -494,16 +463,18 @@ argSpecs:
 ; and thus parse their args themselves.
 ; Z for success.
 _parseArgs:
-	; For the duration of the routine, our final value will be in DE, and
-	; then placed in HL at the end.
+	; For the duration of the routine, argspec is in DE and final MSB is
+	; in BC. We place result in HL at the end.
 	push	de
+	push	bc
+	ld	bc, 0
 	ex	de, hl		; argspecs now in DE
 	call	readWord
 	jr	nz, .end
 	ld	a, d
 	call	.parse
 	jr	nz, .end
-	ld	d, a
+	ld	b, a
 	ld	a, e
 	or	a
 	jr	z, .end		; no arg
@@ -515,10 +486,12 @@ _parseArgs:
 	call	.parse
 	jr	nz, .end
 	; we're done with (HL) now
-	ld	l, a
+	ld	c, a
 	cp	a		; ensure Z
 .end:
-	ld	h, d
+	ld	h, b
+	ld	l, c
+	pop	bc
 	pop	de
 	ret
 
@@ -575,9 +548,9 @@ _readDouble:
 	push	ix
 	call	parseExpr
 	jr	nz, .end
-	push	ix \ pop hl
-	; HL is already set. For good measure, let's set A to HL's MSB
-	ld	a, h
+	push	ix \ pop bc
+	; BC is already set. For good measure, let's set A to BC's MSB
+	ld	a, b
 .end:
 	pop	ix
 	ret
@@ -603,7 +576,7 @@ _readk7:
 	inc	hl \ inc hl
 	ex	de, hl
 	sbc	hl, de
-	jp	c, .err	; Carry? error
+	jr	c, .err	; Carry? error
 	ld	de, 0x7f
 	sbc	hl, de
 	; We're within bounds! However, our value in L is the number of
