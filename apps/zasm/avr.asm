@@ -103,6 +103,9 @@ instrNames:
 .equ	I_RCALL	84
 .db "RCALL", 0
 .db "RJMP", 0
+.equ	I_CBI	86
+.db "CBI", 0
+.db "SBI", 0
 .db 0xff
 
 ; Instruction table
@@ -200,6 +203,9 @@ instrTbl:
 ; k(12): XXXXkkkk kkkkkkkk
 .db 0x08, 0b11010000, 0x00		; RCALL k
 .db 0x08, 0b11000000, 0x00		; RJMP k
+; A(5) + bit: XXXXXXXX AAAAAbbb
+.db 0x09, 0b10011000, 0x00		; CBI A, b
+.db 0x09, 0b10011010, 0x00		; SBI A, b
 
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
@@ -289,7 +295,14 @@ parseInstruction:
 	jr	c, .spitRegular
 	cp	I_RCALL
 	jr	c, .spitRdK8
-	jr	.spitk12
+	cp	I_CBI
+	jr	c, .spitk12
+	; spit A(5) + bit
+	ld	a, h
+	rla \ rla \ rla
+	or	l
+	ld	c, a
+	jr	.spit
 .spitRegular:
 	; Regular process which places H and L, ORring it with upcode. Works
 	; in most cases.
@@ -454,6 +467,7 @@ argSpecs:
 	.db	'b', 7		; bit + k(7)
 	.db	'R', 'A'	; Rd(5) + A(6)
 	.db	'D', 0		; K(12)
+	.db	'a', 'b'	; A(5) + bit
 
 ; Parse arguments from I/O according to specs in HL
 ; H for first spec, L for second spec
@@ -506,6 +520,8 @@ _parseArgs:
 	jr	z, _readBit
 	cp	'A'
 	jr	z, _readA6
+	cp	'a'
+	jr	z, _readA5
 	cp	7
 	jr	z, _readk7
 	cp	8
@@ -514,31 +530,17 @@ _parseArgs:
 	jr	z, _readDouble
 	ret			; something's wrong
 
-; Read expr and return success only if result in under number given in A
-; Z for success
-_readExpr:
-	push	ix
-	push	bc
-	ld	b, a
-	call	parseExpr
-	jr	nz, .end
-	ld	a, b
-	call	_IX2A
-	jr	nz, .end
-	or	c
-	ld	c, a
-	cp	a		; ensure Z
-.end:
-	pop	bc
-	pop	ix
-	ret
-
 _readBit:
 	ld	a, 7
 	jr	_readExpr
 
 _readA6:
 	ld	a, 0x3f
+	jr	_readExpr
+
+_readA5:
+	ld	a, 0x1f
+	jr	_readExpr
 
 _readK8:
 	ld	a, 0xff
@@ -630,6 +632,25 @@ _IX2A:
 	ret	nz		; should be zero
 	ld	a, l
 	; Z set from "or a"
+	ret
+
+; Read expr and return success only if result in under number given in A
+; Z for success
+_readExpr:
+	push	ix
+	push	bc
+	ld	b, a
+	call	parseExpr
+	jr	nz, .end
+	ld	a, b
+	call	_IX2A
+	jr	nz, .end
+	or	c
+	ld	c, a
+	cp	a		; ensure Z
+.end:
+	pop	bc
+	pop	ix
 	ret
 
 
