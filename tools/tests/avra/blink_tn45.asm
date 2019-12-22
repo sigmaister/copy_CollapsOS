@@ -1,4 +1,3 @@
-; TODO: implement instructions that are commented out
 ; REGISTER USAGE
 ;
 ; R1: overflow counter
