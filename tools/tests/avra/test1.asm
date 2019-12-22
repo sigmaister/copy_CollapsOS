@@ -19,3 +19,5 @@ sbis	22, 5
 ser	r19
 bset	4
 bclr	7
+call	foo
+jmp	bar

@@ -112,6 +112,13 @@ instrNames:
 .db "SBI", 0
 .db "SBIC", 0
 .db "SBIS", 0
+; 32-bit
+; ZASM limitation: CALL and JMP constants are 22-bit. In ZASM, we limit
+; ourselves to 16-bit. Supporting 22-bit would incur a prohibitive complexity
+; cost. As they say, 64K words ought to be enough for anybody.
+.equ	I_CALL	94
+.db "CALL", 0
+.db "JMP", 0
 .db 0xff
 
 ; Instruction table
@@ -219,6 +226,9 @@ instrTbl:
 .db 0x09, 0b10011010, 0x00		; SBI A, b
 .db 0x09, 0b10011001, 0x00		; SBIC A, b
 .db 0x09, 0b10011011, 0x00		; SBIS A, b
+; k(16) (well, k(22)...)
+.db 0x08, 0b10010100, 0b00001110	; CALL k
+.db 0x08, 0b10010100, 0b00001100	; JMP k
 
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
@@ -280,7 +290,7 @@ parseInstruction:
 	push	hl \ pop ix	; IX is now our tblrow
 	ld	hl, 0
 	or	a
-	jr	z, .spit	; No arg? spit right away
+	jp	z, .spit	; No arg? spit right away
 	and	0xf		; lower nibble
 	dec	a		; argspec index is 1-based
 	ld	hl, argSpecs
@@ -312,12 +322,18 @@ parseInstruction:
 	jr	c, .spitRdK8
 	cp	I_CBI
 	jr	c, .spitk12
-	; spit A(5) + bit
+	cp	I_CALL
+	jr	c, .spitA5Bit
+	; Spit k(16)
+	call	.spit		; spit 16-bit const upcode
+	; divide HL by 2 (PC deals with words, not bytes)
+	srl h \ rr l
+	; spit 16-bit K, LSB first
+	ld	a, l
+	call	ioPutB
 	ld	a, h
-	rla \ rla \ rla
-	or	l
-	ld	c, a
-	jr	.spit
+	jp	ioPutB
+
 .spitRegular:
 	; Regular process which places H and L, ORring it with upcode. Works
 	; in most cases.
@@ -353,6 +369,12 @@ parseInstruction:
 	ld	a, h
 	and	0xf
 	ld	b, a
+	jr	.spit
+.spitA5Bit:
+	ld	a, h
+	sla a \ rla \ rla
+	or	l
+	ld	c, a
 	jr	.spit
 
 .spit:
