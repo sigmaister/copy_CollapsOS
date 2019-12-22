@@ -37,8 +37,10 @@ instrNames:
 .db "ADD", 0
 .db "AND", 0
 .db "ASR", 0
+.db "BCLR", 0
 .db "BLD", 0
 .db "BREAK", 0
+.db "BSET", 0
 .db "BST", 0
 .db "CLC", 0
 .db "CLH", 0
@@ -93,7 +95,7 @@ instrNames:
 .db "SWAP", 0
 .db "WDR", 0
 .db "XCH", 0
-.equ	I_ANDI	78
+.equ	I_ANDI	80
 .db "ANDI", 0
 .db "CBR", 0
 .db "CPI", 0
@@ -102,10 +104,10 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_RCALL	86
+.equ	I_RCALL	88
 .db "RCALL", 0
 .db "RJMP", 0
-.equ	I_CBI	88
+.equ	I_CBI	90
 .db "CBI", 0
 .db "SBI", 0
 .db "SBIC", 0
@@ -142,8 +144,10 @@ instrTbl:
 .db 0x02, 0b00001100, 0x00		; ADD Rd, Rr
 .db 0x02, 0b00100000, 0x00		; AND Rd, Rr
 .db 0x01, 0b10010100, 0b00000101	; ASR Rd
+.db 0x0b, 0b10010100, 0b10001000	; BCLR s, k
 .db 0x05, 0b11111000, 0x00		; BLD Rd, b
 .db 0x00, 0b10010101, 0b10011000	; BREAK
+.db 0x0b, 0b10010100, 0b00001000	; BSET s, k
 .db 0x05, 0b11111010, 0x00		; BST Rd, b
 .db 0x00, 0b10010100, 0b10001000	; CLC
 .db 0x00, 0b10010100, 0b11011000	; CLH
@@ -486,6 +490,7 @@ argSpecs:
 	.db	'D', 0		; K(12)
 	.db	'a', 'b'	; A(5) + bit
 	.db	'r', 0		; Rd(4)
+	.db	'b', 0		; bit
 
 ; Parse arguments from I/O according to specs in HL
 ; H for first spec, L for second spec

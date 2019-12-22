@@ -17,3 +17,5 @@ in	r0, 0x9
 cbr	r31, 0xff
 sbis	22, 5
 ser	r19
+bset	4
+bclr	7
