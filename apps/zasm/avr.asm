@@ -94,16 +94,17 @@ instrNames:
 .db "XCH", 0
 .equ	I_ANDI	77
 .db "ANDI", 0
+.db "CBR", 0
 .db "CPI", 0
 .db "LDI", 0
 .db "ORI", 0
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_RCALL	84
+.equ	I_RCALL	85
 .db "RCALL", 0
 .db "RJMP", 0
-.equ	I_CBI	86
+.equ	I_CBI	87
 .db "CBI", 0
 .db "SBI", 0
 .db 0xff
@@ -127,6 +128,7 @@ instrNames:
 ;        allow this kind of syntactic sugar with minimal complexity.
 ;
 ; Bit 6: Second arg is a copy of the first
+; Bit 5: Second arg is inverted (complement)
 
 ; In the same order as in instrNames
 instrTbl:
@@ -193,13 +195,14 @@ instrTbl:
 .db 0x00, 0b10010101, 0b10101000	; WDR
 .db 0x01, 0b10010010, 0b00000100	; XCH Rd
 ; Rd(4) + K(8): XXXXKKKK ddddKKKK
-.db 0x04, 0b01110000, 0x00		; ANDI
-.db 0x04, 0b00110000, 0x00		; CPI
-.db 0x04, 0b11100000, 0x00		; LDI
-.db 0x04, 0b01100000, 0x00		; ORI
-.db 0x04, 0b01000000, 0x00		; SBCI
-.db 0x04, 0b01100000, 0x00		; SBR
-.db 0x04, 0b01010000, 0x00		; SUBI
+.db 0x04, 0b01110000, 0x00		; ANDI Rd, K
+.db 0x24, 0b01110000, 0x00		; CBR Rd, K (Bit 5)
+.db 0x04, 0b00110000, 0x00		; CPI Rd, K
+.db 0x04, 0b11100000, 0x00		; LDI Rd, K
+.db 0x04, 0b01100000, 0x00		; ORI Rd, K
+.db 0x04, 0b01000000, 0x00		; SBCI Rd, K
+.db 0x04, 0b01100000, 0x00		; SBR Rd, K
+.db 0x04, 0b01010000, 0x00		; SUBI Rd, K
 ; k(12): XXXXkkkk kkkkkkkk
 .db 0x08, 0b11010000, 0x00		; RCALL k
 .db 0x08, 0b11000000, 0x00		; RJMP k
@@ -290,6 +293,8 @@ parseInstruction:
 	call	nz, .swapHL	; Bit 7 set, swap H and L again!
 	bit	6, (ix)
 	call	nz, .cpHintoL	; Bit 6 set, copy H into L
+	bit	5, (ix)
+	call	nz, .invL	; Bit 5 set, invert L
 	ld	a, e		; InstrID
 	cp	I_ANDI
 	jr	c, .spitRegular
@@ -439,6 +444,12 @@ parseInstruction:
 
 .cpHintoL:
 	ld	l, h
+	ret
+
+.invL:
+	ld	a, l
+	cpl
+	ld	l, a
 	ret
 
 ; Argspecs: two bytes describing the arguments that are accepted. Possible

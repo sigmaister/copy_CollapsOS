@@ -14,3 +14,4 @@ rcall	baz
 baz:
 out	0x2e, r12
 in	r0, 0x9
+cbr	r31, 0xff
