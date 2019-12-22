@@ -22,3 +22,4 @@ bclr	7
 call	foo
 jmp	bar
 mov	r6, r30
+lsl	r3

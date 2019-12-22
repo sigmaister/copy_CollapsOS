@@ -66,6 +66,7 @@ instrNames:
 .db "LAC", 0
 .db "LAS", 0
 .db "LAT", 0
+.db "LSL", 0
 .db "LSR", 0
 .db "MOV", 0
 .db "MUL", 0
@@ -95,7 +96,7 @@ instrNames:
 .db "SWAP", 0
 .db "WDR", 0
 .db "XCH", 0
-.equ	I_ANDI	80
+.equ	I_ANDI	81
 .db "ANDI", 0
 .db "CBR", 0
 .db "CPI", 0
@@ -104,10 +105,10 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_RCALL	88
+.equ	I_RCALL	89
 .db "RCALL", 0
 .db "RJMP", 0
-.equ	I_CBI	90
+.equ	I_CBI	91
 .db "CBI", 0
 .db "SBI", 0
 .db "SBIC", 0
@@ -116,7 +117,7 @@ instrNames:
 ; ZASM limitation: CALL and JMP constants are 22-bit. In ZASM, we limit
 ; ourselves to 16-bit. Supporting 22-bit would incur a prohibitive complexity
 ; cost. As they say, 64K words ought to be enough for anybody.
-.equ	I_CALL	94
+.equ	I_CALL	95
 .db "CALL", 0
 .db "JMP", 0
 .db 0xff
@@ -180,6 +181,7 @@ instrTbl:
 .db 0x01, 0b10010010, 0b00000110	; LAC Rd
 .db 0x01, 0b10010010, 0b00000101	; LAS Rd
 .db 0x01, 0b10010010, 0b00000111	; LAT Rd
+.db 0x41, 0b00001100, 0x00		; LSL Rd
 .db 0x01, 0b10010100, 0b00000110	; LSR Rd
 .db 0x02, 0b00101100, 0x00		; MOV Rd, Rr
 .db 0x02, 0b10011100, 0x00		; MUL Rd, Rr
