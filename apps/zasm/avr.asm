@@ -107,6 +107,8 @@ instrNames:
 .equ	I_CBI	87
 .db "CBI", 0
 .db "SBI", 0
+.db "SBIC", 0
+.db "SBIS", 0
 .db 0xff
 
 ; Instruction table
@@ -209,6 +211,8 @@ instrTbl:
 ; A(5) + bit: XXXXXXXX AAAAAbbb
 .db 0x09, 0b10011000, 0x00		; CBI A, b
 .db 0x09, 0b10011010, 0x00		; SBI A, b
+.db 0x09, 0b10011001, 0x00		; SBIC A, b
+.db 0x09, 0b10011011, 0x00		; SBIS A, b
 
 ; Same signature as getInstID in instr.asm
 ; Reads string in (HL) and returns the corresponding ID (I_*) in A. Sets Z if
