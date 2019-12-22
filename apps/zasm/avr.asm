@@ -83,6 +83,7 @@ instrNames:
 .db "SEH", 0
 .db "SEI", 0
 .db "SEN", 0
+.db "SER", 0
 .db "SES", 0
 .db "SET", 0
 .db "SEV", 0
@@ -92,7 +93,7 @@ instrNames:
 .db "SWAP", 0
 .db "WDR", 0
 .db "XCH", 0
-.equ	I_ANDI	77
+.equ	I_ANDI	78
 .db "ANDI", 0
 .db "CBR", 0
 .db "CPI", 0
@@ -101,10 +102,10 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_RCALL	85
+.equ	I_RCALL	86
 .db "RCALL", 0
 .db "RJMP", 0
-.equ	I_CBI	87
+.equ	I_CBI	88
 .db "CBI", 0
 .db "SBI", 0
 .db "SBIC", 0
@@ -187,6 +188,7 @@ instrTbl:
 .db 0x00, 0b10010100, 0b01011000	; SEH
 .db 0x00, 0b10010100, 0b01111000	; SEI
 .db 0x00, 0b10010100, 0b00101000	; SEN
+.db 0x0a, 0b11101111, 0b00001111	; SER Rd
 .db 0x00, 0b10010100, 0b01001000	; SES
 .db 0x00, 0b10010100, 0b01101000	; SET
 .db 0x00, 0b10010100, 0b00111000	; SEV
@@ -483,6 +485,7 @@ argSpecs:
 	.db	'R', 'A'	; Rd(5) + A(6)
 	.db	'D', 0		; K(12)
 	.db	'a', 'b'	; A(5) + bit
+	.db	'r', 0		; Rd(4)
 
 ; Parse arguments from I/O according to specs in HL
 ; H for first spec, L for second spec
