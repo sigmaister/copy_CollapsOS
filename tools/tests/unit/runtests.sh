@@ -11,7 +11,7 @@ APPS="${BASE}/apps"
 
 chk() {
     echo "Running test $1"
-    if ! ${ZASM} "${KERNEL}" "${APPS}" < $1 | ${RUNBIN}; then
+    if ! ${ZASM} "${KERNEL}" "${APPS}" common.asm < $1 | ${RUNBIN}; then
         echo "failed with code ${PIPESTATUS[1]}"
         exit 1
     fi
@@ -22,7 +22,7 @@ if [ ! -z $1 ]; then
     exit 0
 fi
 
-for fn in *.asm; do
+for fn in test_*.asm; do
     chk "${fn}"
 done
 

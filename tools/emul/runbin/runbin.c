@@ -6,9 +6,15 @@
  * until it halts. The return code is the value of the register A at halt time.
  */
 
+static void iowr_stderr(uint8_t val)
+{
+    fputc(val, stderr);
+}
+
 int main()
 {
     Machine *m = emul_init();
+    m->iowr[0] = iowr_stderr;
     // read stdin in mem
     int i = 0;
     int c = getchar();
@@ -22,6 +28,7 @@ int main()
         return 1;
     }
     emul_loop();
+    if (m->cpu.R1.wr.HL)
     return m->cpu.R1.br.A;
 }
 

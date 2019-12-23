@@ -5,8 +5,14 @@
 
 jp	test
 
+.inc "ascii.h"
+.inc "core.asm"
+.inc "lib/ari.asm"
+.inc "lib/fmt.asm"
+.inc "stdio.asm"
+.inc "common.asm"
+
 dummyLabel:
-testNum:	.db 1
 
 .equ	dummyLabel	0x42
 
@@ -37,37 +43,25 @@ test:
 	call	nexttest
 
 	; Test that .equ can override label
-	ld	a, 0x42
+	ld	de, 0x42
 	ld	hl, dummyLabel
-	cp	l
-	jp	nz, fail
+	call	assertEQW
 	call	nexttest
 
 	; test that "@" is updated by a .org directive
 	ld	hl, AFTER_ORG
 	ld	de, 0x1234
-	or	a	; clear carry
-	sbc	hl, de
-	jp	nz, fail
+	call	assertEQW
 	call	nexttest
 
 	; test that AND affects the Z flag
 	ld	a, 0x69
 	and	0x80
-	jp	nz, fail
+	call	assertZ
 	call	nexttest
 
 	; success
 	xor	a
 	halt
 
-nexttest:
-	ld	a, (testNum)
-	inc	a
-	ld	(testNum), a
-	ret
-
-fail:
-	ld	a, (testNum)
-	halt
-
+STDIO_RAMSTART:

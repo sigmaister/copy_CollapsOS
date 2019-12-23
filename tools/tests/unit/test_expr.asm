@@ -9,10 +9,12 @@
 
 jp	test
 
+.inc "ascii.h"
 .inc "core.asm"
 .inc "str.asm"
 .inc "lib/util.asm"
 .inc "lib/ari.asm"
+.inc "lib/fmt.asm"
 .inc "zasm/util.asm"
 .inc "zasm/const.asm"
 .inc "lib/parse.asm"
@@ -21,6 +23,9 @@ jp	test
 .inc "zasm/symbol.asm"
 .equ	EXPR_PARSE	parseNumberOrSymbol
 .inc "lib/expr.asm"
+.equ	STDIO_RAMSTART	SYM_RAMEND
+.inc "stdio.asm"
+.inc "common.asm"
 
 ; Pretend that we aren't in first pass
 zasmIsFirstPass:
@@ -28,8 +33,6 @@ zasmIsFirstPass:
 
 zasmGetPC:
 	ret
-
-testNum:	.db 1
 
 s1:		.db "2+2", 0
 s2:		.db "0x4001+0x22", 0
@@ -44,29 +47,22 @@ sBAR:		.db "BAR", 0
 test:
 	ld	sp, 0xffff
 
+	; New-style tests
+	;call	testParseExpr
+
 	; Old-style tests, not touching them now.
 	ld	hl, s1
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop hl
-	ld	a, h
-	or	a
-	jp	nz, fail
-	ld	a, l
-	cp	4
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	hl, 4
+	call	assertEQW
 	call	nexttest
 
 	ld	hl, s2
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop hl
-	ld	a, h
-	cp	0x40
-	jp	nz, fail
-	ld	a, l
-	cp	0x23
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	hl, 0x4023
+	call	assertEQW
 	call	nexttest
 
 	; before the next test, let's set up FOO and BAR symbols
@@ -81,55 +77,33 @@ test:
 	jp	nz, fail
 
 	ld	hl, s3
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop hl
-	ld	a, h
-	cp	0x40
-	jp	nz, fail
-	ld	a, l
-	cp	0x20
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	hl, 0x4020
+	call	assertEQW
 	call	nexttest
 
 	ld	hl, s4
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop hl
-	ld	a, h
-	or	a
-	jp	nz, fail
-	ld	a, l
-	cp	0x60
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	hl, 0x60
+	call	assertEQW
 	call	nexttest
 
 	ld	hl, s5
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop hl
-	ld	a, h
-	cp	0x3f
-	jp	nz, fail
-	ld	a, l
-	cp	0xfd
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	hl, 0x3ffd
+	call	assertEQW
 	call	nexttest
 
 	ld	hl, s6
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop hl
-	ld	a, h
-	cp	0x40
-	jp	nz, fail
-	ld	a, l
-	cp	0x80
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	hl, 0x4080
+	call	assertEQW
 	call	nexttest
 
-	; New-style tests
-	call	testParseExpr
 	; success
 	xor	a
 	halt
@@ -151,20 +125,18 @@ testParseExpr:
 	call	.testEQ
 	ld	iy, .t8
 	call	.testEQ
+	ld	iy, .t9
+	call	.testEQ
 	ret
 
 .testEQ:
 	push	iy \ pop hl
 	inc	hl \ inc hl
-	call	parseExpr
-	jp	nz, fail
-	push	ix \ pop de
-	ld	a, e
-	cp	(iy)
-	jp	nz, fail
-	ld	a, d
-	cp	(iy+1)
-	jp	nz, fail
+	call	parseExprDE
+	call	assertZ
+	ld	l, (iy)
+	ld	h, (iy+1)
+	call	assertEQW
 	jp	nexttest
 
 .t1:
@@ -191,13 +163,6 @@ testParseExpr:
 .t8:
 	.dw	0xffff
 	.db	"-1", 0
-
-nexttest:
-	ld	a, (testNum)
-	inc	a
-	ld	(testNum), a
-	ret
-
-fail:
-	ld	a, (testNum)
-	halt
+.t9:
+	.dw	10
+	.db	"2*3+4", 0

@@ -26,6 +26,18 @@ parseExpr:
 	pop	de
 	ret
 
+; Same as parseExpr, but preserves IX and puts result in DE. This is a
+; transitionary routine and will replace parseExpr when everyone has jumped
+; ship.
+parseExprDE:
+	push	ix
+	push	hl
+	call	_parseExpr
+	push	ix \ pop de
+	pop	hl
+	pop	ix
+	ret
+
 _parseExpr:
 	ld	de, exprTbl
 .loop:

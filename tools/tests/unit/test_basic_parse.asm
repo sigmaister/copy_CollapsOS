@@ -1,5 +1,6 @@
 jp	test
 
+.inc "ascii.h"
 .inc "core.asm"
 .inc "str.asm"
 .inc "lib/util.asm"
@@ -8,6 +9,9 @@ jp	test
 .equ	EXPR_PARSE	parseLiteral
 .inc "lib/expr.asm"
 .inc "basic/parse.asm"
+.inc "lib/fmt.asm"
+.inc "stdio.asm"
+.inc "common.asm"
 
 test:
 	ld	sp, 0xffff
@@ -55,21 +59,21 @@ testParseThruth:
 
 .true:
 	call	parseTruth
-	jp	nz, fail
+	call	assertZ
 	or	a
-	jp	z, fail
+	call	assertNZ
 	jp	nexttest
 
 .false:
 	call	parseTruth
-	jp	nz, fail
+	call	assertZ
 	or	a
-	jp	nz, fail
+	call	assertZ
 	jp	nexttest
 
 .error:
 	call	parseTruth
-	jp	z, fail
+	call	assertNZ
 	jp	nexttest
 
 .t1:	.db	"42", 0
@@ -88,17 +92,4 @@ testParseThruth:
 .f6:	.db	"2<=1", 0
 .e1:	.db	"foo", 0
 
-testNum:	.db 1
-
-nexttest:
-	ld	a, (testNum)
-	inc	a
-	ld	(testNum), a
-	ret
-
-fail:
-	ld	a, (testNum)
-	halt
-
-; used as RAM
-sandbox:
+STDIO_RAMSTART:
