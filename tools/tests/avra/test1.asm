@@ -23,3 +23,4 @@ call	foo
 jmp	bar
 mov	r6, r30
 lsl	r3
+tst	r12

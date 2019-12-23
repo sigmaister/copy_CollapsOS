@@ -191,4 +191,10 @@ the instruction after the "foo" label would be "rjmp foo+1". In zasm, it's
 "rjmp foo+2". If your expression results in an odd number, the low bit of your
 number will be ignored.
 
+Limitations:
+
+* `CALL` and `JMP` only support 16-bit numbers, not 22-bit ones.
+* `BRLO` and `BRSH` are not there. Use `BRCS` and `BRCC` instead.
+* No `high()` and `low()`. Use `&0xff` and `}8`.
+
 [libz80]: https://github.com/ggambetta/libz80

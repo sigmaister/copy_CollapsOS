@@ -94,9 +94,10 @@ instrNames:
 .db "SLEEP", 0
 .db "SUB", 0
 .db "SWAP", 0
+.db "TST", 0
 .db "WDR", 0
 .db "XCH", 0
-.equ	I_ANDI	81
+.equ	I_ANDI	82
 .db "ANDI", 0
 .db "CBR", 0
 .db "CPI", 0
@@ -105,10 +106,10 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_RCALL	89
+.equ	I_RCALL	90
 .db "RCALL", 0
 .db "RJMP", 0
-.equ	I_CBI	91
+.equ	I_CBI	92
 .db "CBI", 0
 .db "SBI", 0
 .db "SBIC", 0
@@ -117,7 +118,7 @@ instrNames:
 ; ZASM limitation: CALL and JMP constants are 22-bit. In ZASM, we limit
 ; ourselves to 16-bit. Supporting 22-bit would incur a prohibitive complexity
 ; cost. As they say, 64K words ought to be enough for anybody.
-.equ	I_CALL	95
+.equ	I_CALL	96
 .db "CALL", 0
 .db "JMP", 0
 .db 0xff
@@ -209,6 +210,7 @@ instrTbl:
 .db 0x00, 0b10010101, 0b10001000	; SLEEP
 .db 0x02, 0b00011000, 0x00		; SUB Rd, Rr
 .db 0x01, 0b10010100, 0b00000010	; SWAP Rd
+.db 0x41, 0b00100000, 0x00		; TST Rd (Bit 6)
 .db 0x00, 0b10010101, 0b10101000	; WDR
 .db 0x01, 0b10010010, 0b00000100	; XCH Rd
 ; Rd(4) + K(8): XXXXKKKK ddddKKKK
