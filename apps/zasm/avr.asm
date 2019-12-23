@@ -354,6 +354,8 @@ parseInstruction:
 .spitk12:
 	; k(12) in HL
 	; We're doing the same dance as in _readk7. See comments there.
+	call	zasmIsFirstPass
+	jr	z, .spit
 	ld	de, 0xfff
 	add	hl, de
 	jp	c, unsetZ	; Carry? number is way too high.
@@ -612,6 +614,10 @@ _readk7:
 	push	ix
 	call	parseExpr
 	jr	nz, .end
+	; If we're in first pass, stop now. The value of HL doesn't matter and
+	; truncation checks might falsely fail.
+	call	zasmIsFirstPass
+	jr	z, .end
 	; IX contains an absolute value. Turn this into a -64/+63 relative
 	; value by subtracting PC from it. However, before we do that, let's
 	; add 0x7f to it, which we'll remove later. This will simplify bounds
