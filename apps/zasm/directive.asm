@@ -40,6 +40,7 @@ dirHandlers:
 	.dw	handleBIN
 
 handleDB:
+	push	de
 	push	hl
 .loop:
 	call	readWord
@@ -47,20 +48,21 @@ handleDB:
 	ld	hl, scratchpad
 	call	enterDoubleQuotes
 	jr	z, .stringLiteral
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .badarg
-	push	ix \ pop hl
-	ld	a, h
+	ld	a, d
 	or	a		; cp 0
 	jr	nz, .overflow	; not zero? overflow
-	ld	a, l
+	ld	a, e
 	call	ioPutB
 	jr	nz, .ioError
 .stopStrLit:
 	call	readComma
 	jr	z, .loop
 	cp	a		; ensure Z
+.end:
 	pop	hl
+	pop	de
 	ret
 .ioError:
 	ld	a, SHELL_ERR_IO_ERROR
@@ -74,9 +76,8 @@ handleDB:
 .overflow:
 	ld	a, ERR_OVFL
 .error:
-	call	unsetZ
-	pop	hl
-	ret
+	or	a		; unset Z
+	jr	.end
 
 .stringLiteral:
 	ld	a, (hl)
@@ -89,24 +90,26 @@ handleDB:
 	jr	.stringLiteral
 
 handleDW:
+	push	de
 	push	hl
 .loop:
 	call	readWord
 	jr	nz, .badfmt
 	ld	hl, scratchpad
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .badarg
-	push	ix \ pop hl
-	ld	a, l
+	ld	a, e
 	call	ioPutB
 	jr	nz, .ioError
-	ld	a, h
+	ld	a, d
 	call	ioPutB
 	jr	nz, .ioError
 	call	readComma
 	jr	z, .loop
 	cp	a		; ensure Z
+.end:
 	pop	hl
+	pop	de
 	ret
 .ioError:
 	ld	a, SHELL_ERR_IO_ERROR
@@ -117,9 +120,8 @@ handleDW:
 .badarg:
 	ld	a, ERR_BAD_ARG
 .error:
-	call	unsetZ
-	pop	hl
-	ret
+	or	a		; unset Z
+	jr	.end
 
 handleEQU:
 	call	zasmIsLocalPass	; Are we in local pass? Then ignore all .equ.
@@ -178,14 +180,17 @@ handleEQU:
 	jp	readWord
 
 handleORG:
+	push	de
 	call	readWord
 	jr	nz, .badfmt
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .badarg
-	push	ix \ pop hl
+	ex	de, hl
 	ld	(DIREC_LASTVAL), hl
 	call	zasmSetOrg
 	cp	a		; ensure Z
+.end:
+	pop	de
 	ret
 .badfmt:
 	ld	a, ERR_BAD_FMT
@@ -193,31 +198,28 @@ handleORG:
 .badarg:
 	ld	a, ERR_BAD_ARG
 .error:
-	call	unsetZ
-	ret
+	or	a		; unset Z
+	jr	.end
 
 handleFIL:
 	call	readWord
 	jr	nz, .badfmt
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .badarg
-	push	bc	; --> lvl 1
-	push	ix \ pop bc
-	ld	a, b
+	ld	a, d
 	cp	0xd0
 	jr	nc, .overflow
 .loop:
-	ld	a, b
-	or	c
+	ld	a, d
+	or	e
 	jr	z, .loopend
 	xor	a
 	call	ioPutB
 	jr	nz, .ioError
-	dec	bc
+	dec	de
 	jr	.loop
 .loopend:
 	cp	a	; ensure Z
-	pop	bc	; <-- lvl 1
 	ret
 .ioError:
 	ld	a, SHELL_ERR_IO_ERROR
@@ -229,11 +231,11 @@ handleFIL:
 	ld	a, ERR_BAD_ARG
 	jp	unsetZ
 .overflow:
-	pop	bc	; <-- lvl 1
 	ld	a, ERR_OVFL
 	jp	unsetZ
 
 handleOUT:
+	push	de
 	push	hl
 	; Read our expression
 	call	readWord
@@ -241,12 +243,11 @@ handleOUT:
 	call	zasmIsFirstPass		; No .out during first pass
 	jr	z, .end
 	ld	hl, scratchpad
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .badarg
-	push	ix \ pop hl
-	ld	a, h
+	ld	a, d
 	out	(ZASM_DEBUG_PORT), a
-	ld	a, l
+	ld	a, e
 	out	(ZASM_DEBUG_PORT), a
 	jr	.end
 .badfmt:
@@ -255,9 +256,10 @@ handleOUT:
 .badarg:
 	ld	a, ERR_BAD_ARG
 .error:
-	call	unsetZ
+	or	a		; unset Z
 .end:
 	pop	hl
+	pop	de
 	ret
 
 handleINC:

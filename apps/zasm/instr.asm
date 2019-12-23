@@ -146,7 +146,7 @@ parseIXY:
 ; any argspec (A == 0 means arg is empty). A return value of 0xff means an
 ; error.
 ;
-; If the parsed argument is a number constant, 'N' is returned and IX contains
+; If the parsed argument is a number constant, 'N' is returned and DE contains
 ; the value of that constant.
 parseArg:
 	call	strlen
@@ -154,12 +154,7 @@ parseArg:
 	ret	z		; empty string? A already has our result: 0
 
 	push	bc
-	push	de
 	push	hl
-
-	; We always initialize IX to zero so that non-numerical args end up with
-	; a clean zero.
-	ld	ix, 0
 
 	ld	de, argspecTbl
 	; DE now points the the "argspec char" part of the entry, but what
@@ -181,7 +176,7 @@ parseArg:
 	; (HL) has no parens
 	call	.maybeParseExpr
 	jr	nz, .nomatch
-	; We have a proper number in no parens. Number in IX.
+	; We have a proper number in no parens. Number in DE.
 	ld	a, 'N'
 	jr	.end
 .withParens:
@@ -208,23 +203,20 @@ parseArg:
 .parseNumberInParens:
 	call	.maybeParseExpr
 	jr	nz, .nomatch
-	; We have a proper number in parens. Number in IX
-	; is '-' in B? if yes, we need to negate the low part of IX
+	; We have a proper number in parens. Number in DE
+	; is '-' in B? if yes, we need to negate the low part of DE
 	ld	a, b
 	cp	'-'
-	jr	nz, .dontNegateIX
-	; we need to negate the low part of IX
+	jr	nz, .dontNegateDE
+	; we need to negate the low part of DE
 	; TODO: when parsing routines properly support unary negative numbers,
 	; We could replace this complicated scheme below with a nice hack where
 	; we start parsing our displacement number at the '+' and '-' char.
 
-	; HL isn't needed anymore and can be destroyed.
-	push	ix \ pop hl
-	ld	a, l
+	ld	a, e
 	neg
-	ld	l, a
-	push	hl \ pop ix
-.dontNegateIX:
+	ld	e, a
+.dontNegateDE:
 	ld	a, c	; M, x, or y
 	jr	.end
 .nomatch:
@@ -235,9 +227,13 @@ parseArg:
 	; found the matching argspec row. Our result is one byte left of DE.
 	dec	de
 	ld	a, (de)
+
+	; When we have non-numerical args, we set DE to zero to have a clean
+	; result.
+	ld	de, 0
+
 .end:
 	pop	hl
-	pop	de
 	pop	bc
 	ret
 
@@ -247,9 +243,10 @@ parseArg:
 	; harmless, but in some cases it causes false failures. For example,
 	; a "-" operator can cause is to falsely overflow and generate
 	; truncation error.
+	ld	de, 0			; in first pass, return a clean zero
 	call	zasmIsFirstPass
 	ret	z
-	jp	parseExpr
+	jp	parseExprDE
 
 ; Returns, with Z, whether A is a groupId
 isGroupId:
@@ -817,27 +814,18 @@ spitUpcode:
 	ld	(INS_UPCODE+2), a
 	ret
 
-; Parse argument in (HL) and place it in (DE)
-; DE is not preserved
+; Parse argument in (HL) and place it in (IX)
 ; Sets Z on success, reset on error.
 processArg:
 	call	parseArg
 	cp	0xff
 	jr	z, .error
-	ld	(de), a
-	; When A is a number, IX is set with the value of that number. Because
+	ld	(ix), a
+	; When A is a number, DE is set with the value of that number. Because
 	; We don't use the space allocated to store those numbers in any other
-	; occasion, we store IX there unconditonally, LSB first.
-	inc	de
-	ex	(sp), ix	; (SP) is kept in IX and will be restored
-	ex	(sp), hl	; old HL is on (SP)
-	ld	a, l
-	ld	(de), a
-	inc	de
-	ld	a, h
-	ld	(de), a
-	ex	(sp), hl	; restore old HL from (SP)
-	ex	(sp), ix	; restore old (SP) from IX
+	; occasion, we store DE there unconditonally, LSB first.
+	ld	(ix+1), e
+	ld	(ix+2), d
 	cp	a		; ensure Z
 	ret
 .error:
@@ -860,14 +848,14 @@ parseInstruction:
 	ld	(INS_CURARG2), a
 	call	readWord
 	jr	nz, .nomorearg
-	ld	de, INS_CURARG1
+	ld	ix, INS_CURARG1
 	call	processArg
 	jr	nz, .end	; A is set to error, Z is unset
 	call	readComma
 	jr	nz, .nomorearg
 	call	readWord
 	jr	nz, .badfmt
-	ld	de, INS_CURARG2
+	ld	ix, INS_CURARG2
 	call	processArg
 	jr	nz, .end	; A is set to error, Z is unset
 .nomorearg:

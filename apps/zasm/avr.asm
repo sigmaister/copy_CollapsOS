@@ -643,14 +643,15 @@ _readK8:
 	jr	_readExpr
 
 _readDouble:
-	push	ix
-	call	parseExpr
+	push	de
+	call	parseExprDE
 	jr	nz, .end
-	push	ix \ pop bc
+	ld	b, d
+	ld	c, e
 	; BC is already set. For good measure, let's set A to BC's MSB
 	ld	a, b
 .end:
-	pop	ix
+	pop	de
 	ret
 
 _readk7:
@@ -705,6 +706,7 @@ _readR4:
 ; read a rXX argument and return register number in A.
 ; Set Z for success.
 _readR5:
+	push	de
 	push	ix
 	ld	a, (hl)
 	call	upcase
@@ -713,43 +715,44 @@ _readR5:
 	inc	hl
 	call	parseDecimal
 	jr	nz, .end
+	push	ix \ pop de
 	ld	a, 31
-	call	_IX2A
+	call	_DE2A
 .end:
 	pop	ix
+	pop	de
 	ret
 
-; Put IX's LSB into A and, additionally, ensure that the new value is <=
+; Put DE's LSB into A and, additionally, ensure that the new value is <=
 ; than what was previously in A.
 ; Z for success.
-_IX2A:
-	push	ix \ pop hl
-	cp	l
-	jp	c, unsetZ	; A < L
-	ld	a, h
+_DE2A:
+	cp	e
+	jp	c, unsetZ	; A < E
+	ld	a, d
 	or	a
 	ret	nz		; should be zero
-	ld	a, l
+	ld	a, e
 	; Z set from "or a"
 	ret
 
 ; Read expr and return success only if result in under number given in A
 ; Z for success
 _readExpr:
-	push	ix
+	push	de
 	push	bc
 	ld	b, a
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .end
 	ld	a, b
-	call	_IX2A
+	call	_DE2A
 	jr	nz, .end
 	or	c
 	ld	c, a
 	cp	a		; ensure Z
 .end:
 	pop	bc
-	pop	ix
+	pop	de
 	ret
 
 ; Parse one of the following: X, Y, Z, X+, Y+, Z+, -X, -Y, -Z.
