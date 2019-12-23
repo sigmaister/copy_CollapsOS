@@ -31,8 +31,11 @@ instrNames:
 .equ	I_BRBS	16
 .db "BRBS", 0
 .db "BRBC", 0
+.equ	I_LD	18
+.db "LD", 0
+.db "ST", 0
 ; Rd(5) + Rr(5) (from here, instrTbl8)
-.equ	I_ADC	18
+.equ	I_ADC	20
 .db "ADC", 0
 .db "ADD", 0
 .db "AND", 0
@@ -97,7 +100,7 @@ instrNames:
 .db "TST", 0
 .db "WDR", 0
 .db "XCH", 0
-.equ	I_ANDI	82
+.equ	I_ANDI	84
 .db "ANDI", 0
 .db "CBR", 0
 .db "CPI", 0
@@ -106,10 +109,10 @@ instrNames:
 .db "SBCI", 0
 .db "SBR", 0
 .db "SUBI", 0
-.equ	I_RCALL	90
+.equ	I_RCALL	92
 .db "RCALL", 0
 .db "RJMP", 0
-.equ	I_CBI	92
+.equ	I_CBI	94
 .db "CBI", 0
 .db "SBI", 0
 .db "SBIC", 0
@@ -118,7 +121,7 @@ instrNames:
 ; ZASM limitation: CALL and JMP constants are 22-bit. In ZASM, we limit
 ; ourselves to 16-bit. Supporting 22-bit would incur a prohibitive complexity
 ; cost. As they say, 64K words ought to be enough for anybody.
-.equ	I_CALL	96
+.equ	I_CALL	98
 .db "CALL", 0
 .db "JMP", 0
 .db 0xff
@@ -280,8 +283,11 @@ parseInstruction:
 	ld	bc, 0
 	ld	e, a		; Let's keep that instrID somewhere safe
 	; First, let's fetch our table row
-	cp	I_ADC
+	cp	I_LD
 	jp	c, .BR		; BR is special, no table row
+	jp	z, .LD		; LD is special
+	cp	I_ADC
+	jp	c, .ST		; ST is special
 
 	; *** Step 2: parse arguments
 	sub	I_ADC		; Adjust index for table
@@ -448,6 +454,40 @@ parseInstruction:
 	; bit in H, k in L.
 	jr	.spitBR2
 
+.LD:
+	ld	h, 'R'
+	ld	l, 'z'
+	call	_parseArgs
+	ret	nz
+	ld	d, 0b10000000
+	jr	.LDST
+.ST:
+	ld	h, 'z'
+	ld	l, 'R'
+	call	_parseArgs
+	ret	nz
+	ld	d, 0b10000010
+	call	.swapHL
+	; continue to .LDST
+
+.LDST:
+	; Rd in H, Z in L, base upcode in D
+	call	.placeRd
+	; We're spitting LSB first, so let's compose it.
+	ld	a, l
+	and	0b00001111
+	or	c
+	call	ioPutB
+	; Now, MSB's bit 4 is L's bit 4. How convenient!
+	ld	a, l
+	and	0b00010000
+	or	d
+	or	b
+	; MSB composed!
+	call	ioPutB
+	cp	a		; ensure Z
+	ret
+
 ; local routines
 ; place number in H in BC at position .......d dddd....
 ; BC is assumed to be 0
@@ -502,6 +542,9 @@ parseInstruction:
 ; 'D' - A double-length number which will fill whole HL.
 ; 'R' - an r5 value: r0-r31
 ; 'r' - an r4 value: r16-r31
+; 'z' - an indirect register (X, Y or Z), with our without post-inc/pre-dec
+;       indicator. This will result in a 5-bit number, from which we can place
+;	bits 3:0 to upcode's 3:0 and bit 4 at upcode's 12 in LD and ST.
 ;
 ; All arguments accept expressions, even 'r' ones: in 'r' args, we start by
 ; looking if the arg starts with 'r' or 'R'. If yes, it's a simple 'rXX' value,
@@ -579,6 +622,8 @@ _parseArgs:
 	jr	z, _readK8
 	cp	'D'
 	jr	z, _readDouble
+	cp	'z'
+	jp	z, _readz
 	ret			; something's wrong
 
 _readBit:
@@ -708,4 +753,63 @@ _readExpr:
 	pop	ix
 	ret
 
+; Parse one of the following: X, Y, Z, X+, Y+, Z+, -X, -Y, -Z.
+; For each of those values, return a 5-bit value than can then be interleaved
+; with LD or ST upcodes.
+_readz:
+	call	strlen
+	cp	3
+	jp	nc, unsetZ	; string too long
+	; Let's load first char in A and second in A'. This will free HL
+	ld	a, (hl)
+	ex	af, af'
+	inc	hl
+	ld	a, (hl)		; Good, HL is now free
+	ld	hl, .tblStraight
+	or	a
+	jr	z, .parseXYZ	; Second char null? We have a single char
+	; Maybe +
+	cp	'+'
+	jr	nz, .skip
+	; We have a +
+	ld	hl, .tblInc
+	jr	.parseXYZ
+.skip:
+	; Maybe a -
+	ex	af, af'
+	cp	'-'
+	ret	nz		; we have nothing
+	; We have a -
+	ld	hl, .tblDec
+	; continue to .parseXYZ
+.parseXYZ:
+	; We have X, Y or Z in A'
+	ex	af, af'
+	call	upcase
+	; Now, let's place HL
+	cp	'X'
+	jr	z, .fetch
+	inc	hl
+	cp	'Y'
+	jr	z, .fetch
+	inc	hl
+	cp	'Z'
+	ret	nz		; error
+.fetch:
+	ld	a, (hl)
+	; Z already set from earlier cp
+	ret
+
+.tblStraight:
+	.db	0b11100		; X
+	.db	0b01000		; Y
+	.db	0b00000		; Z
+.tblInc:
+	.db	0b11101		; X+
+	.db	0b11001		; Y+
+	.db	0b10001		; Z+
+.tblDec:
+	.db	0b11110		; -X
+	.db	0b11010		; -Y
+	.db	0b10010		; -Z
 
