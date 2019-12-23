@@ -40,9 +40,8 @@ parseTruth:
 	ret
 
 .simple:
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .end
-	push	ix \ pop de
 	ld	a, d
 	or	e
 	jr	.success
@@ -136,8 +135,7 @@ parseTruth:
 	ret	nz
 	push	ix		; --> lvl 1. save (HL) value in stack.
 	ex	de, hl
-	call	parseExpr
+	call	parseExprDE
 	ret	nz
-	push	ix \ pop de
 	pop	hl		; <-- lvl 1. restore.
 	ret

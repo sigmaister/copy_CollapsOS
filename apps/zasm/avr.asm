@@ -657,19 +657,18 @@ _readk7:
 	push	hl
 	push	de
 	push	ix
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .end
 	; If we're in first pass, stop now. The value of HL doesn't matter and
 	; truncation checks might falsely fail.
 	call	zasmIsFirstPass
 	jr	z, .end
-	; IX contains an absolute value. Turn this into a -64/+63 relative
+	; DE contains an absolute value. Turn this into a -64/+63 relative
 	; value by subtracting PC from it. However, before we do that, let's
 	; add 0x7f to it, which we'll remove later. This will simplify bounds
 	; checks. (we use 7f instead of 3f because we deal in bytes here, not
 	; in words)
-	push	ix \ pop hl
-	ld	de, 0x7f
+	ld	hl, 0x7f
 	add	hl, de		; Carry cleared
 	ex	de, hl
 	call	zasmGetPC	; --> HL

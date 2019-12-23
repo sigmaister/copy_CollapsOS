@@ -146,10 +146,9 @@ handleEQU:
 	call	readWord
 	jr	nz, .badfmt
 	ld	hl, scratchpad
-	call	parseExpr
+	call	parseExprDE
 	jr	nz, .badarg
 	ld	hl, DIREC_SCRATCHPAD
-	push	ix \ pop de
 	; Save value in "@" special variable
 	ld	(DIREC_LASTVAL), de
 	call	symRegisterConst	; A and Z set
