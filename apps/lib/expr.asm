@@ -96,18 +96,15 @@ _findAndSplit:
 ; parse expression on the left (HL) and the right (DE) and put the results in
 ; HL (left) and DE (right)
 _resolveLeftAndRight:
-	; special case: is (HL) zero? If yes, it means that our left operand
-	; is empty. consider it as 0
-	ld	ix, 0		; pre-set to 0
 	ld	a, (hl)
 	or	a
-	jr	z, .skip
+	jr	z, .noleft
 	; Parse left operand in (HL)
 	push	de		; --> lvl 1
 	call	parseExpr
 	pop	hl		; <-- lvl 1, orig DE
 	ret	nz		; return immediately if error
-.skip:
+.parseright:
 	; Now we have parsed everything to the left and we have its result in
 	; DE. What we need to do now is the same thing on (DE) and then apply
 	; the + operator. Let's save DE somewhere and parse this.
@@ -116,6 +113,12 @@ _resolveLeftAndRight:
 	call	parseExpr	; DE is set
 	pop	hl	; <-- lvl 1. left value
 	ret		; Z is parseExpr's result
+.noleft:
+	; special case: is (HL) zero? If yes, it means that our left operand
+	; is empty. consider it as 0
+	ex	de, hl	; (DE) goes in (HL) for .parseright
+	ld	de, 0
+	jr	.parseright
 
 ; Routines in here all have the same signature: they take two numbers, DE (left)
 ; and IX (right), apply the operator and put the resulting number in DE.

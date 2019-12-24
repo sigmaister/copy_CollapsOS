@@ -48,7 +48,7 @@ test:
 	ld	sp, 0xffff
 
 	; New-style tests
-	;call	testParseExpr
+	call	testParseExpr
 
 	; Old-style tests, not touching them now.
 	ld	hl, s1
