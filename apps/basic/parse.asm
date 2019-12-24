@@ -131,11 +131,12 @@ parseTruth:
 ; place their corresponding values in HL and DE.
 .parseLeftRight:
 	; let's start with HL
-	call	parseExpr
-	ret	nz
-	push	ix		; --> lvl 1. save (HL) value in stack.
-	ex	de, hl
+	push	de		; --> lvl 1
 	call	parseExprDE
+	pop	hl		; <-- lvl 1, orig DE
 	ret	nz
-	pop	hl		; <-- lvl 1. restore.
+	push	de		; --> lvl 1. save HL value in stack.
+	; Now, for DE. (DE) is now in HL
+	call	parseExprDE	; DE in place
+	pop	hl		; <-- lvl 1. restore saved HL
 	ret

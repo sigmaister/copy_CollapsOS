@@ -85,11 +85,13 @@ rdWord:
 ; Read word from HL in SCRATCHPAD and then intepret that word as an expression.
 ; Put the result in IX.
 ; Z for success.
+; TODO: put result in DE
 rdExpr:
 	ld	de, SCRATCHPAD
 	call	rdWord
 	push	hl
 	ex	de, hl
-	call	parseExpr
+	call	parseExprDE
+	push	de \ pop ix
 	pop	hl
 	ret
