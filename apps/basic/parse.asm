@@ -40,7 +40,7 @@ parseTruth:
 	ret
 
 .simple:
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .end
 	ld	a, d
 	or	e
@@ -132,11 +132,11 @@ parseTruth:
 .parseLeftRight:
 	; let's start with HL
 	push	de		; --> lvl 1
-	call	parseExprDE
+	call	parseExpr
 	pop	hl		; <-- lvl 1, orig DE
 	ret	nz
 	push	de		; --> lvl 1. save HL value in stack.
 	; Now, for DE. (DE) is now in HL
-	call	parseExprDE	; DE in place
+	call	parseExpr	; DE in place
 	pop	hl		; <-- lvl 1. restore saved HL
 	ret

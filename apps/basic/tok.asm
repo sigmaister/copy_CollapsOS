@@ -91,7 +91,7 @@ rdExpr:
 	call	rdWord
 	push	hl
 	ex	de, hl
-	call	parseExprDE
+	call	parseExpr
 	push	de \ pop ix
 	pop	hl
 	ret

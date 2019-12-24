@@ -48,7 +48,7 @@ handleDB:
 	ld	hl, scratchpad
 	call	enterDoubleQuotes
 	jr	z, .stringLiteral
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .badarg
 	ld	a, d
 	or	a		; cp 0
@@ -96,7 +96,7 @@ handleDW:
 	call	readWord
 	jr	nz, .badfmt
 	ld	hl, scratchpad
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .badarg
 	ld	a, e
 	call	ioPutB
@@ -148,7 +148,7 @@ handleEQU:
 	call	readWord
 	jr	nz, .badfmt
 	ld	hl, scratchpad
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .badarg
 	ld	hl, DIREC_SCRATCHPAD
 	; Save value in "@" special variable
@@ -183,7 +183,7 @@ handleORG:
 	push	de
 	call	readWord
 	jr	nz, .badfmt
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .badarg
 	ex	de, hl
 	ld	(DIREC_LASTVAL), hl
@@ -204,7 +204,7 @@ handleORG:
 handleFIL:
 	call	readWord
 	jr	nz, .badfmt
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .badarg
 	ld	a, d
 	cp	0xd0
@@ -243,7 +243,7 @@ handleOUT:
 	call	zasmIsFirstPass		; No .out during first pass
 	jr	z, .end
 	ld	hl, scratchpad
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .badarg
 	ld	a, d
 	out	(ZASM_DEBUG_PORT), a

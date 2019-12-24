@@ -52,7 +52,7 @@ varTryAssign:
 	call	rdWord
 	ex	de, hl
 	; Now, evaluate that expression now in (HL)
-	call	parseExprDE	; --> number in DE
+	call	parseExpr	; --> number in DE
 	jr	nz, .exprErr
 	pop	af	; <-- lvl 4
 	call	varAssign

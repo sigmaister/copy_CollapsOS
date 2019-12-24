@@ -11,25 +11,12 @@
 ;
 ; *** Code ***
 ;
-; Parse expression in string at (HL) and returns the result in IX.
+
+; Parse expression in string at (HL) and returns the result in DE.
 ; **This routine mutates (HL).**
 ; We expect (HL) to be disposable: we mutate it to avoid having to make a copy.
 ; Sets Z on success, unset on error.
-; TODO: the IX output register is a bit awkward. Nearly everywhere, I need
-;       to push \ pop that thing. See if we could return the result in DE
-;       instead.
 parseExpr:
-	push	de
-	push	hl
-	call	_parseExpr
-	pop	hl
-	pop	de
-	ret
-
-; Same as parseExpr, but preserves IX and puts result in DE. This is a
-; transitionary routine and will replace parseExpr when everyone has jumped
-; ship.
-parseExprDE:
 	push	ix
 	push	hl
 	call	_parseExpr
@@ -116,17 +103,18 @@ _resolveLeftAndRight:
 	or	a
 	jr	z, .skip
 	; Parse left operand in (HL)
+	push	de		; --> lvl 1
 	call	parseExpr
+	pop	hl		; <-- lvl 1, orig DE
 	ret	nz		; return immediately if error
 .skip:
 	; Now we have parsed everything to the left and we have its result in
-	; IX. What we need to do now is the same thing on (DE) and then apply
-	; the + operator. Let's save IX somewhere and parse this.
-	ex	de, hl	; right expr now in HL
-	push	ix	; --> lvl 1
-	call	parseExpr
-	pop	hl	; <-- lvl 1. left
-	push	ix \ pop de	; right
+	; DE. What we need to do now is the same thing on (DE) and then apply
+	; the + operator. Let's save DE somewhere and parse this.
+	push	de	; --> lvl 1
+	; right expr in (HL)
+	call	parseExpr	; DE is set
+	pop	hl	; <-- lvl 1. left value
 	ret		; Z is parseExpr's result
 
 ; Routines in here all have the same signature: they take two numbers, DE (left)

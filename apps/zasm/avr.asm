@@ -644,7 +644,7 @@ _readK8:
 
 _readDouble:
 	push	de
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .end
 	ld	b, d
 	ld	c, e
@@ -658,7 +658,7 @@ _readk7:
 	push	hl
 	push	de
 	push	ix
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .end
 	; If we're in first pass, stop now. The value of HL doesn't matter and
 	; truncation checks might falsely fail.
@@ -742,7 +742,7 @@ _readExpr:
 	push	de
 	push	bc
 	ld	b, a
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .end
 	ld	a, b
 	call	_DE2A

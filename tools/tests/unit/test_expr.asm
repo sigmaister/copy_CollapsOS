@@ -52,14 +52,14 @@ test:
 
 	; Old-style tests, not touching them now.
 	ld	hl, s1
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	hl, 4
 	call	assertEQW
 	call	nexttest
 
 	ld	hl, s2
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	hl, 0x4023
 	call	assertEQW
@@ -77,28 +77,28 @@ test:
 	jp	nz, fail
 
 	ld	hl, s3
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	hl, 0x4020
 	call	assertEQW
 	call	nexttest
 
 	ld	hl, s4
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	hl, 0x60
 	call	assertEQW
 	call	nexttest
 
 	ld	hl, s5
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	hl, 0x3ffd
 	call	assertEQW
 	call	nexttest
 
 	ld	hl, s6
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	hl, 0x4080
 	call	assertEQW
@@ -132,7 +132,7 @@ testParseExpr:
 .testEQ:
 	push	iy \ pop hl
 	inc	hl \ inc hl
-	call	parseExprDE
+	call	parseExpr
 	call	assertZ
 	ld	l, (iy)
 	ld	h, (iy+1)

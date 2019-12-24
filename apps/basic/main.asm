@@ -222,7 +222,7 @@ basPRINT:
 	call	rdWord
 	push	hl		; --> lvl 1
 	ex	de, hl
-	call	parseExprDE
+	call	parseExpr
 	jr	nz, .parseError
 	ld	hl, SCRATCHPAD
 	call	fmtDecimalS
@@ -251,7 +251,7 @@ basGOTO:
 	ld	de, SCRATCHPAD
 	call	rdWord
 	ex	de, hl
-	call	parseExprDE
+	call	parseExpr
 	ret	nz
 	call	bufFind
 	jr	nz, .notFound
@@ -314,7 +314,7 @@ basINPUT:
 	call	spitQuoted
 	call	rdSep
 	call	stdioReadLine
-	call	parseExprDE
+	call	parseExpr
 	ld	(VAR_TBL), de
 	call	printcrlf
 	cp	a		; ensure Z

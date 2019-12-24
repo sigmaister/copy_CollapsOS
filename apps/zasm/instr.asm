@@ -246,7 +246,7 @@ parseArg:
 	ld	de, 0			; in first pass, return a clean zero
 	call	zasmIsFirstPass
 	ret	z
-	jp	parseExprDE
+	jp	parseExpr
 
 ; Returns, with Z, whether A is a groupId
 isGroupId:
