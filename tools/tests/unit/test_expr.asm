@@ -34,12 +34,6 @@ zasmIsFirstPass:
 zasmGetPC:
 	ret
 
-s1:		.db "2+2", 0
-s2:		.db "0x4001+0x22", 0
-s3:		.db "FOO+BAR", 0
-s4:		.db "BAR*3", 0
-s5:		.db "FOO-3", 0
-s6:		.db "FOO+BAR*4", 0
 
 sFOO:		.db "FOO", 0
 sBAR:		.db "BAR", 0
@@ -47,25 +41,7 @@ sBAR:		.db "BAR", 0
 test:
 	ld	sp, 0xffff
 
-	; New-style tests
-	call	testParseExpr
-
-	; Old-style tests, not touching them now.
-	ld	hl, s1
-	call	parseExpr
-	call	assertZ
-	ld	hl, 4
-	call	assertEQW
-	call	nexttest
-
-	ld	hl, s2
-	call	parseExpr
-	call	assertZ
-	ld	hl, 0x4023
-	call	assertEQW
-	call	nexttest
-
-	; before the next test, let's set up FOO and BAR symbols
+	; before testing begins, let's set up FOO and BAR symbols
 	call	symInit
 	ld	hl, sFOO
 	ld	de, 0x4000
@@ -76,33 +52,7 @@ test:
 	call	symRegisterGlobal
 	jp	nz, fail
 
-	ld	hl, s3
-	call	parseExpr
-	call	assertZ
-	ld	hl, 0x4020
-	call	assertEQW
-	call	nexttest
-
-	ld	hl, s4
-	call	parseExpr
-	call	assertZ
-	ld	hl, 0x60
-	call	assertEQW
-	call	nexttest
-
-	ld	hl, s5
-	call	parseExpr
-	call	assertZ
-	ld	hl, 0x3ffd
-	call	assertEQW
-	call	nexttest
-
-	ld	hl, s6
-	call	parseExpr
-	call	assertZ
-	ld	hl, 0x4080
-	call	assertEQW
-	call	nexttest
+	call	testParseExpr
 
 	; success
 	xor	a
@@ -157,5 +107,26 @@ testParseExpr:
 	.dw	'-'+1
 	.db	"'-'+1", 0
 
+.t11:
+	.dw	0x4023
+	.db	"0x4001+0x22", 0
+
+.t12:
+	.dw	0x4020
+	.db	"FOO+BAR", 0
+
+.t13:
+	.dw	0x60
+	.db	"BAR*3", 0
+
+.t14:
+	.dw	0x3ffd
+	.db	"FOO-3", 0
+
+.t15:
+	.dw	0x4080
+	.db	"FOO+BAR*4", 0
+
 .alltests:
-	.dw	.t1, .t2, .t3, .t4, .t5, .t6, .t7, .t8, .t9, .t10, 0
+	.dw	.t1, .t2, .t3, .t4, .t5, .t6, .t7, .t8, .t9, .t10, .t11, .t12
+	.dw	.t13, .t14, .t15, 0
