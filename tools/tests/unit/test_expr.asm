@@ -109,35 +109,18 @@ test:
 	halt
 
 testParseExpr:
-	ld	iy, .t1
-	call	.testEQ
-	ld	iy, .t2
-	call	.testEQ
-	ld	iy, .t3
-	call	.testEQ
-	ld	iy, .t4
-	call	.testEQ
-	ld	iy, .t5
-	call	.testEQ
-	ld	iy, .t6
-	call	.testEQ
-	ld	iy, .t7
-	call	.testEQ
-	ld	iy, .t8
-	call	.testEQ
-	ld	iy, .t9
-	call	.testEQ
-	ret
+	ld	hl, .alltests
+	ld	ix, .test
+	jp	testList
 
-.testEQ:
-	push	iy \ pop hl
+.test:
+	push	hl \ pop iy
 	inc	hl \ inc hl
 	call	parseExpr
 	call	assertZ
 	ld	l, (iy)
 	ld	h, (iy+1)
-	call	assertEQW
-	jp	nexttest
+	jp	assertEQW
 
 .t1:
 	.dw	7
@@ -166,3 +149,13 @@ testParseExpr:
 .t9:
 	.dw	10
 	.db	"2*3+4", 0
+
+; There was this untested regression during the replacement of find-and-subst
+; parseExpr to the recursive descent one. It was time consuming to find. Here
+; it goes, here it stays.
+.t10:
+	.dw	'-'+1
+	.db	"'-'+1", 0
+
+.alltests:
+	.dw	.t1, .t2, .t3, .t4, .t5, .t6, .t7, .t8, .t9, .t10, 0

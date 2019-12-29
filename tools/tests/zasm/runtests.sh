@@ -13,9 +13,9 @@ cmpas() {
         echo ok
     else
         echo actual
-        echo $ACTUAL
+        echo "$ACTUAL"
         echo expected
-        echo $EXPECTED
+        echo "$EXPECTED"
         exit 1
     fi
 }
