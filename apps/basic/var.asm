@@ -98,12 +98,9 @@ parseLiteralOrVar:
 	push	hl	; --> lvl 1
 	ld	hl, VAR_TBL
 	call	addHL
-	push	de	; --> lvl 2
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
-	push	de \ pop ix
-	pop	de	; <-- lvl 2
 	pop	hl	; <-- lvl 1
 	cp	a	; ensure Z
 	ret

@@ -5,7 +5,7 @@
 ;
 ; EXPR_PARSE: routine to call to parse literals or symbols that are part of
 ;             the expression. Routine's signature:
-;	      String in (HL), returns its parsed value to IX. Z for success.
+;	      String in (HL), returns its parsed value to DE. Z for success.
 ;
 ; *** Code ***
 ;
@@ -258,7 +258,6 @@ _parseNumber:
 	ret
 .skip1:
 	; End of special case 1
-	push	ix
 	; Copy beginning of string to DE, we'll need it later
 	ld	d, h
 	ld	e, l
@@ -288,19 +287,16 @@ _parseNumber:
 	xor	a
 	ld	(hl), a
 	ex	de, hl	; rewind to beginning of number
-	call	EXPR_PARSE
+	call	EXPR_PARSE	; --> DE
 	ex	af, af'		; keep result flags away while we restore (HL)
-	push	ix \ pop de	; result in DE
 	pop	hl	; <-- lvl 2, end of string
 	pop	af	; <-- lvl 1, saved op
 	ld	(hl), a
 	ex	af, af'		; restore Z from EXPR_PARSE
-	jr	nz, .end
+	ret	nz
 	; HL is currently at the end of the number's string
 	; On success, have A be the operator char following the number
 	ex	af, af'
-.end:
-	pop	ix
 	ret
 
 ; Sets Z if A contains a valid operator char or a null char.

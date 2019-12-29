@@ -67,7 +67,7 @@ parseHexPair:
 ;	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 ;	sub	0xff-9		; maps to 0-9 and carries if not a digit
 
-; Parse string at (HL) as a decimal value and return value in IX under the
+; Parse string at (HL) as a decimal value and return value in DE under the
 ; same conditions as parseLiteral.
 ; Sets Z on success, unset on error.
 ; To parse successfully, all characters following HL must be digits and those
@@ -76,7 +76,7 @@ parseHexPair:
 ; digit in the string.
 
 parseDecimal:
-	push 	hl
+	push 	hl		; --> lvl 1
 
 	ld	a, (hl)
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
@@ -129,23 +129,23 @@ parseDecimal:
 	; to 0x00+(0xff-'9')-(0xff-9)=-0x30=0xd0
 	sub 	0xd0	; if a is null, set Z
 			; a is checked for null before any errors
-	push	hl \ pop ix
-	exx	; restore original de and bc
-	pop	hl
+	push	hl	; --> lvl 2, result
+	exx		; restore original bc
+	pop	de	; <-- lvl 2, result
+	pop	hl	; <-- lvl 1, orig
 	ret	z
 	; A is not 0? Ok, but if it's a space, we're happy too.
 	jp	isWS
 .error:
-	pop	hl
+	pop	hl	; <-- lvl 1, orig
 	jp	unsetZ
 
-; Parse string at (HL) as a hexadecimal value and return value in IX under the
+; Parse string at (HL) as a hexadecimal value and return value in DE under the
 ; same conditions as parseLiteral.
 parseHexadecimal:
 	call	hasHexPrefix
 	ret	nz
 	push	hl
-	push	de
 	ld	d, 0
 	inc	hl	; get rid of "0x"
 	inc	hl
@@ -179,8 +179,6 @@ parseHexadecimal:
 .error:
 	call	unsetZ
 .end:
-	push	de \ pop ix
-	pop	de
 	pop	hl
 	ret
 
@@ -196,15 +194,14 @@ hasHexPrefix:
 	pop	hl
 	ret
 
-; Parse string at (HL) as a binary value (0b010101) and return value in IX.
-; High IX byte is always clear.
+; Parse string at (HL) as a binary value (0b010101) and return value in E.
+; D is always zero.
 ; Sets Z on success.
 parseBinaryLiteral:
 	call	hasBinPrefix
 	ret	nz
 	push	bc
 	push	hl
-	push	de
 	ld	d, 0
 	inc	hl	; get rid of "0b"
 	inc	hl
@@ -236,8 +233,6 @@ parseBinaryLiteral:
 .error:
 	call	unsetZ
 .end:
-	push	de \ pop ix
-	pop	de
 	pop	hl
 	pop	bc
 	ret
@@ -255,7 +250,7 @@ hasBinPrefix:
 	ret
 
 ; Parse string at (HL) and, if it is a char literal, sets Z and return
-; corresponding value in IX. High IX byte is always clear.
+; corresponding value in E. D is always zero.
 ;
 ; A valid char literal starts with ', ends with ' and has one character in the
 ; middle. No escape sequence are accepted, but ''' will return the apostrophe
@@ -266,7 +261,6 @@ parseCharLiteral:
 	ret	nz
 
 	push	hl
-	push	de
 	inc	hl
 	inc	hl
 	cp	(hl)
@@ -283,12 +277,10 @@ parseCharLiteral:
 	ld	e, a
 	cp	a		; ensure Z
 .end:
-	push	de \ pop ix
-	pop	de
 	pop	hl
 	ret
 
-; Parses the string at (HL) and returns the 16-bit value in IX. The string
+; Parses the string at (HL) and returns the 16-bit value in DE. The string
 ; can be a decimal literal (1234), a hexadecimal literal (0x1234) or a char
 ; literal ('X').
 ;

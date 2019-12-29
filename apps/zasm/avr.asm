@@ -657,7 +657,6 @@ _readDouble:
 _readk7:
 	push	hl
 	push	de
-	push	ix
 	call	parseExpr
 	jr	nz, .end
 	; If we're in first pass, stop now. The value of HL doesn't matter and
@@ -686,7 +685,6 @@ _readk7:
 	ld	a, l
 	cp	a		; ensure Z
 .end:
-	pop	ix
 	pop	de
 	pop	hl
 	ret
@@ -707,7 +705,6 @@ _readR4:
 ; Set Z for success.
 _readR5:
 	push	de
-	push	ix
 	ld	a, (hl)
 	call	upcase
 	cp	'R'
@@ -715,11 +712,9 @@ _readR5:
 	inc	hl
 	call	parseDecimal
 	jr	nz, .end
-	push	ix \ pop de
 	ld	a, 31
 	call	_DE2A
 .end:
-	pop	ix
 	pop	de
 	ret
 
