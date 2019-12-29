@@ -45,10 +45,11 @@ _parseApply:
 	; Here we do some stack kung fu. We have, in HL, a string pointer we
 	; want to keep. We have, in (SP), our left result we want to use.
 	ex	(sp), hl	; <-> lvl 1
-	ret	nz
+	jr	nz, .end
 	push	af	; --> lvl 2, save ending operator
 	call	callIX
 	pop	af	; <-- lvl 2, restore operator.
+.end:
 	pop	hl	; <-- lvl 1, restore str pointer
 	ret
 

@@ -53,6 +53,7 @@ test:
 	jp	nz, fail
 
 	call	testParseExpr
+	call	testSPOnFail
 
 	; success
 	xor	a
@@ -130,3 +131,15 @@ testParseExpr:
 .alltests:
 	.dw	.t1, .t2, .t3, .t4, .t5, .t6, .t7, .t8, .t9, .t10, .t11, .t12
 	.dw	.t13, .t14, .t15, 0
+
+; Ensure that stack is balanced on failure
+testSPOnFail:
+	ld	(testSP), sp
+	ld	hl, .sFail
+	call	parseExpr
+	call	assertNZ
+	call	assertSP
+	jp	nexttest
+
+.sFail:	.db "1+abc123", 0
+

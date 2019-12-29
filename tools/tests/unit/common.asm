@@ -6,6 +6,12 @@
 ; lib/fmt
 
 testNum:	.db 1
+; Each time we call assertSP, we verify that our stack isn't imbalanced by
+; comparing SP to its saved value. Whenever your "base" SP value change,
+; generally at the beginning of a test routine, run "ld (testSP), sp" to have
+; proper value saved to heap.
+testSP:		.dw 0xffff
+
 
 STDIO_PUTC:
 	out	(0), a
@@ -68,6 +74,20 @@ testList:
 .end:
 	pop	hl		; <-- lvl 1
 	ret
+
+; test that SP == testSP
+assertSP:
+	ld	hl, (testSP)
+	; offset the fact that we call assertSP
+	dec	hl \ dec hl
+	or	a		; reset carry
+	sbc	hl, sp
+	ret	z
+	ld	hl, .msg
+	call	printstr
+	jr	fail
+.msg:
+	.db	"Wrong SP", CR, LF, 0
 
 nexttest:
 	ld	a, (testNum)
