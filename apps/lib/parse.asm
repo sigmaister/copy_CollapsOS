@@ -135,40 +135,24 @@ parseHexadecimal:
 
 ; Parse string at (HL) as a binary value (010101) without the "0b" prefix and
 ; return value in E. D is always zero.
+; HL is advanced to the character following the last successfully read char.
 ; Sets Z on success.
 parseBinaryLiteral:
-	push	bc
-	push	hl
-	call	strlen
-	or	a
-	jr	z, .error	; empty, error
-	cp	9
-	jr	nc, .error	; >= 9, too long
-	; We have a string of 8 or less chars. What we'll do is that for each
-	; char, we rotate left and set the LSB according to whether we have '0'
-	; or '1'. Error out on anything else. C is our stored result.
-	ld	b, a		; we loop for "strlen" times
-	ld	c, 0		; our stored result
+	ld	de, 0
 .loop:
-	rlc	c
 	ld	a, (hl)
+	add	a, 0xff-'1'
+	sub	0xff-1
+	jr	c, .end
+	rl	e
+	add	a, e
+	ld	e, a
+	jp	c, unsetZ	; overflow
 	inc	hl
-	cp	'0'
-	jr	z, .nobit	; no bit to set
-	cp	'1'
-	jr	nz, .error	; not 0 or 1
-	; We have a bit to set
-	inc	c
-.nobit:
-	djnz	.loop
-	ld	e, c
-	cp	a		; ensure Z
-	jr	.end
-.error:
-	call	unsetZ
+	jr	.loop
 .end:
-	pop	hl
-	pop	bc
+	; HL is properly set
+	xor	a		; ensure Z
 	ret
 
 ; Parses the string at (HL) and returns the 16-bit value in DE. The string
@@ -235,5 +219,7 @@ parseLiteral:
 	jr	.hexOrBinEnd
 
 .bin:
+	push	hl
 	call	parseBinaryLiteral
+	pop	hl
 	jr	.hexOrBinEnd
