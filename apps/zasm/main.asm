@@ -23,34 +23,32 @@
 ; HL is set to the last lineno to be read.
 ; Sets Z on success, unset on error. On error, A contains an error code (ERR_*)
 zasmMain:
-	; Parse args. HL points to string already
-	; We don't allocate memory just to hold this. Because this happens
-	; before initialization, we don't really care where those args are
-	; parsed. That's why we borrow zasm's RAMSTART for a little while.
-	ld	de, .argspecs
-	ld	ix, ZASM_RAMSTART
-	call	parseArgs
-	jr	z, .goodargs
-	; bad args
-	ld	hl, 0
-	ld	de, 0
-	ld	a, SHELL_ERR_BAD_ARGS
-	ret
-
-.goodargs:
-	; HL now points to parsed args
-	; Init I/O
-	ld	a, (ZASM_RAMSTART)	; blkdev in ID
+	; Parse args in (HL)
+	; blkdev in
+	call	parseHexPair	; --> A
+	jr	c, .badargs
 	ld	de, IO_IN_BLK
 	call	blkSel
-	ld	a, (ZASM_RAMSTART+1)	; blkdev out ID
+	inc	hl		; char following last hex char
+
+	; blkdev in
+	call	rdWS
+	jr	nz, .badargs
+	call	parseHexPair	; --> A
+	jr	c, .badargs
 	ld	de, IO_OUT_BLK
 	call	blkSel
+	inc	hl		; char following last hex char
 
-	; Init .org
-	; This is the 3rd argument, optional, will be zero if not given.
+	; .org high byte
+	call	rdWS
+	jr	nz, .skipOrgSet		; no org argument
+	call	parseHexPair	; --> A
+	jr	c, .badargs
+
+.skipOrgSet:
+	; Init .org with value of E
 	; Save in "@" too
-	ld	a, (ZASM_RAMSTART+2)
 	ld	(ZASM_ORG+1), a		; high byte of .org
 	ld	(DIREC_LASTVAL+1), a
 	xor	a
@@ -82,8 +80,11 @@ zasmMain:
 .end:
 	jp	ioLineNo		; --> HL, --> DE, returns
 
-.argspecs:
-	.db	0b001, 0b001, 0b101
+.badargs:
+	; bad args
+	ld	a, SHELL_ERR_BAD_ARGS
+	ret
+
 .sFirstPass:
 	.db	"First pass", 0
 .sSecondPass:

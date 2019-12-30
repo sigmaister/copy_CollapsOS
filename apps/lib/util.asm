@@ -5,6 +5,31 @@ isWS:
 	cp	0x09
 	ret
 
+; Advance HL to next WS.
+; Set Z if WS found, unset if end-of-string.
+toWS:
+	ld	a, (hl)
+	call	isWS
+	ret	z
+	or	a
+	jp	z, unsetZ
+	inc	hl
+	jr	toWS
+
+; Consume following whitespaces in HL until a non-WS is hit.
+; Set Z if non-WS found, unset if end-of-string.
+rdWS:
+	ld	a, (hl)
+	call	isWS
+	jr	nz, .ok
+	or	a
+	jp	z, unsetZ
+	inc	hl
+	jr	rdWS
+.ok:
+	cp	a	; ensure Z
+	ret
+
 ; Copy string from (HL) in (DE), that is, copy bytes until a null char is
 ; encountered. The null char is also copied.
 ; HL and DE point to the char right after the null char.

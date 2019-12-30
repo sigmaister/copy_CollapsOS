@@ -25,7 +25,6 @@ jp	zasmMain
 .inc "lib/util.asm"
 .inc "lib/ari.asm"
 .inc "lib/parse.asm"
-.inc "lib/args.asm"
 .inc "zasm/util.asm"
 .equ	IO_RAMSTART	USER_RAMSTART
 .inc "zasm/io.asm"
