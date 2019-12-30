@@ -22,42 +22,6 @@ parseHex:
 	ret
 
 
-; Parses 2 characters of the string pointed to by HL and returns the numerical
-; value in A. If the second character is a "special" character (<0x21) we don't
-; error out: the result will be the one from the first char only.
-; HL is set to point to the last char of the pair.
-;
-; On success, the carry flag is reset. On error, it is set.
-parseHexPair:
-	push	bc
-
-	ld	a, (hl)
-	call	parseHex
-	jr	c, .end		; error? goto end, keeping the C flag on
-	rla \ rla \ rla \ rla	; let's push this in MSB
-	ld	b, a
-	inc	hl
-	ld	a, (hl)
-	cp	0x21
-	jr	c, .single	; special char? single digit
-	call	parseHex
-	jr	c, .end		; error?
-	or	b		; join left-shifted + new. we're done!
-	; C flag was set on parseHex and is necessarily clear at this point
-	jr	.end
-
-.single:
-	; If we have a single digit, our result is already stored in B, but
-	; we have to right-shift it back.
-	ld	a, b
-	and	0xf0
-	rra \ rra \ rra \ rra
-	dec	hl
-
-.end:
-	pop	bc
-	ret
-
 ; Parse the decimal char at A and extract it's 0-9 numerical value. Put the
 ; result in A.
 ;
@@ -142,40 +106,35 @@ parseDecimal:
 
 ; Parse string at (HL) as a hexadecimal value without the "0x" prefix and
 ; return value in DE.
+; HL is advanced to the character following the last successfully read char.
 ; Sets Z on success.
 parseHexadecimal:
-	push	hl
-	call	strlen
-	cp	3
-	jr	c, .single
-	cp	4
-	jr	c, .doubleShort	; 0x123
-	cp	5
-	jr	c, .double	; 0x1234
-	; too long, error
-	jr	.error
-.double:
-	call	parseHexPair
-	jr	c, .error
-	inc	hl			; now HL is on first char of next pair
-	ld	d, a
-	jr	.single
-.doubleShort:
 	ld	a, (hl)
 	call	parseHex
-	jr	c, .error
-	inc	hl			; now HL is on first char of next pair
-	ld	d, a
-.single:
-	call	parseHexPair
-	jr	c, .error
+	jp	c, unsetZ	; we need at least one char
+	push	bc
+	ld	de, 0
+	ld	b, 0
+.loop:
+	; we push to B to verify overflow
+	rl	e \ rl d \ rl b
+	rl	e \ rl d \ rl b
+	rl	e \ rl d \ rl b
+	rl	e \ rl d \ rl b
+	or	e
 	ld	e, a
-	cp	a			; ensure Z
-	jr	.end
-.error:
-	call	unsetZ
+	; did we overflow?
+	ld	a, b
+	or	a
+	jr	nz, .end	; overflow, NZ already set
+	; next char
+	inc	hl
+	ld	a, (hl)
+	call	parseHex
+	jr	nc, .loop
+	cp	a		; ensure Z
 .end:
-	pop	hl
+	pop	bc
 	ret
 
 ; Parse string at (HL) as a binary value (010101) without the "0b" prefix and
@@ -271,7 +230,9 @@ parseLiteral:
 	ret			; Z already set
 
 .hex:
+	push	hl
 	call	parseHexadecimal
+	pop	hl
 	jr	.hexOrBinEnd
 
 .bin:

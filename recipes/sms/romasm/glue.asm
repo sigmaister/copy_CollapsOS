@@ -16,7 +16,6 @@
 	jp	upcase
 	jp	findchar
 	jp	parseHex
-	jp	parseHexPair
 	jp	blkSel
 	jp	blkSet
 	jp	fsFindFN
@@ -145,9 +144,9 @@ basFindCmdExtra:
 	jp	basPgmHook
 .mycmds:
 	.db "ed", 0
-	.dw 0x1e00
+	.dw 0x1f00
 	.db "zasm", 0
-	.dw 0x2300
+	.dw 0x2400
 	.db 0xff
 
 f0GetB:
@@ -166,13 +165,13 @@ f1PutB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
 	jp	fsPutB
 
-; last time I checked, PC at this point was 0x1df8. Let's give us a nice margin
+; last time I checked, PC at this point was 0x1e92. Let's give us a nice margin
 ; for the start of ed.
-.fill 0x1e00-$
+.fill 0x1f00-$
 .bin "ed.bin"
 
-; Last check: 0x22dd
-.fill 0x2300-$
+; Last check: 0x23b0
+.fill 0x2400-$
 .bin "zasm.bin"
 
 .fill 0x7ff0-$

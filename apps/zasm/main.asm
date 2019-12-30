@@ -25,30 +25,32 @@
 zasmMain:
 	; Parse args in (HL)
 	; blkdev in
-	call	parseHexPair	; --> A
-	jr	c, .badargs
+	call	parseHexadecimal	; --> DE
+	jr	nz, .badargs
+	ld	a, e
 	ld	de, IO_IN_BLK
 	call	blkSel
-	inc	hl		; char following last hex char
 
 	; blkdev in
 	call	rdWS
 	jr	nz, .badargs
-	call	parseHexPair	; --> A
-	jr	c, .badargs
+	call	parseHexadecimal	; --> DE
+	jr	nz, .badargs
+	ld	a, e
 	ld	de, IO_OUT_BLK
 	call	blkSel
-	inc	hl		; char following last hex char
 
 	; .org high byte
+	ld	e, 0			; in case we .skipOrgSet
 	call	rdWS
 	jr	nz, .skipOrgSet		; no org argument
-	call	parseHexPair	; --> A
-	jr	c, .badargs
+	call	parseHexadecimal	; --> DE
+	jr	nz, .badargs
 
 .skipOrgSet:
 	; Init .org with value of E
 	; Save in "@" too
+	ld	a, e
 	ld	(ZASM_ORG+1), a		; high byte of .org
 	ld	(DIREC_LASTVAL+1), a
 	xor	a

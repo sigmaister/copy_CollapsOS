@@ -13,7 +13,7 @@ test:
 	ld	sp, 0xffff
 
 	call	testParseHex
-	call	testParseHexPair
+	call	testParseHexadecimal
 
 	; success
 	xor	a
@@ -40,24 +40,30 @@ testParseHex:
 	call	nexttest
 	ret
 
-testParseHexPair:
+testParseHexadecimal:
 	ld	hl, .s99
-	call	parseHexPair
-	jp	c, fail
+	call	parseHexadecimal
+	jp	nz, fail
+	ld	a, e
 	cp	0x99
 	jp	nz, fail
 	call	nexttest
 
 	ld	hl, .saB
-	call	parseHexPair
-	jp	c, fail
+	call	parseHexadecimal
+	jp	nz, fail
+	ld	a, e
 	cp	0xab
 	jp	nz, fail
 	call	nexttest
 
+	; The string "Foo" will not cause a failure. We will parse up to "o"
+	; and then stop.
 	ld	hl, .sFoo
-	call	parseHexPair
-	jp	nc, fail
+	call	parseHexadecimal
+	jp	nz, fail
+	ld	a, e
+	cp	0xf
 	call	nexttest
 	ret
 

@@ -14,7 +14,6 @@
 .equ	upcase			@+3
 .equ	findchar		@+3
 .equ	parseHex		@+3
-.equ	parseHexPair	@+3
 .equ	blkSel			@+3
 .equ	blkSet			@+3
 .equ	fsFindFN		@+3
