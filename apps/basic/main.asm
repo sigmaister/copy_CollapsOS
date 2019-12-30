@@ -38,7 +38,7 @@ basLoop:
 	call	printstr
 	call	stdioReadLine
 	call	printcrlf
-	call	parseDecimal
+	call	parseDecimalC
 	jr	z, .number
 	ld	de, basCmds1
 	call	basCallCmds
@@ -47,8 +47,6 @@ basLoop:
 	call	basERR
 	jr	basLoop
 .number:
-	push	ix \ pop de
-	call	toSepOrEnd
 	call	rdSep
 	call	bufAdd
 	jp	nz, basERR

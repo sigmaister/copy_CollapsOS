@@ -22,87 +22,83 @@ parseHex:
 	ret
 
 
-; Parse the decimal char at A and extract it's 0-9 numerical value. Put the
-; result in A.
-;
-; On success, the carry flag is reset. On error, it is set.
-; Also, zero flag set if '0'
-; parseDecimalDigit has been replaced with the following code inline:
-;	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
-;	sub	0xff-9		; maps to 0-9 and carries if not a digit
-
-; Parse string at (HL) as a decimal value and return value in DE under the
-; same conditions as parseLiteral.
+; Parse string at (HL) as a decimal value and return value in DE.
+; Reads as many digits as it can and stop when:
+; 1 - A non-digit character is read
+; 2 - The number overflows from 16-bit
+; HL is advanced to the character following the last successfully read char.
+; Error conditions are:
+; 1 - There wasn't at least one character that could be read.
+; 2 - Overflow.
 ; Sets Z on success, unset on error.
-; To parse successfully, all characters following HL must be digits and those
-; digits must form a number that fits in 16 bits. To end the number, both \0
-; and whitespaces (0x20 and 0x09) are accepted. There must be at least one
-; digit in the string.
 
 parseDecimal:
-	push 	hl		; --> lvl 1
-
+	; First char is special: it has to succeed.
 	ld	a, (hl)
+	; Parse the decimal char at A and extract it's 0-9 numerical value. Put the
+	; result in A.
+	; On success, the carry flag is reset. On error, it is set.
 	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
 	sub	0xff-9		; maps to 0-9 and carries if not a digit
-	jr	c, .error	; not a digit on first char? error
-	exx		; preserve bc, hl, de
+	ret	c		; Error. If it's C, it's also going to be NZ
+	; During this routine, we switch between HL and its shadow. On one side,
+	; we have HL the string pointer, and on the other side, we have HL the
+	; numerical result. We also use EXX to preserve BC, saving us a push.
+	exx		; HL as a result
 	ld	h, 0
 	ld	l, a	; load first digit in without multiplying
-	ld	b, 3	; Carries can only occur for decimals >=5 in length
+	ld	b, 0	; We use B to detect overflow
 
 .loop:
-	exx
+	exx		; HL as a string pointer
 	inc hl
 	ld a, (hl)
-	exx
+	exx		; HL as a numerical result
 
-	; inline parseDecimalDigit
-	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
-	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	; same as other above
+	add	a, 0xff-'9'
+	sub	0xff-9
 	jr	c, .end
 
 	add	hl, hl	; x2
+	; We do this to detect overflow at each step
+	rl	b
 	ld	d, h
 	ld	e, l		; de is x2
 	add	hl, hl	; x4
+	rl	b
 	add	hl, hl	; x8
+	rl	b
 	add	hl, de	; x10
+	rl	b
 	ld	d, 0
 	ld	e, a
 	add	hl, de
-	jr	c, .end	; if hl was 0x1999, it may carry here
-	djnz	.loop
+	rl	b
+	; Did we oveflow?
+	xor	a
+	or	b
+	jr	z, .loop	; No? continue
+	; error, NZ already set
+	exx		; HL is now string pointer, restore BC
+	; HL points to the char following the last success.
+	ret
 
-
-	inc 	b	; so loop only executes once more
-	; only numbers >0x1999 can carry when multiplied by 10.
-	ld	de, 0xE666
-	ex	de, hl
-	add	hl, de
-	ex	de, hl
-	jr	nc, .loop	; if it doesn't carry, it's small enough
-
-	exx
-	inc 	hl
-	ld 	a, (hl)
-	exx
-	add 	a, 0xd0	; the next line expects a null to be mapped to 0xd0
 .end:
-	; Because of the add and sub in parseDecimalDigit, null is mapped
-	; to 0x00+(0xff-'9')-(0xff-9)=-0x30=0xd0
-	sub 	0xd0	; if a is null, set Z
-			; a is checked for null before any errors
-	push	hl	; --> lvl 2, result
-	exx		; restore original bc
-	pop	de	; <-- lvl 2, result
-	pop	hl	; <-- lvl 1, orig
-	ret	z
-	; A is not 0? Ok, but if it's a space, we're happy too.
+	push	hl	; --> lvl 1, result
+	exx		; HL as a string pointer, restore BC
+	pop	de	; <-- lvl 1, result
+	cp	a	; ensure Z
+	ret
+
+; Call parseDecimal and then check that HL points to a whitespace or a null.
+parseDecimalC:
+	call	parseDecimal
+	ret	nz
+	ld	a, (hl)
+	or	a
+	ret	z		; null? we're happy
 	jp	isWS
-.error:
-	pop	hl	; <-- lvl 1, orig
-	jp	unsetZ
 
 ; Parse string at (HL) as a hexadecimal value without the "0x" prefix and
 ; return value in DE.
@@ -188,7 +184,10 @@ parseLiteral:
 	jr	z, .char
 	cp	'0'
 	jr	z, .hexOrBin
-	jp	parseDecimal
+	push	hl
+	call	parseDecimalC
+	pop	hl
+	ret
 
 ; Parse string at (HL) and, if it is a char literal, sets Z and return
 ; corresponding value in E. D is always zero.

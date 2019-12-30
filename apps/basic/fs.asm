@@ -43,10 +43,8 @@ basLDBAS:
 	; Ok, line ready
 	push	hl		; --> lvl 1. current file position
 	ld	hl, SCRATCHPAD
-	call	parseDecimal
+	call	parseDecimalC
 	jr	nz, .notANumber
-	push	ix \ pop de
-	call	toSepOrEnd
 	call	rdSep
 	call	bufAdd
 	pop	hl		; <-- lvl 1

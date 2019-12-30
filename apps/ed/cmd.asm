@@ -91,14 +91,14 @@ cmdParse:
 	jr	z, .eof
 
 	; inline parseDecimalDigit
-	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
-	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	add	a, 0xff-'9'
+	sub	0xff-9
 
 	jr	c, .notHandled
 	; straight number
 	ld	a, ABSOLUTE
 	ld	(ix), a
-	call	.parseDecimalM
+	call	parseDecimal
 	ret	nz
 	dec	de	; from 1-based to 0-base
 	jr	.end
@@ -127,11 +127,11 @@ cmdParse:
 	ld	de, 1		; if .pmNoSuffix
 
 	; inline parseDecimalDigit
-	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
-	sub	0xff-9		; maps to 0-9 and carries if not a digit
+	add	a, 0xff-'9'
+	sub	0xff-9
 
 	jr	c, .pmNoSuffix
-	call	.parseDecimalM	; --> DE
+	call	parseDecimal	; --> DE
 .pmNoSuffix:
 	pop	af		; bring back that +/-
 	cp	'-'
@@ -148,39 +148,3 @@ cmdParse:
 	ld	(ix+2), d
 	cp	a		; ensure Z
 	ret
-
-; call parseDecimal and set HL to the character following the last digit
-.parseDecimalM:
-	push	bc
-	push	ix
-	push	hl
-.loop:
-	inc	hl
-	ld	a, (hl)
-
-	; inline parseDecimalDigit
-	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
-	sub	0xff-9		; maps to 0-9 and carries if not a digit
-
-	jr	nc, .loop
-	; We're at the first non-digit char. Let's save it because we're going
-	; to temporarily replace it with a null.
-	ld	b, (hl)		; refetch (HL), A has been mucked with in
-				; parseDecimalDigit
-	xor	a
-	ld	(hl), a
-	; Now, let's go back to the beginning of the string and parse it.
-	; but before we do this, let's save the end of string in DE
-	ex	de, hl
-	pop	hl
-	call	parseDecimal
-	; Z is set properly at this point. nothing touches Z below.
-	ld	a, b
-	ld	(de), a
-	ex	de, hl	; put end of string back from DE to HL
-	; Put addr in its final register, DE
-	push	ix \ pop de
-	pop	ix
-	pop	bc
-	ret
-
