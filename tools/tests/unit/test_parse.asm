@@ -3,7 +3,6 @@ jp	test
 .inc "core.asm"
 .inc "lib/util.asm"
 .inc "lib/parse.asm"
-.inc "lib/args.asm"
 
 zasmGetPC:
 	ret
@@ -11,12 +10,10 @@ zasmGetPC:
 testNum:	.db 1
 
 test:
-	ld	hl, 0xffff
-	ld	sp, hl
+	ld	sp, 0xffff
 
 	call	testParseHex
 	call	testParseHexPair
-	call	testParseArgs
 
 	; success
 	xor	a
@@ -67,60 +64,6 @@ testParseHexPair:
 .sFoo:		.db "Foo", 0
 .saB:		.db "aB", 0
 .s99:		.db "99", 0
-
-
-testParseArgs:
-	ld	hl, .t1+6
-	ld	de, .t1
-	ld	iy, .t1+3
-	call	.testargs
-
-	ld	hl, .t2+6
-	ld	de, .t2
-	ld	iy, .t2+3
-	call	.testargs
-
-	ld	hl, .t3+6
-	ld	de, .t3
-	ld	iy, .t3+3
-	call	.testargs
-	ret
-
-; HL and DE must be set, and IY must point to expected results in IX
-.testargs:
-	ld	ix, sandbox
-	call	parseArgs
-	jp	nz, fail
-	ld	a, (ix)
-	cp	(iy)
-	jp	nz, fail
-	ld	a, (ix+1)
-	cp	(iy+1)
-	jp	nz, fail
-	ld	a, (ix+2)
-	cp	(iy+2)
-	jp	nz, fail
-	jp	nexttest
-
-; Test data format: 3 bytes specs, 3 bytes expected (IX), then the arg string.
-
-; Empty args with empty specs
-.t1:
-	.db 0b0000, 0b0000, 0b0000
-	.db 0, 0, 0
-	.db 0
-
-; One arg, one byte spec
-.t2:
-	.db 0b0001, 0b0000, 0b0000
-	.db 0xe4, 0, 0
-	.db "e4", 0
-
-; 3 args, 3 bytes spec
-.t3:
-	.db 0b0001, 0b0001, 0b0001
-	.db 0xe4, 0xab, 0x99
-	.db "e4 ab 99", 0
 
 nexttest:
 	ld	a, (testNum)
