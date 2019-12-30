@@ -22,6 +22,5 @@ jp	at28wMain
 .inc "core.asm"
 .inc "lib/util.asm"
 .inc "lib/parse.asm"
-.inc "lib/args.asm"
 .inc "at28w/main.asm"
 USER_RAMSTART:

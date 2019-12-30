@@ -11,15 +11,15 @@
 ; *** Code ***
 
 at28wMain:
-	ld	de, .argspecs
-	ld	ix, AT28W_MAXBYTES
-	call	parseArgs
+	ld	de, AT28W_MAXBYTES
+	ld	a, (hl)
+	or	a
+	jr	z, at28wInner		; no arg
+	call	parseHexadecimal	; --> DE
 	jr	z, at28wInner
 	; bad args
 	ld	a, SHELL_ERR_BAD_ARGS
 	ret
-.argspecs:
-	.db	0b111, 0b101, 0
 
 at28wInner:
 	; Reminder: words in parseArgs aren't little endian. High byte is first.
