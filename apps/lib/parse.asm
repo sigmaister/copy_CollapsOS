@@ -140,15 +140,11 @@ parseDecimal:
 	pop	hl	; <-- lvl 1, orig
 	jp	unsetZ
 
-; Parse string at (HL) as a hexadecimal value and return value in DE under the
-; same conditions as parseLiteral.
+; Parse string at (HL) as a hexadecimal value without the "0x" prefix and
+; return value in DE.
+; Sets Z on success.
 parseHexadecimal:
-	call	hasHexPrefix
-	ret	nz
 	push	hl
-	ld	d, 0
-	inc	hl	; get rid of "0x"
-	inc	hl
 	call	strlen
 	cp	3
 	jr	c, .single
@@ -182,29 +178,12 @@ parseHexadecimal:
 	pop	hl
 	ret
 
-; Sets Z if (HL) has a '0x' prefix.
-hasHexPrefix:
-	ld	a, (hl)
-	cp	'0'
-	ret	nz
-	push	hl
-	inc	hl
-	ld	a, (hl)
-	cp	'x'
-	pop	hl
-	ret
-
-; Parse string at (HL) as a binary value (0b010101) and return value in E.
-; D is always zero.
+; Parse string at (HL) as a binary value (010101) without the "0b" prefix and
+; return value in E. D is always zero.
 ; Sets Z on success.
 parseBinaryLiteral:
-	call	hasBinPrefix
-	ret	nz
 	push	bc
 	push	hl
-	ld	d, 0
-	inc	hl	; get rid of "0b"
-	inc	hl
 	call	strlen
 	or	a
 	jr	z, .error	; empty, error
@@ -237,49 +216,6 @@ parseBinaryLiteral:
 	pop	bc
 	ret
 
-; Sets Z if (HL) has a '0b' prefix.
-hasBinPrefix:
-	ld	a, (hl)
-	cp	'0'
-	ret	nz
-	push	hl
-	inc	hl
-	ld	a, (hl)
-	cp	'b'
-	pop	hl
-	ret
-
-; Parse string at (HL) and, if it is a char literal, sets Z and return
-; corresponding value in E. D is always zero.
-;
-; A valid char literal starts with ', ends with ' and has one character in the
-; middle. No escape sequence are accepted, but ''' will return the apostrophe
-; character.
-parseCharLiteral:
-	ld	a, 0x27		; apostrophe (') char
-	cp	(hl)
-	ret	nz
-
-	push	hl
-	inc	hl
-	inc	hl
-	cp	(hl)
-	jr	nz, .end	; not ending with an apostrophe
-	inc	hl
-	ld	a, (hl)
-	or	a		; cp 0
-	jr	nz, .end	; string has to end there
-	; Valid char, good
-	ld	d, a		; A is zero, take advantage of that
-	dec	hl
-	dec	hl
-	ld	a, (hl)
-	ld	e, a
-	cp	a		; ensure Z
-.end:
-	pop	hl
-	ret
-
 ; Parses the string at (HL) and returns the 16-bit value in DE. The string
 ; can be a decimal literal (1234), a hexadecimal literal (0x1234) or a char
 ; literal ('X').
@@ -287,11 +223,57 @@ parseCharLiteral:
 ; As soon as the number doesn't fit 16-bit any more, parsing stops and the
 ; number is invalid. If the number is valid, Z is set, otherwise, unset.
 parseLiteral:
-	call	parseCharLiteral
-	ret	z
-	call	parseHexadecimal
-	ret	z
-	call	parseBinaryLiteral
-	ret	z
+	ld	de, 0		; pre-fill
+	ld	a, (hl)
+	cp	0x27		; apostrophe
+	jr	z, .char
+	cp	'0'
+	jr	z, .hexOrBin
 	jp	parseDecimal
 
+; Parse string at (HL) and, if it is a char literal, sets Z and return
+; corresponding value in E. D is always zero.
+;
+; A valid char literal starts with ', ends with ' and has one character in the
+; middle. No escape sequence are accepted, but ''' will return the apostrophe
+; character.
+.char:
+	push	hl
+	inc	hl
+	inc	hl
+	cp	(hl)
+	jr	nz, .charEnd	; not ending with an apostrophe
+	inc	hl
+	ld	a, (hl)
+	or	a		; cp 0
+	jr	nz, .charEnd	; string has to end there
+	; Valid char, good
+	dec	hl
+	dec	hl
+	ld	e, (hl)
+	cp	a		; ensure Z
+.charEnd:
+	pop	hl
+	ret
+
+.hexOrBin:
+	inc	hl
+	ld	a, (hl)
+	inc	hl		; already place it for hex or bin
+	cp	'x'
+	jr	z, .hex
+	cp	'b'
+	jr	z, .bin
+	; special case: single '0'. set Z if we hit have null terminating.
+	or	a
+.hexOrBinEnd:
+	dec	hl \ dec hl	; replace HL
+	ret			; Z already set
+
+.hex:
+	call	parseHexadecimal
+	jr	.hexOrBinEnd
+
+.bin:
+	call	parseBinaryLiteral
+	jr	.hexOrBinEnd
