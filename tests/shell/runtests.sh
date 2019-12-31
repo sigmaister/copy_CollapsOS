@@ -6,7 +6,7 @@ SHELL="${EMULDIR}/shell/shell"
 replay() {
     fn=$1
     replayfn=${fn%.*}.expected
-    ACTUAL=$("${SHELL}" < "${fn}" 2> /dev/null)
+    ACTUAL=$("${SHELL}" -f test.cfs < "${fn}" 2> /dev/null)
     EXPECTED=$(cat ${replayfn})
     if [ "$ACTUAL" = "$EXPECTED" ]; then
         echo ok
