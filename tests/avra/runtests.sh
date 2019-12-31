@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-ZASM=../../tools/zasm.sh
+ZASM=../../emul/zasm.sh
 AVRINC=../../avr
 
 cmpas() {

@@ -34,9 +34,10 @@ path to giving Collapse OS a try.
 * `recipes`: collection of recipes that assemble parts together on a specific
              machine.
 * `doc`: User guide for when you've successfully installed Collapse OS.
-* `tools`: Tools for working with Collapse OS from "modern" environments. Mostly
-           development tools, but also contains emulated zasm, which is
-           necessary to build Collapse OS from a non-Collapse OS machine.
+* `tools`: Tools for working with Collapse OS from "modern" environments. For
+           example, tools for facilitating data upload to a Collapse OS machine
+           through a serial port.
+* `emul`: Emulated applications, such as zasm and the shell.
 * `tests`: Automated test suite for the whole project.
 
 ## Status

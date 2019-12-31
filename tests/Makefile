@@ -1,4 +1,4 @@
-EMULDIR = ../tools/emul
+EMULDIR = ../emul
 CFSPACK = ../tools/cfspack/cfspack
 
 .PHONY: run

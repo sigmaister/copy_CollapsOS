@@ -8,7 +8,7 @@ emulator.
 First, make sure that the `libz80` git submodule is checked out. If not, run
 `git submodule init && git submodule update`.
 
-After that, you can run `make` and it builds all tools.
+After that, you can run `make` and it builds all applications.
 
 ## shell
 

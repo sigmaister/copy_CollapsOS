@@ -1,10 +1,10 @@
-CFSPACK = ../cfspack/cfspack
+CFSPACK = ../tools/cfspack/cfspack
 TARGETS = shell/shell zasm/zasm runbin/runbin
-KERNEL = ../../kernel
-APPS = ../../apps
+KERNEL = ../kernel
+APPS = ../apps
 ZASMBIN = zasm/zasm
 AVRABIN = zasm/avra
-ZASMSH = ../zasm.sh
+ZASMSH = ./zasm.sh
 SHELLAPPS = zasm ed
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
@@ -52,7 +52,7 @@ emul.o: emul.c
 	$(CC) -c -o emul.o emul.c
 
 $(CFSPACK):
-	$(MAKE) -C ../cfspack
+	$(MAKE) -C ../tools/cfspack
 
 # -o in sync with USER_CODE in shell/user.h
 $(SHELLTGTS): $(ZASMBIN)

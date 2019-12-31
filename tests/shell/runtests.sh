@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-EMULDIR=../../tools/emul
+EMULDIR=../../emul
 SHELL="${EMULDIR}/shell/shell"
 
 replay() {
