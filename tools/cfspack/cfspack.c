@@ -88,7 +88,7 @@ int spitdir(char *path, char *prefix, char **patterns)
         fprintf(stderr, "Couldn't open directory.\n");
         return 1;
     }
-    while (ep = readdir(dp)) {
+    while ((ep = readdir(dp))) {
         if ((strcmp(ep->d_name, ".") == 0) || strcmp(ep->d_name, "..") == 0) {
             continue;
         }
