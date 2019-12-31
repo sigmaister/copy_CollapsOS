@@ -4,6 +4,7 @@
 #include <termios.h>
 #include "../emul.h"
 #include "shell-bin.h"
+#include "../../tools/cfspack/cfs.h"
 
 /* Collapse OS shell with filesystem
  *
@@ -138,6 +139,17 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "Can't open %s\n", optarg);
                     return 1;
                 }
+                fprintf(stderr, "Initializing filesystem from %s\n", optarg);
+                int i = 0;
+                int c;
+                while ((c = fgetc(fp)) != EOF && i < MAX_FSDEV_SIZE) {
+                    fsdev[i++] = c & 0xff;
+                }
+                if (i == MAX_FSDEV_SIZE) {
+                    fprintf(stderr, "Filesytem image too large.\n");
+                    return 1;
+                }
+                pclose(fp);
                 break;
             default:
                 fprintf(stderr, "Usage: shell [-f fsdev]\n");
@@ -146,25 +158,14 @@ int main(int argc, char *argv[])
     }
     // Setup fs blockdev
     if (fp == NULL) {
-        fp = popen("../cfspack/cfspack cfsin", "r");
-        if (fp == NULL) {
+        fprintf(stderr, "Initializing filesystem from cfsin\n");
+        fp = fmemopen(fsdev, MAX_FSDEV_SIZE, "w");
+        set_spit_stream(fp);
+        if (spitdir("cfsin", "", NULL) != 0) {
             fprintf(stderr, "Can't initialize filesystem. Leaving blank.\n");
         }
+        fclose(fp);
     }
-    if (fp != NULL) {
-        fprintf(stderr, "Initializing filesystem\n");
-        int i = 0;
-        int c;
-        while ((c = fgetc(fp)) != EOF && i < MAX_FSDEV_SIZE) {
-            fsdev[i++] = c & 0xff;
-        }
-        if (i == MAX_FSDEV_SIZE) {
-            fprintf(stderr, "Filesytem image too large.\n");
-            return 1;
-        }
-        pclose(fp);
-    }
-
     bool tty = isatty(fileno(stdin));
     struct termios termInfo;
     if (tty) {

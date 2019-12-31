@@ -1,10 +1,12 @@
 TARGETS = cfspack cfsunpack
 
+CFSPACK_OBJS = cfspack.o libcfs.o
+
 .PHONY: all
 all: $(TARGETS)
 
-cfspack: cfspack.c
-	$(CC) $(CFLAGS) -o $@ cfspack.c
+cfspack: $(CFSPACK_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(CFSPACK_OBJS)
 
 cfsunpack: cfsunpack.c
 	$(CC) $(CFLAGS) -o $@ cfsunpack.c
