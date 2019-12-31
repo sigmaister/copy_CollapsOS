@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
-EMULDIR=../../emul
-SHELL=../../emul/shell/shell
+EMULDIR=../../tools/emul
+SHELL="${EMULDIR}/shell/shell"
 
 replay() {
     fn=$1

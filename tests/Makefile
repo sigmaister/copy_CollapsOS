@@ -1,5 +1,5 @@
-EMULDIR = ../emul
-CFSPACK = ../cfspack/cfspack
+EMULDIR = ../tools/emul
+CFSPACK = ../tools/cfspack/cfspack
 
 .PHONY: run
 run:
@@ -10,7 +10,7 @@ run:
 	cd shell && ./runtests.sh
 
 $(CFSPACK):
-	$(MAKE) -C ../cfspack
+	$(MAKE) -C ../tools/cfspack
 
 .PHONY: cfs
 cfs: $(CFSPACK)

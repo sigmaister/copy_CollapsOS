@@ -4,15 +4,9 @@ git submodule init
 git submodule update
 git clean -fxd
 
-cd tools/emul
-make
-
-cd ../tests
-make
+make -C tools/emul
+make -C tests
 
 # let's try again with an updated zasm
-cd ../emul
-make updatebootstrap all
-
-cd ../tests
-make
+make -C tools/emul updatebootstrap all
+make -C tests

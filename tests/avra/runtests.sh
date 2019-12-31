@@ -1,14 +1,12 @@
 #!/bin/sh -e
 
-KERNEL=../../../kernel
-APPS=../../../apps
-ZASM=../../zasm.sh
-ASMFILE=${APPS}/zasm/instr.asm
+ZASM=../../tools/zasm.sh
+AVRINC=../../avr
 
 cmpas() {
     FN=$1
-    EXPECTED=$(xxd ${FN}.expected)
-    ACTUAL=$(cat ${FN} | $ZASM "${KERNEL}" "${APPS}" | xxd)
+    EXPECTED=$(xxd ${FN%.*}.expected)
+    ACTUAL=$(cat ${FN} | "${ZASM}" -a "${AVRINC}" | xxd)
     if [ "$ACTUAL" = "$EXPECTED" ]; then
         echo ok
     else
@@ -29,5 +27,3 @@ for fn in *.asm; do
     echo "Comparing ${fn}"
     cmpas $fn
 done
-
-./errtests.sh

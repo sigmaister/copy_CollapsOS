@@ -37,8 +37,7 @@ path to giving Collapse OS a try.
 * `tools`: Tools for working with Collapse OS from "modern" environments. Mostly
            development tools, but also contains emulated zasm, which is
            necessary to build Collapse OS from a non-Collapse OS machine.
-
-Each folder has a README with more details.
+* `tests`: Automated test suite for the whole project.
 
 ## Status
 
