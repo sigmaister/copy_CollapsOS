@@ -158,6 +158,7 @@ parseBinaryLiteral:
 ; Parses the string at (HL) and returns the 16-bit value in DE. The string
 ; can be a decimal literal (1234), a hexadecimal literal (0x1234) or a char
 ; literal ('X').
+; HL is advanced to the character following the last successfully read char.
 ;
 ; As soon as the number doesn't fit 16-bit any more, parsing stops and the
 ; number is invalid. If the number is valid, Z is set, otherwise, unset.
@@ -166,60 +167,57 @@ parseLiteral:
 	ld	a, (hl)
 	cp	0x27		; apostrophe
 	jr	z, .char
+	call	isDigit
+	ret	nz
 	cp	'0'
-	jr	z, .hexOrBin
-	push	hl
-	call	parseDecimalC
-	pop	hl
-	ret
+	jp	nz, parseDecimal
+	; maybe hex, maybe binary
+	inc	hl
+	ld	a, (hl)
+	inc	hl		; already place it for hex or bin
+	cp	'x'
+	jr	z, parseHexadecimal
+	cp	'b'
+	jr	z, parseBinaryLiteral
+	; nope, just a regular decimal
+	dec	hl \ dec hl
+	jp	parseDecimal
 
 ; Parse string at (HL) and, if it is a char literal, sets Z and return
 ; corresponding value in E. D is always zero.
+; HL is advanced to the character following the last successfully read char.
 ;
 ; A valid char literal starts with ', ends with ' and has one character in the
 ; middle. No escape sequence are accepted, but ''' will return the apostrophe
 ; character.
 .char:
-	push	hl
 	inc	hl
+	ld	e, (hl)		; our result
 	inc	hl
 	cp	(hl)
-	jr	nz, .charEnd	; not ending with an apostrophe
+	jr	nz, .charError	; not ending with an apostrophe
+	; good char, advance HL and return
 	inc	hl
-	ld	a, (hl)
-	or	a		; cp 0
-	jr	nz, .charEnd	; string has to end there
-	; Valid char, good
-	dec	hl
-	dec	hl
-	ld	e, (hl)
-	cp	a		; ensure Z
-.charEnd:
-	pop	hl
+	; Z already set
+	ret
+.charError:
+	; In all error conditions, HL is advanced by 2. Rewind.
+	dec	hl \ dec hl
+	; NZ already set
 	ret
 
-.hexOrBin:
-	inc	hl
-	ld	a, (hl)
-	inc	hl		; already place it for hex or bin
-	cp	'x'
-	jr	z, .hex
-	cp	'b'
-	jr	z, .bin
-	; special case: single '0'. set Z if we hit have null terminating.
-	or	a
-.hexOrBinEnd:
-	dec	hl \ dec hl	; replace HL
-	ret			; Z already set
 
-.hex:
-	push	hl
-	call	parseHexadecimal
-	pop	hl
-	jr	.hexOrBinEnd
+; Returns whether A is a literal prefix, that is, a digit or an apostrophe.
+isLiteralPrefix:
+	cp	0x27	; apostrophe
+	ret	z
+	; continue to isDigit
 
-.bin:
-	push	hl
-	call	parseBinaryLiteral
-	pop	hl
-	jr	.hexOrBinEnd
+; Returns whether A is a digit
+isDigit:
+	cp	'0'
+	jp	c, unsetZ
+	cp	'9'+1
+	jp	nc, unsetZ
+	cp	a	; ensure Z
+	ret

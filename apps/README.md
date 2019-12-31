@@ -74,8 +74,6 @@ There are decimal, hexadecimal and binary literals. A "straight" number is
 parsed as a decimal. Hexadecimal literals must be prefixed with `0x` (`0xf4`).
 Binary must be prefixed with `0b` (`0b01100110`).
 
-A decimal literal cannot start with `0`, with the exception of the `0` literal.
-
 Decimals and hexadecimal are "flexible". Whether they're written in a byte or
 a word, you don't need to prefix them with zeroes. Watch out for overflow,
 however.

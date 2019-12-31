@@ -9,6 +9,12 @@
 ; first pass" whenever we encounter a new context. That is, we wipe the local
 ; registry, parse the code until the next global symbol (or EOF), then rewind
 ; and continue second pass as usual.
+;
+; What is a symbol name? The accepted characters for a symbol are A-Z, a-z, 0-9
+; dot (.) and underscore (_).
+; This unit doesn't disallow symbols starting with a digit, but in effect, they
+; aren't going to work because parseLiteral is going to get that digit first.
+; So, make your symbols start with a letter or dot or underscore.
 
 ; *** Constants ***
 ; Size of each record in registry
@@ -17,6 +23,9 @@
 .equ	SYM_REGSIZE		ZASM_REG_BUFSZ+1+ZASM_REG_MAXCNT*SYM_RECSIZE
 
 .equ	SYM_LOC_REGSIZE		ZASM_LREG_BUFSZ+1+ZASM_LREG_MAXCNT*SYM_RECSIZE
+
+; Maximum name length for a symbol
+.equ	SYM_NAME_MAXLEN		0x20
 
 ; *** Variables ***
 ; A registry has three parts: record count (byte) record list and names pool.
@@ -34,9 +43,11 @@
 
 ; Global labels registry
 .equ	SYM_GLOB_REG		SYM_RAMSTART
-.equ	SYM_LOC_REG		SYM_GLOB_REG+SYM_REGSIZE
-.equ	SYM_CONST_REG		SYM_LOC_REG+SYM_LOC_REGSIZE
-.equ	SYM_RAMEND		SYM_CONST_REG+SYM_REGSIZE
+.equ	SYM_LOC_REG		@+SYM_REGSIZE
+.equ	SYM_CONST_REG		@+SYM_LOC_REGSIZE
+; Area where we parse symbol names into
+.equ	SYM_TMPNAME		@+SYM_REGSIZE
+.equ	SYM_RAMEND		@+SYM_NAME_MAXLEN+1
 
 ; *** Registries ***
 ; A symbol registry is a 5 bytes record with points to the name pool then the
@@ -267,3 +278,63 @@ _symIsFull:
 	pop	hl
 	ret
 
+; Parse string (HL) as far as it can for a valid symbol name (see definition in
+; comment at top) for a maximum of SYM_NAME_MAXLEN characters. Puts the parsed
+; symbol, null-terminated, in SYM_TMPNAME. Make DE point to SYM_TMPNAME.
+; HL is advanced to the character following the last successfully read char.
+; Z for success.
+; Error conditions:
+; 1 - No character parsed.
+; 2 - name too long.
+symParse:
+	ld	de, SYM_TMPNAME
+	push	bc
+	; +1 because we want to loop one extra time to see if the char is good
+	; or bad. If it's bad, then fine, proceed as normal. If it's good, then
+	; its going to go through djnz and we can return an error then.
+	ld	b, SYM_NAME_MAXLEN+1
+.loop:
+	ld	a, (hl)
+	; Set it directly, even if we don't know yet if it's good
+	ld	(de), a
+	or	a	; end of string?
+	jr	z, .end	; easy ending, Z set, HL set
+	; Check special symbols first
+	cp	'.'
+	jr	z, .good
+	cp	'_'
+	jr	z, .good
+	; lowercase
+	or	0x20
+	cp	'0'
+	jr	c, .bad
+	cp	'9'+1
+	jr	c, .good
+	cp	'a'
+	jr	c, .bad
+	cp	'z'+1
+	jr	nc, .bad
+.good:
+	; character is valid, continue!
+	inc	hl
+	inc	de
+	djnz	.loop
+	; error: string too long
+	; NZ is already set from cp 'z'+1
+	; HL is one char too far
+	dec	hl
+	jr	.end
+.bad:
+	; invalid char, stop where we are.
+	; In all cases, we want to null-terminate that string
+	xor	a
+	ld	(de), a
+	; HL is good. Now, did we succeed? to know, let's see where B is.
+	ld	a, b
+	cp	SYM_NAME_MAXLEN+1
+	; Our result is the invert of Z
+	call	toggleZ
+.end:
+	ld	de, SYM_TMPNAME
+	pop	bc
+	ret

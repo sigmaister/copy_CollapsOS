@@ -6,6 +6,8 @@
 ; EXPR_PARSE: routine to call to parse literals or symbols that are part of
 ;             the expression. Routine's signature:
 ;	      String in (HL), returns its parsed value to DE. Z for success.
+;             HL is advanced to the character following the last successfully
+;             read char.
 ;
 ; *** Code ***
 ;
@@ -258,74 +260,8 @@ _parseNumber:
 	ret
 .skip1:
 	; End of special case 1
-	; Copy beginning of string to DE, we'll need it later
-	ld	d, h
-	ld	e, l
-
-	; Special case 2: we have a char literal. If we have a char literal, we
-	; don't want to go through the "_isOp" loop below because if that char
-	; is one of our operators, we're messing up our processing. So, set
-	; ourselves 3 chars further and continue from there. EXPR_PARSE will
-	; take care of validating those 3 chars.
-	cp	0x27		; apostrophe (') char
-	jr	nz, .skip2
-	; "'". advance HL by 3
-	inc	hl \ inc hl \ inc hl
-	; End of special case 2
-.skip2:
-
-	dec	hl	; offset "inc-hl-before" in loop
-.loop:
-	inc	hl
-	ld	a, (hl)
-	call	_isOp
-	jr	nz, .loop
-	; (HL) and A is an op or a null
-	push	af	; --> lvl 1 save op
-	push	hl	; --> lvl 2 save end of string
-	; temporarily put a null char instead of the op
-	xor	a
-	ld	(hl), a
-	ex	de, hl	; rewind to beginning of number
 	call	EXPR_PARSE	; --> DE
-	ex	af, af'		; keep result flags away while we restore (HL)
-	pop	hl	; <-- lvl 2, end of string
-	pop	af	; <-- lvl 1, saved op
-	ld	(hl), a
-	ex	af, af'		; restore Z from EXPR_PARSE
 	ret	nz
-	; HL is currently at the end of the number's string
-	; On success, have A be the operator char following the number
-	ex	af, af'
+	; Check if (HL) points to null or op
+	ld	a, (hl)
 	ret
-
-; Sets Z if A contains a valid operator char or a null char.
-_isOp:
-	or	a
-	ret	z
-	push	hl	; --> lvl 1
-	; Set A' to zero for quick end-of-table checks
-	ex	af, af'
-	xor	a
-	ex	af, af'
-	ld	hl, .exprChars
-.loop:
-	cp	(hl)
-	jr	z, .found
-	ex	af, af'
-	cp	(hl)
-	jr	z, .notFound	; end of table
-	ex	af, af'
-	inc	hl		; next char
-	jr	.loop
-.notFound:
-	ex	af, af'			; restore orig A
-	inc	a			; unset Z
-.found:
-	; Z already set
-	pop	hl	; <-- lvl 1
-	ret
-
-.exprChars:
-	.db	"+-*/%&|^{}", 0
-

@@ -128,9 +128,19 @@ testParseExpr:
 	.dw	0x4080
 	.db	"FOO+BAR*4", 0
 
+; "0" is a special case, let's test it
+.t16:
+	.dw	0
+	.db	"0", 0
+
+; Another one that caused troubles
+.t17:
+	.dw	123
+	.db	"0+123", 0
+
 .alltests:
 	.dw	.t1, .t2, .t3, .t4, .t5, .t6, .t7, .t8, .t9, .t10, .t11, .t12
-	.dw	.t13, .t14, .t15, 0
+	.dw	.t13, .t14, .t15, .t16, .t17, 0
 
 ; Ensure that stack is balanced on failure
 testSPOnFail:

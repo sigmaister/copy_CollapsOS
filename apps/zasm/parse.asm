@@ -1,27 +1,26 @@
 ; Parse string in (HL) and return its numerical value whether its a number
 ; literal or a symbol. Returns value in DE.
+; HL is advanced to the character following the last successfully read char.
 ; Sets Z if number or symbol is valid, unset otherwise.
 parseNumberOrSymbol:
-	call	parseLiteral
-	ret	z
-	; Not a number.
-	; Is str a single char? If yes, maybe it's a special symbol.
-	call	strIs1L
-	jr	nz, .symbol	; nope
+	call	isLiteralPrefix
+	jp	z, parseLiteral
+	; Not a number. try symbol
 	ld	a, (hl)
 	cp	'$'
-	jr	z, .returnPC
+	jr	z, .PC
 	cp	'@'
-	jr	nz, .symbol
-	; last val
-	ld	de, (DIREC_LASTVAL)
-	ret
-.symbol:
+	jr	z, .lastVal
+	call	symParse
+	ret	nz
+	; HL at end of symbol name, DE at tmp null-terminated symname.
+	push	hl		; --> lvl 1
+	ex	de, hl
 	call	symFindVal	; --> DE
-	jr	nz, .notfound
-	ret
-.notfound:
-	; If not found, check if we're in first pass. If we are, it doesn't
+	pop	hl		; <-- lvl 1
+	ret	z
+	; not found
+	; When not found, check if we're in first pass. If we are, it doesn't
 	; matter that we didn't find our symbol. Return success anyhow.
 	; Otherwise return error. Z is already unset, so in fact, this is the
 	; same as jumping to zasmIsFirstPass
@@ -30,9 +29,17 @@ parseNumberOrSymbol:
 	ld	de, 0
 	jp	zasmIsFirstPass
 
-.returnPC:
-	push	hl
-	call	zasmGetPC
+.PC:
+	ex	de, hl
+	call	zasmGetPC	; --> HL
 	ex	de, hl	; result in DE
-	pop	hl
+	inc	hl	; char after last read
+	; Z already set from cp '$'
+	ret
+
+.lastVal:
+	; last val
+	ld	de, (DIREC_LASTVAL)
+	inc	hl	; char after last read
+	; Z already set from cp '@'
 	ret

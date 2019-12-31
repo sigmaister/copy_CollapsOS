@@ -84,15 +84,12 @@ varAssign:
 ; Check if value at (HL) is a variable. If yes, returns its associated value.
 ; Otherwise, jump to parseLiteral.
 parseLiteralOrVar:
-	inc	hl
-	ld	a, (hl)
-	dec	hl
-	or	a
-	; if more than one in length, it can't be a variable
-	jp	nz, parseLiteral
+	call	isLiteralPrefix
+	jp	z, parseLiteral
+	; not a literal, try var
 	ld	a, (hl)
 	call	varChk
-	jp	nz, parseLiteral
+	ret	nz
 	; It's a variable, resolve!
 	add	a, a	; * 2 because each element is a word
 	push	hl	; --> lvl 1
@@ -102,5 +99,6 @@ parseLiteralOrVar:
 	inc	hl
 	ld	d, (hl)
 	pop	hl	; <-- lvl 1
+	inc	hl	; point to char after variable
 	cp	a	; ensure Z
 	ret
