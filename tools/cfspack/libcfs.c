@@ -11,7 +11,7 @@
 
 #define PUTC(c) putc(c, spitstream)
 
-static FILE *spitstream = stdout;
+static FILE *spitstream = NULL;
 
 void set_spit_stream(FILE *stream)
 {
@@ -27,6 +27,7 @@ int is_regular_file(char *path)
 
 void spitempty()
 {
+    if (spitstream == NULL) spitstream = stdout;
     PUTC('C');
     PUTC('F');
     PUTC('S');
@@ -37,6 +38,7 @@ void spitempty()
 
 int spitblock(char *fullpath, char *fn)
 {
+    if (spitstream == NULL) spitstream = stdout;
     FILE *fp = fopen(fullpath, "r");
     fseek(fp, 0, SEEK_END);
     long fsize = ftell(fp);
