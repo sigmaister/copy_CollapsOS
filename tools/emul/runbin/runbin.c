@@ -28,7 +28,6 @@ int main()
         return 1;
     }
     emul_loop();
-    if (m->cpu.R1.wr.HL)
     return m->cpu.R1.br.A;
 }
 

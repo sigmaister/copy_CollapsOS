@@ -37,6 +37,37 @@ assertNZ:
 .msg:
 	.db	"Z set", CR, LF, 0
 
+assertC:
+	ret	c
+	ld	hl, .msg
+	call	printstr
+	jp	fail
+.msg:
+	.db	"C not set", CR, LF, 0
+
+assertNC:
+	ret	nc
+	ld	hl, .msg
+	call	printstr
+	jp	fail
+.msg:
+	.db	"C set", CR, LF, 0
+
+; Assert that A == B
+assertEQB:
+	cp	b
+	ret	z
+	call	printHex
+	call	printcrlf
+	ld	a, b
+	call	printHex
+	call	printcrlf
+	ld	hl, .msg
+	call	printstr
+	jp	fail
+.msg:
+	.db	"A != B", CR, LF, 0
+
 ; Assert that HL == DE
 assertEQW:
 	ld	a, h
