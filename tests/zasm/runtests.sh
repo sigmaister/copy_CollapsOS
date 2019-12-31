@@ -3,7 +3,7 @@
 BASE=../..
 KERNEL="${BASE}/kernel"
 APPS="${BASE}/apps"
-ZASM="${BASE}/emul/zasm.sh"
+ZASM="${BASE}/emul/zasm/zasm"
 
 cmpas() {
     FN=$1

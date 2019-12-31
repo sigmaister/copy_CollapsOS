@@ -2,9 +2,10 @@ PROGNAME = ps2ctl
 AVRDUDEMCU ?= t45
 AVRDUDEARGS ?= -c usbtiny -P usb 
 TARGETS = $(PROGNAME).hex os.bin
-ZASM = ../../../tools/zasm.sh
-KERNEL = ../../../kernel
-APPS = ../../../apps
+BASEDIR = ../../..
+ZASM = $(BASEDIR)/emul/zasm/zasm
+KERNEL = $(BASEDIR)/kernel
+APPS = $(BASEDIR)/apps
 
 # Rules
 
@@ -14,13 +15,13 @@ all: $(TARGETS)
 	@echo Done!
 
 send: $(PROGNAME).hex
-	avrdude $(AVRDUDEARGS) -p $(AVRDUDEMCU) -U flash:w:$<
+	avrdude $(AVRDUDEARGS) -p $(AVRDUDEMCU) -U flash:w:$(PROGNAME).hex
 
 $(PROGNAME).hex: $(PROGNAME).asm
-	avra -o $@ $<
+	avra -o $@ $(PROGNAME).asm
 
 os.bin: glue.asm
-	$(ZASM) $(KERNEL) $(APPS) < $< > $@
+	$(ZASM) $(KERNEL) $(APPS) < glue.asm > $@
 
 clean:
 	rm -f $(TARGETS) *.eep.hex *.obj os.bin

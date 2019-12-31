@@ -65,12 +65,9 @@ look like:
 
 Once this is written, you can build it with `zasm`, which takes code from stdin
 and spits binary to stdout. Because out code has includes, however, you need
-to supply zasm with a block device containing a CFS containing the files to
-include. This sounds, compicated, but it's managed by the `tools/zasm.sh` shell
-script. The invocation would look like (it builds a CFS with the contents of
-both `kernel/` and `apps/` folders):
+to supply zasm with include folders or files. The invocation would look like
 
-    tools/zasm.sh kernel/ apps/ < glue.asm > collapseos.bin
+    emul/zasm/zasm kernel/ apps/ < glue.asm > collapseos.bin
 
 ## Building zasm
 
@@ -79,7 +76,7 @@ Collapse OS has its own assembler written in z80 assembly. We call it
 but because it is written in z80 assembler, it needs to be emulated (with
 [libz80][libz80]).
 
-So, the first step is to build zasm. Open `tools/emul/README.md` and follow
+So, the first step is to build zasm. Open `emul/README.md` and follow
 instructions there.
 
 ## Platform constants
@@ -162,5 +159,5 @@ and this much depends on the part you select. But if you want a shell, you will
 usually end it with `basStart`, which never returns.
 
 [rc2014]: https://rc2014.co.uk/
-[zasm]: ../tools/emul/README.md
+[zasm]: ../emul/README.md
 [libz80]: https://github.com/ggambetta/libz80

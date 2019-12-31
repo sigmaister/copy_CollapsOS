@@ -2,7 +2,7 @@
 
 # no "set -e" because we test errors
 
-ZASM=../../emul/zasm.sh
+ZASM=../../emul/zasm/zasm
 
 chkerr() {
     echo "Check that '$1' results in error $2"

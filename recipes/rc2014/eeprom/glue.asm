@@ -33,7 +33,6 @@ jp	aciaInt
 .equ	STDIO_PUTC	aciaPutC
 .inc "stdio.asm"
 
-.inc "lib/args.asm"
 .equ	AT28W_RAMSTART	STDIO_RAMEND
 .inc "at28w/main.asm"
 

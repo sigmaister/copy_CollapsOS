@@ -1,7 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <libgen.h>
 #include "../emul.h"
+#include "../../tools/cfspack/cfs.h"
 #include "kernel-bin.h"
 #ifdef AVRA
 #include "avra-bin.h"
@@ -51,6 +54,7 @@
 // By default, we don't spit what zasm prints. Too noisy. Define VERBOSE if
 // you want to spit this content to stderr.
 //#define VERBOSE
+#define MAX_FSDEV_SIZE 0x80000
 
 // STDIN buffer, allows us to seek and tell
 static uint8_t inpt[STDIN_BUFSIZE];
@@ -58,8 +62,7 @@ static int inpt_size;
 static int inpt_ptr;
 static uint8_t middle_of_seek_tell = 0;
 
-static uint8_t fsdev[0x80000] = {0};
-static uint32_t fsdev_size = 0;
+static uint8_t fsdev[MAX_FSDEV_SIZE] = {0};
 static uint32_t fsdev_ptr = 0;
 static uint8_t fsdev_seek_tell_cnt = 0;
 
@@ -88,7 +91,7 @@ static uint8_t iord_stdin_seek()
 
 static uint8_t iord_fsdata()
 {
-    if (fsdev_ptr < fsdev_size) {
+    if (fsdev_ptr < MAX_FSDEV_SIZE) {
         return fsdev[fsdev_ptr++];
     } else {
         return 0;
@@ -99,7 +102,7 @@ static uint8_t iord_fsseek()
 {
     if (fsdev_seek_tell_cnt != 0) {
         return fsdev_seek_tell_cnt;
-    } else if (fsdev_ptr >= fsdev_size) {
+    } else if (fsdev_ptr >= MAX_FSDEV_SIZE) {
         return 1;
     } else {
         return 0;
@@ -130,7 +133,7 @@ static void iowr_stdin_seek(uint8_t val)
 
 static void iowr_fsdata(uint8_t val)
 {
-    if (fsdev_ptr < fsdev_size) {
+    if (fsdev_ptr < MAX_FSDEV_SIZE) {
         fsdev[fsdev_ptr++] = val;
     }
 }
@@ -159,11 +162,50 @@ static void iowr_stderr(uint8_t val)
 #endif
 }
 
+void usage()
+{
+    fprintf(stderr, "Usage: zasm [-o org] [include-dir-or-file...] < source > binary\n");
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc > 3) {
-        fprintf(stderr, "Too many args\n");
-        return 1;
+    char *init_org = "00";
+    while (1) {
+        int c = getopt(argc, argv, "o:");
+        if (c < 0) {
+            break;
+        }
+        switch (c) {
+            case 'o':
+                init_org = optarg;
+                if (strlen(init_org) != 2) {
+                    fprintf(stderr, "Initial org must be a two-character hex string");
+                }
+                break;
+            default:
+                usage();
+                return 1;
+        }
+    }
+    if (argc-optind > 0) {
+        FILE *fp = fmemopen(fsdev, MAX_FSDEV_SIZE, "w");
+        set_spit_stream(fp);
+        char *patterns[4] = {"*.h", "*.asm", "*.bin", 0};
+        for (int i=optind; i<argc; i++) {
+            int res;
+            if (is_regular_file(argv[i])) {
+                // special case: just one file
+                res = spitblock(argv[i], basename(argv[i]));
+            } else {
+                res = spitdir(argv[i], "", patterns);
+            }
+            if (res != 0) {
+                fprintf(stderr, "Error while building the include CFS.\n");
+                fclose(fp);
+                return 1;
+            }
+        }
+        fclose(fp);
     }
     Machine *m = emul_init();
     m->iord[STDIO_PORT] = iord_stdio;
@@ -182,31 +224,9 @@ int main(int argc, char *argv[])
     for (int i=0; i<sizeof(USERSPACE); i++) {
         m->mem[i+USER_CODE] = USERSPACE[i];
     }
-    char *init_org = "00";
-    if (argc >= 2) {
-        init_org = argv[1];
-        if (strlen(init_org) != 2) {
-            fprintf(stderr, "Initial org must be a two-character hex string");
-        }
-    }
     // glue.asm knows that it needs to fetch these arguments at this address.
     m->mem[0xff00] = init_org[0];
     m->mem[0xff01] = init_org[1];
-    fsdev_size = 0;
-    if (argc == 3) {
-        FILE *fp = fopen(argv[2], "r");
-        if (fp == NULL) {
-            fprintf(stderr, "Can't open file %s\n", argv[1]);
-            return 1;
-        }
-        int c = fgetc(fp);
-        while (c != EOF) {
-            fsdev[fsdev_size] = c;
-            fsdev_size++;
-            c = fgetc(fp);
-        }
-        fclose(fp);
-    }
     // read stdin in buffer
     inpt_size = 0;
     inpt_ptr = 0;

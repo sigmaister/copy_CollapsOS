@@ -1,9 +1,10 @@
 TARGET = os.sms
-ZASM = ../../tools/zasm.sh
-KERNEL = ../../kernel
-APPS = ../../apps
+BASEDIR = ../..
+ZASM = $(BASEDIR)/emul/zasm/zasm
+KERNEL = $(BASEDIR)/kernel
+APPS = $(BASEDIR)/apps
 
 .PHONY: all
 all: $(TARGET)
 $(TARGET): glue.asm
-	$(ZASM) $(KERNEL) $(APPS) < $< > $@
+	$(ZASM) $(KERNEL) $(APPS) < glue.asm > $@

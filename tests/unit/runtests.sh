@@ -3,7 +3,7 @@ set -e
 # TODO: find POSIX substitute to that PIPESTATUS thing
 
 BASE=../..
-ZASM="${BASE}/emul/zasm.sh"
+ZASM="${BASE}/emul/zasm/zasm"
 RUNBIN="${BASE}/emul/runbin/runbin"
 KERNEL="${BASE}/kernel"
 APPS="${BASE}/apps"

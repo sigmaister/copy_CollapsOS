@@ -77,7 +77,7 @@ is decoupled from the ACIA and can get its IO from anything. See comments in
 
 We only have the shell to build, so it's rather straightforward:
 
-    ../../tools/zasm.sh ../../kernel < glue.asm > os.bin
+    ../../emul/zasm/zasm ../../kernel < glue.asm > os.bin
 
 Running `make` will also work.
 
