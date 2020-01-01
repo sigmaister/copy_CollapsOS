@@ -3,6 +3,16 @@
 This folder contains a couple of tools running under the [libz80][libz80]
 emulator.
 
+## Not real hardware
+
+In the few emulated apps described below, we don't try to emulate real hardware
+because the goal here is to facilitate userspace development.
+
+These apps run on imaginary hardware and use many cheats to simplify I/Os.
+
+For real hardware emulation (which helps developing drivers), see the `hw`
+folder.
+
 ## Build
 
 First, make sure that the `libz80` git submodule is checked out. If not, run
@@ -20,10 +30,6 @@ device that is suitable for Collapse OS's filesystem to run on.
 
 Through that, it becomes easier to develop userspace applications for Collapse
 OS.
-
-We don't try to emulate real hardware to ease the development of device drivers
-because so far, I don't see the advantage of emulation versus running code on
-the real thing.
 
 By default, the shell initialized itself with a CFS device containing the
 contents of `cfsin/` at launch (it's packed on the fly). You can specify an
