@@ -3,6 +3,7 @@ BASEDIR = ../..
 ZASM = $(BASEDIR)/emul/zasm/zasm
 KERNEL = $(BASEDIR)/kernel
 APPS = $(BASEDIR)/apps
+EMUL = $(BASEDIR)/emul/hw/ti/ti84
 MKTIUPGRADE = mktiupgrade
 
 .PHONY: all
@@ -10,6 +11,13 @@ all: $(TARGET)
 $(TARGET): glue.asm
 	$(ZASM) $(KERNEL) $(APPS) < glue.asm > $@
 
+$(EMUL):
+	$(MAKE) -C ${@:%/ti84=%}
+
+.PHONY: emul
+emul: $(EMUL) $(TARGET)
+	$(EMUL) $(TARGET)
+	
 os.rom: $(TARGET)
 	cp $(TARGET) $@
 	truncate -s 1M $@

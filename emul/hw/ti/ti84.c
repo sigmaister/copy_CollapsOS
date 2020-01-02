@@ -223,10 +223,6 @@ void draw_pixels()
 
 void event_loop()
 {
-    if (!emul_step()) {
-        // We're done
-        return;
-    }
     while (1) {
         emul_step();
         if (lcd_changed) {

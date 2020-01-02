@@ -81,6 +81,11 @@ We only have the shell to build, so it's rather straightforward:
 
 Running `make` will also work.
 
+### Emulate
+
+The Collapse OS project includes a RC2014 emulator suitable for this image.
+You can invoke it with `make emul`. See `emul/hw/rc2014/README.md` for details.
+
 ### Write to the ROM
 
 Plug your romwrite atmega328 to your computer and identify the tty bound to it.

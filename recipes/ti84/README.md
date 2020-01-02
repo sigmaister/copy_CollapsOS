@@ -22,27 +22,19 @@ screen as output and its builtin keyboard as input.
 * A USB cable
 * [tilp][tilp]
 * [mktiupgrade][mktiupgrade]
-* Optional: [z80e][z80e] to emulate
 
 ## Build the ROM
 
 Running `make` will result in `os.rom` being created.
 
-## Emulate through z80e
+## Emulate
 
-[KnightOS][knightos] has a handy emulator, [z80e][z80e] for TI calculators and
-it also emulates the screen. It is recommended to use this tool.
-
-Once z80e is installed (build it with SDL support) and `os.rom` is created,
-you can run the emulator with:
-
-    z80e-sdl -d TI84p --no-rom-check os.rom
+Collapse OS has a builtin TI-84+ emulator using XCB for display in `emul/hw/ti`.
+You can invoke it with `make emul`.
 
 You will start with a blank screen, it's normal, you haven't pressed the "ON"
-key yet. This key is mapped to F12 in the emulator. Once you press it, the
-Collapse OS prompt will appear.
-
-See z80e's `KEYBINDINGS.md` file for details.
+key yet. This key is mapped to tilde (~) in the emulator. Once you press it, the
+Collapse OS prompt will appear. See `emul/hw/ti/README.md` for details.
 
 ## Upload to the calculator
 
@@ -102,7 +94,5 @@ Keys that aren't a digit, a letter, a symbol that is part of 7-bit ASCII or one
 of the two mode key have no effect.
 
 [zasm]: ../../tools/emul
-[knightos]: https://knightos.org/
-[z80e]: https://github.com/KnightOS/z80e
 [mktiupgrade]: https://github.com/KnightOS/mktiupgrade
 [tilp]: http://lpg.ticalc.org/prj_tilp/
