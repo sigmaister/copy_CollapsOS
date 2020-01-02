@@ -1,4 +1,4 @@
-TARGET = os.rom
+TARGET = os.bin
 BASEDIR = ../..
 ZASM = $(BASEDIR)/emul/zasm/zasm
 KERNEL = $(BASEDIR)/kernel
@@ -9,10 +9,13 @@ MKTIUPGRADE = mktiupgrade
 all: $(TARGET)
 $(TARGET): glue.asm
 	$(ZASM) $(KERNEL) $(APPS) < glue.asm > $@
+
+os.rom: $(TARGET)
+	cp $(TARGET) $@
 	truncate -s 1M $@
 
-os.8xu: $(TARGET)
-	$(MKTIUPGRADE) -p -k keys/0A.key -d TI-84+ $(TARGET) $@ 00
+os.8xu: os.rom
+	$(MKTIUPGRADE) -p -k keys/0A.key -d TI-84+ os.rom $@ 00
 
 .PHONY: send
 send: os.8xu

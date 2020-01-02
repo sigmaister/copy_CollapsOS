@@ -76,6 +76,17 @@ bool emul_step()
     }
 }
 
+bool emul_steps(unsigned int steps)
+{
+    while (steps) {
+        if (!emul_step()) {
+            return false;
+        }
+        steps--;
+    }
+    return true;
+}
+
 void emul_loop()
 {
     while (emul_step());

@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     }
     FILE *fp = fopen(argv[1], "r");
     if (fp == NULL) {
-        fprintf(stderr, "Can't open %s\n", optarg);
+        fprintf(stderr, "Can't open %s\n", argv[1]);
         return 1;
     }
     Machine *m = emul_init();
