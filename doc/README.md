@@ -1,10 +1,5 @@
 # Collapse OS documentation
 
-## Assembly guide
-
-* [Writing the glue code](glue-code.md)
-* [Running Collapse OS on an emulator](emulate.md)
-
 ## User guide
 
 * [The shell](../apps/basic/README.md)
@@ -12,6 +7,8 @@
 * [Using block devices](blockdev.md)
 * [Using the filesystem](fs.md)
 * [Assembling z80 source from the shell](zasm.md)
+* [Writing the glue code](glue-code.md)
+* [Understanding the code](understanding-code.md)
 
 ## Hardware
 
