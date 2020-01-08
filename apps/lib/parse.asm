@@ -21,7 +21,6 @@ parseHex:
 	add	a, 10		; C is clear, map back to 0xA-0xF
 	ret
 
-
 ; Parse string at (HL) as a decimal value and return value in DE.
 ; Reads as many digits as it can and stop when:
 ; 1 - A non-digit character is read
@@ -44,10 +43,10 @@ parseDecimal:
 	; During this routine, we switch between HL and its shadow. On one side,
 	; we have HL the string pointer, and on the other side, we have HL the
 	; numerical result. We also use EXX to preserve BC, saving us a push.
+parseDecimalSkip:	; enter here to skip parsing the first digit
 	exx		; HL as a result
 	ld	h, 0
 	ld	l, a	; load first digit in without multiplying
-	ld	b, 0	; We use B to detect overflow
 
 .loop:
 	exx		; HL as a string pointer
@@ -58,26 +57,24 @@ parseDecimal:
 	; same as other above
 	add	a, 0xff-'9'
 	sub	0xff-9
-	jr	c, .end
+	jr	c, .end	
 
+	ld	b, a	; we can now use a for overflow checking
 	add	hl, hl	; x2
-	; We do this to detect overflow at each step
-	rl	b
+	sbc	a, a	; a=0 if no overflow, a=0xFF otherwise
 	ld	d, h
 	ld	e, l		; de is x2
 	add	hl, hl	; x4
-	rl	b
+	rla
 	add	hl, hl	; x8
-	rl	b
+	rla
 	add	hl, de	; x10
-	rl	b
-	ld	d, 0
-	ld	e, a
+	rla
+	ld	d, a	; a is zero unless there's an overflow
+	ld	e, b
 	add	hl, de
-	rl	b
+	adc	a, a	; same as rla except affects Z
 	; Did we oveflow?
-	xor	a
-	or	b
 	jr	z, .loop	; No? continue
 	; error, NZ already set
 	exx		; HL is now string pointer, restore BC
@@ -106,32 +103,48 @@ parseDecimalC:
 ; Sets Z on success.
 parseHexadecimal:
 	ld	a, (hl)
-	call	parseHex
-	jp	c, unsetZ	; we need at least one char
+	call	parseHex	; before "ret c" is "sub 0xfa" in parseHex
+				; so carry implies not zero
+	ret 	c	; we need at least one char
 	push	bc
 	ld	de, 0
-	ld	b, 0
+	ld	b, d
+	ld	c, d
+
+; The idea here is that the 4 hex digits of the result can be represented "bdce",
+; where each register holds a single digit. Then the result is simply
+; e = (c << 4) | e,	 d = (b << 4) | d
+; However, the actual string may be of any length, so when loading in the most
+; significant digit, we don't know which digit of the result it actually represents
+; To solve this, after a digit is loaded into a (and is checked for validity),
+; all digits are moved along, with e taking the latest digit.
 .loop:
-	; we push to B to verify overflow
-	rl	e \ rl d \ rl b
-	rl	e \ rl d \ rl b
-	rl	e \ rl d \ rl b
-	rl	e \ rl d \ rl b
-	or	e
-	ld	e, a
-	; did we overflow?
-	ld	a, b
-	or	a
-	jr	nz, .end	; overflow, NZ already set
-	; next char
-	inc	hl
-	ld	a, (hl)
-	call	parseHex
-	jr	nc, .loop
-	cp	a		; ensure Z
-.end:
+	dec 	b
+	inc 	b	; b should be 0, else we've overflowed
+	jr	nz, .end	; Z already unset if overflow
+	ld 	b, d
+	ld 	d, c
+	ld 	c, e
+	ld 	e, a
+	inc 	hl
+	ld 	a, (hl)
+	call 	parseHex
+	jr 	nc, .loop
+	ld 	a, b
+	add	a, a  \ add a, a \ add a, a \ add a, a
+	or 	d
+	ld 	d, a
+
+	ld 	a, c
+	add	a, a  \ add a, a \ add a, a \ add a, a
+	or 	e
+	ld 	e, a
+	xor	a	; ensure z
+
+.end: 
 	pop	bc
 	ret
+
 
 ; Parse string at (HL) as a binary value (010101) without the "0b" prefix and
 ; return value in E. D is always zero.
@@ -144,10 +157,10 @@ parseBinaryLiteral:
 	add	a, 0xff-'1'
 	sub	0xff-1
 	jr	c, .end
-	rl	e
+	rlc	e	; sets carry if overflow, and affects Z
+	ret	c	; Z unset if carry set, since bit 0 of e must be set
 	add	a, e
 	ld	e, a
-	jp	c, unsetZ	; overflow
 	inc	hl
 	jr	.loop
 .end:
@@ -167,10 +180,13 @@ parseLiteral:
 	ld	a, (hl)
 	cp	0x27		; apostrophe
 	jr	z, .char
-	call	isDigit
-	ret	nz
-	cp	'0'
-	jp	nz, parseDecimal
+
+	; inline parseDecimalDigit
+	add 	a, 0xc6	; maps '0'-'9' onto 0xf6-0xff
+	sub 	0xf6	; maps to 0-9 and carries if not a digit
+	ret	c
+	; a already parsed so skip first few instructions of parseDecimal
+	jp	nz, parseDecimalSkip	
 	; maybe hex, maybe binary
 	inc	hl
 	ld	a, (hl)
@@ -195,14 +211,13 @@ parseLiteral:
 	ld	e, (hl)		; our result
 	inc	hl
 	cp	(hl)
-	jr	nz, .charError	; not ending with an apostrophe
-	; good char, advance HL and return
+	; advance HL and return if good char
 	inc	hl
-	; Z already set
-	ret
-.charError:
-	; In all error conditions, HL is advanced by 2. Rewind.
-	dec	hl \ dec hl
+	ret	z
+
+	; Z unset and there's an error
+	; In all error conditions, HL is advanced by 3. Rewind.
+	dec	hl \ dec hl \ dec hl
 	; NZ already set
 	ret
 
@@ -215,9 +230,9 @@ isLiteralPrefix:
 
 ; Returns whether A is a digit
 isDigit:
-	cp	'0'
-	jp	c, unsetZ
-	cp	'9'+1
-	jp	nc, unsetZ
+	cp	'0'	; carry implies not zero for cp
+	ret 	c
+	cp	'9'	; zero unset for a > '9', but set for a='9'
+	ret	nc
 	cp	a	; ensure Z
 	ret
