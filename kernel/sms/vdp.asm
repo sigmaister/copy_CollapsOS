@@ -38,6 +38,7 @@ vdpInit:
 	ld	c, VDP_CTLPORT
 	otir
 
+	; Blank VRAM
 	xor	a
 	out	(VDP_CTLPORT), a
 	ld	a, 0x40
@@ -51,15 +52,17 @@ vdpInit:
 	or	c
 	jr	nz, .loop1
 
+	; Set palettes
 	xor	a
 	out	(VDP_CTLPORT), a
 	ld	a, 0xc0
 	out	(VDP_CTLPORT), a
-	ld	hl, vdpPaletteData
-	ld	b, vdpPaletteDataEnd-vdpPaletteData
-	ld	c, VDP_DATAPORT
-	otir
+	xor	a			; palette 0: black
+	out	(VDP_DATAPORT), a
+	ld	a, 0x3f			; palette 1: white
+	out	(VDP_DATAPORT), a
 
+	; Define tiles
 	xor	a
 	out	(VDP_CTLPORT), a
 	ld	a, 0x40
@@ -97,6 +100,7 @@ vdpInit:
 	dec	c
 	jr	nz, .loop2
 
+	; Bit 7 = ?, Bit 6 = display enabled
 	ld	a, 0b11000000
 	out	(VDP_CTLPORT), a
 	ld	a, 0x81
@@ -129,7 +133,7 @@ vdpSpitC:
 				; two bits
 	out	(VDP_CTLPORT), a
 	ld	a, b		; 3 low bits set
-	or	0x78
+	or	0x78		; 01 header + 0x3800
 	out	(VDP_CTLPORT), a
 	pop	bc
 
@@ -279,11 +283,16 @@ vdpConv:
 	ld	a, 0x5e
 	ret
 
-vdpPaletteData:
-.db 0x00,0x3f
-vdpPaletteDataEnd:
-
 ; VDP initialisation data
 vdpInitData:
-.db 0x04,0x80,0x00,0x81,0xff,0x82,0xff,0x85,0xff,0x86,0xff,0x87,0x00,0x88,0x00,0x89,0xff,0x8a
+; 0x8x == set register X
+.db 0b00000100, 0x80	; Bit 2: Select mode 4
+.db 0b00000000, 0x81
+.db 0b11111111, 0x82	; Name table: 0x3800
+.db 0b11111111, 0x85	; Sprite table: 0x3f00
+.db 0b11111111, 0x86	; sprite use tiles from 0x2000
+.db 0b11111111, 0x87	; Border uses palette 0xf
+.db 0b00000000, 0x88	; BG X scroll
+.db 0b00000000, 0x89	; BG Y scroll
+.db 0b11111111, 0x8a	; Line counter (why have this?)
 vdpInitDataEnd:
