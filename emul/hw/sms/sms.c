@@ -65,7 +65,7 @@ void create_window()
         win,
         screen->root,
         0, 0,
-        150, 150,
+        500, 500,
         10,
         XCB_WINDOW_CLASS_INPUT_OUTPUT,
         screen->root_visual,
