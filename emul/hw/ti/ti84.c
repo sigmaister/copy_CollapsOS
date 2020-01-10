@@ -199,6 +199,7 @@ void draw_pixels()
     int innerh = psize * 64;
     int innerx = (geom->width - innerw) / 2;
     int innery = (geom->height - innerh) / 2;
+    free(geom);
     int drawcnt = 0;
     for (int i=0; i<96; i++) {
         for (int j=0; j<64; j++) {
@@ -230,6 +231,15 @@ void event_loop()
             // drawing operation.
             emul_steps(100);
             draw_pixels();
+        }
+        // A low tech way of checking when the window was closed. The proper way
+        // involving WM_DELETE is too complicated.
+        xcb_get_geometry_reply_t *geom;
+        geom = xcb_get_geometry_reply(conn, xcb_get_geometry(conn, win), NULL);
+        if (geom == NULL) {
+            return;     // window has been closed.
+        } else {
+            free(geom);
         }
         xcb_generic_event_t *e = xcb_poll_for_event(conn);
         if (!e) {
