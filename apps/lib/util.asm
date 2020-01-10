@@ -11,8 +11,8 @@ toWS:
 	ld	a, (hl)
 	call	isWS
 	ret	z
-	or	a
-	jp	z, unsetZ
+	cp	0x01	; if a is null, carries and unsets z
+	ret	c
 	inc	hl
 	jr	toWS
 
@@ -22,8 +22,8 @@ rdWS:
 	ld	a, (hl)
 	call	isWS
 	jr	nz, .ok
-	or	a
-	jp	z, unsetZ
+	cp	0x01	; if a is null, carries and unsets z
+	ret	c
 	inc	hl
 	jr	rdWS
 .ok:
@@ -61,13 +61,11 @@ strcmp:
 	ld	a, (de)
 	cp	(hl)
 	jr	nz, .end	; not equal? break early. NZ is carried out
-				; to the called
+				; to the caller
 	or	a		; If our chars are null, stop the cmp
-	jr	z, .end		; The positive result will be carried to the
-	                        ; caller
 	inc	hl
 	inc	de
-	jr	.loop
+	jr	nz, .loop	; Z is carried through
 
 .end:
 	pop	de
@@ -79,35 +77,31 @@ strcmp:
 
 ; Given a string at (HL), move HL until it points to the end of that string.
 strskip:
-	push	af
+	push	bc
+	ex	af, af'
 	xor	a	; look for null char
-.loop:
-	cp	(hl)
-	jp	z, .found
-	inc	hl
-	jr	.loop
-.found:
-	pop	af
+	ld	b, a
+	ld	c, a
+	cpir	; advances HL regardless of comparison, so goes one too far
+	dec	hl
+	ex	af, af'
+	pop	bc
 	ret
 
 ; Returns length of string at (HL) in A.
 ; Doesn't include null termination.
 strlen:
 	push	bc
-	push	hl
-	ld	bc, 0
 	xor	a	; look for null char
-.loop:
-	cpi
-	jp	z, .found
-	jr	.loop
+	ld	b, a
+	ld	c, a
+	cpir		; advances HL to the char after the null
 .found:
-	; How many char do we have? the (NEG BC)-1, which started at 0 and
-	; decreased at each CPI call. In this routine, we stay in the 8-bit
-	; realm, so C only.
-	ld	a, c
-	neg
+	; How many char do we have? We have strlen=(NEG BC)-1, since BC started 
+	; at 0 and decreased at each CPIR loop. In this routine, 
+	; we stay in the 8-bit realm, so C only.
+	add 	hl, bc
+	sub	c
 	dec	a
-	pop	hl
 	pop	bc
 	ret
