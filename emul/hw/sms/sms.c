@@ -6,10 +6,15 @@
 
 #include "../../emul.h"
 #include "vdp.h"
+#include "port.h"
+#include "pad.h"
 
 #define RAMSTART 0xc000
 #define VDP_CMD_PORT 0xbf
 #define VDP_DATA_PORT 0xbe
+#define PORTS_CTL_PORT 0x3f
+#define PORTS_IO1_PORT 0xdc
+#define PORTS_IO2_PORT 0xdd
 #define MAX_ROMSIZE 0x8000
 
 static xcb_connection_t    *conn;
@@ -26,6 +31,8 @@ static xcb_rectangle_t rectangles[VDP_SCREENW*VDP_SCREENH];
 static Machine *m;
 static VDP vdp;
 static bool vdp_changed;
+static Ports ports;
+static Pad pad;
 
 static uint8_t iord_vdp_cmd()
 {
@@ -37,6 +44,21 @@ static uint8_t iord_vdp_data()
     return vdp_data_rd(&vdp);
 }
 
+static uint8_t iord_ports_io1()
+{
+    return ports_A_rd(&ports);
+}
+
+static uint8_t iord_ports_io2()
+{
+    return ports_B_rd(&ports);
+}
+
+static uint8_t iord_pad()
+{
+    return pad_rd(&pad);
+}
+
 static void iowr_vdp_cmd(uint8_t val)
 {
     vdp_cmd_wr(&vdp, val);
@@ -46,6 +68,11 @@ static void iowr_vdp_data(uint8_t val)
 {
     vdp_changed = true;
     vdp_data_wr(&vdp, val);
+}
+
+static void iowr_ports_ctl(uint8_t val)
+{
+    ports_ctl_wr(&ports, val);
 }
 
 void create_window()
@@ -150,7 +177,34 @@ void event_loop()
         case XCB_KEY_RELEASE:
         case XCB_KEY_PRESS: {
             xcb_key_press_event_t *ev = (xcb_key_press_event_t *)e;
-            if (ev->detail == 0x09) return;
+            bool ispressed = e->response_type == XCB_KEY_PRESS;
+            switch (ev->detail) {
+                case 0x09: return; // ESC
+                case 0x27:  // S
+                    pad_setbtn(&pad, PAD_BTN_START, ispressed);
+                    break;
+                case 0x34:  // Z
+                    pad_setbtn(&pad, PAD_BTN_A, ispressed);
+                    break;
+                case 0x35:  // X
+                    pad_setbtn(&pad, PAD_BTN_B, ispressed);
+                    break;
+                case 0x36:  // C
+                    pad_setbtn(&pad, PAD_BTN_C, ispressed);
+                    break;
+                case 0x62:
+                    pad_setbtn(&pad, PAD_BTN_UP, ispressed);
+                    break;
+                case 0x64:
+                    pad_setbtn(&pad, PAD_BTN_LEFT, ispressed);
+                    break;
+                case 0x66:
+                    pad_setbtn(&pad, PAD_BTN_RIGHT, ispressed);
+                    break;
+                case 0x68:
+                    pad_setbtn(&pad, PAD_BTN_DOWN, ispressed);
+                    break;
+            }
             break;
         }
         case XCB_EXPOSE: {
@@ -190,10 +244,16 @@ int main(int argc, char *argv[])
     }
     vdp_init(&vdp);
     vdp_changed = false;
+    ports_init(&ports);
+    ports.portA_rd = iord_pad;
+    pad_init(&pad, &ports.THA);
     m->iord[VDP_CMD_PORT] = iord_vdp_cmd;
     m->iord[VDP_DATA_PORT] = iord_vdp_data;
+    m->iord[PORTS_IO1_PORT] = iord_ports_io1;
+    m->iord[PORTS_IO2_PORT] = iord_ports_io2;
     m->iowr[VDP_CMD_PORT] = iowr_vdp_cmd;
     m->iowr[VDP_DATA_PORT] = iowr_vdp_data;
+    m->iowr[PORTS_CTL_PORT] = iowr_ports_ctl;
     conn = xcb_connect(NULL, NULL);
     screen = xcb_setup_roots_iterator(xcb_get_setup(conn)).data;
     create_window();

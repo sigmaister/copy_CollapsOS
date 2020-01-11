@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 #include <stdbool.h>
 #include "libz80/z80.h"
@@ -18,6 +19,12 @@ typedef struct {
     IORD iord[0x100];
     IOWR iowr[0x100];
 } Machine;
+
+typedef enum {
+    TRI_HIGH,
+    TRI_LOW,
+    TRI_HIGHZ
+} Tristate;
 
 Machine* emul_init();
 bool emul_step();
