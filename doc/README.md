@@ -17,3 +17,4 @@ Most of that information can already be found elsewhere, but the goal is to have
 the most vital documentation in one single place.
 
 * [TI-83+/TI-84+](ti8x.md)
+* [TRS-80 model 4p](trs80-4p.md)
