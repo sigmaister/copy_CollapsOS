@@ -56,7 +56,7 @@ The first step here is ensuring that you have bi-directional serial
 communication. To do this, first prepare your TRS-80:
 
     set *cl to com
-    setcomm (word=8, parity=no)
+    setcomm (word=8,parity=no)
 
 The first line loads the communication driver from the `COM/DRV` file on the
 TRSDOS disk and binds it to `*cl`, the name generally used for serial
@@ -84,15 +84,18 @@ As stated in the overview, we need a program on the TRS-80 that:
 That program has already been written, it's in `recv.asm` in this folder. You
 can get the binary with `zasm < recv.asm | xxd`.
 
+It's designed to run from offset `0x4000` and write received data in `0x3000`
+and onwards.
+
 How will you punch that in? The `debug` program! This very useful piece of
 software is supplied in TRSDOS. To invoke it, first run `debug (on)` and then
 press the `BREAK` key. You'll get the debug interface which allows you to punch
-in any data in any memory address. Let's use `0x3000` which is the offset for
-user apps.
+in any data in any memory address. Let's use `0x4000` which is the offset it's
+designed for.
 
-First, display the `0x3000-0x303f` range with the `d3000<space>` command (I
+First, display the `0x4000-0x403f` range with the `d4000<space>` command (I
 always press Enter by mistake, but it's space you need to press). Then, you can
-begin punching in with `h3000<space>`. This will bring up a visual indicator of
+begin punching in with `h4000<space>`. This will bring up a visual indicator of
 the address being edited. Punch in the stuff with a space in between each byte
 and end the edit session with `x`.
 
@@ -111,12 +114,13 @@ to `*cl`?  that's it. But that's not our DCB.
 To get your DBC, go explore that memory area. Right after the part where there's
 the `*cl` string, there's the DCB address (little endian). On my setup, the
 driver was loaded in `0x0ff4` and the DCB address was 8 bytes after that, with
-a value of `0x0238`.
+a value of `0x0238`. Don't forget that z80 is little endian. `38` will come
+before `02`.
 
 ## Sending data through the RS-232 port
 
 Once you're finished punching your program in memory, you can run it with
-`g3000<enter>` (not space). Because it's an infinite loop, your screen will
+`g4000<enter>` (not space). Because it's an infinite loop, your screen will
 freeze. You can start sending your data.
 
 To that end, there's the `tools/pingpong` program. It takes a device and a
@@ -140,5 +144,19 @@ that it's finished sending. This will end the infinite loop on the TRS-80 side
 and return. That should bring you back to a refreshed debug display and you
 should see your sent content in memory, at the specified address (`0x3040` if
 you didn't change it).
+
+## Saving that program for later
+
+If you want to save yourself typing for later sessions, why not save the
+program you've painfully typed to disk? TRSDOS enables that easily. Let's say
+that you typed your program at `0x4000` and that you want to save it to
+`RECV/CMD` on your second floppy drive, you'd do:
+
+    dump recv/cmd:1 (start=x'4000',end=x'4030',tra='4000')
+
+A memory range dumped this way will be re-loaded at the same offset through
+`load recv/cmd:1`. Even better, `TRA` indicates when to jump after load when
+using the `RUN` command. Therefore, you can avoid all this work above in later
+sessions by simply typing `recv` in the DOS prompt.
 
 **WIP: that's where we are for now...**

@@ -1,4 +1,4 @@
-	ld	hl, 0x3040	; memory address where to put contents.
+	ld	hl, 0x3000	; memory address where to put contents.
 loop:
 	ld	a, 0x03		; @GET
 	ld	de, 0xffff	; replace with *CL's DCB addr

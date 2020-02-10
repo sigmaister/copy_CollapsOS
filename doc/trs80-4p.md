@@ -62,7 +62,7 @@
     84-87-Wr    Page    Fix upr Memory  Memory  Invert  80/64   Select  Select
                         mem     bit 1   bit 0   video           Bit 1   Bit 0
 
-## Memory map
+## System memory map
 
 ### Memory map 1 - model III mode
 
@@ -94,6 +94,15 @@
 
     0000-7fff       RAM (32K) bank 1
     8000-ffff       RAM (32K) bank 2
+
+## TRSDOS memory map
+
+    0000-25ff       Reserved for TRSDOS operations
+    2600-2fff       Overlay area
+    3000-HIGH       Free to use
+    HIGH-ffff       Drivers, filters, etc
+
+    Use `MEMORY` command to know value of `HIGH`
 
 ## Supervisor calls
 
