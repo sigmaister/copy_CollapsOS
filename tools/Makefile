@@ -14,7 +14,13 @@ all: $(TARGETS)
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGETS): $@.c $(OBJS)
+$(MEMDUMP_TGT): $(MEMDUMP_TGT).c
+$(BLKDUMP_TGT): $(BLKDUMP_TGT).c
+$(UPLOAD_TGT): $(UPLOAD_TGT).c
+$(FONTCOMPILE_TGT): $(FONTCOMPILE_TGT).c
+$(TTYSAFE_TGT): $(TTYSAFE_TGT).c
+$(PINGPONG_TGT): $(PINGPONG_TGT).c
+$(TARGETS): $(OBJS)
 	$(CC) $(CFLAGS) $@.c $(OBJS) -o $@
 
 .PHONY: clean
