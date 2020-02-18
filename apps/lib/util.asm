@@ -20,10 +20,10 @@ toWS:
 ; Set Z if non-WS found, unset if end-of-string.
 rdWS:
 	ld	a, (hl)
-	call	isWS
-	jr	nz, .ok
 	cp	0x01	; if a is null, carries and unsets z
 	ret	c
+	call	isWS
+	jr	nz, .ok
 	inc	hl
 	jr	rdWS
 .ok:
@@ -97,8 +97,8 @@ strlen:
 	ld	c, a
 	cpir		; advances HL to the char after the null
 .found:
-	; How many char do we have? We have strlen=(NEG BC)-1, since BC started 
-	; at 0 and decreased at each CPIR loop. In this routine, 
+	; How many char do we have? We have strlen=(NEG BC)-1, since BC started
+	; at 0 and decreased at each CPIR loop. In this routine,
 	; we stay in the 8-bit realm, so C only.
 	add 	hl, bc
 	sub	c
