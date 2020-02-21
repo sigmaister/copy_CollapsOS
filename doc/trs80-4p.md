@@ -210,3 +210,34 @@ always successful.
     66  BANK    B=func C=bank       BZ   Memory bank use
     67  BREAK   HL=vector           HL   Set Break vector
     68  SOUND   B=func              -    Sound generation
+
+## Personal reverse engineering
+
+This section below contains notes about my personal reverse engineering efforts.
+I'm not an expert in this, and also, I might not be aware of existing, better
+documentation making this information useless.
+
+### Bootable disk
+
+I'm wondering what makes a disk bootable to the TRS-80 and how it boots it.
+When I read the raw contents of the first sector of the first cylinder of the
+TRS-DOS disk, I see that, except for the 3 first bytes (`00fe14`), the rest of
+the contents is exactly the same as what is at memory offset `0x0203`, which
+seems to indicates that the bootloader simply loads that contents to memory,
+leaving the first 3 bytes of RAM to either random contents or some predefined
+value (I have `f8f800`).
+
+A non-bootable disk starts with `00fe14`, but we can see the message "Cannot
+boot, DA TA DISK!" at offset `0x2a`.
+
+I'm not sure what `00fe14` can mean. Disassembled, it's
+`nop \ rst 0x28 \ ld b, c`. It makes sense that booting would start with a
+service call with parameters set by the bootloader (so we don't know what that
+service call actually is), but I'm not sure it's what happens.
+
+I don't see any reference to the `0x2a` offset in the data from the first
+sector, but anyways, booting with the non-bootable disk doesn't actually prints
+the aformentioned message, so it might be a wild goose chase.
+
+In any case, making a disk bootable isn't a concern as long as Collapse OS uses
+the TRS-DOS drivers.
