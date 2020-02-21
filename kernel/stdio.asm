@@ -76,6 +76,9 @@ printnstr:
 	pop	bc
 	ret
 
+; Prints a line terminator. This routine is a bit of a misnomer because it's
+; designed to be overridable to, for example, printlf, but we'll live with it
+; for now...
 printcrlf:
 	push	af
 	ld	a, CR

@@ -151,6 +151,10 @@ A memory range dumped this way will be re-loaded at the same offset through
 using the `RUN` command. Therefore, you can avoid all this work above in later
 sessions by simply typing `recv` in the DOS prompt.
 
+Note that you might want to turn `debug` off for these commands to run. I'm not
+sure why, but when the debugger is on, launching the command triggers the
+debugger.
+
 ## Sending binary through the RS-232 port
 
 Once you're finished punching your program in memory, you can run it with
@@ -185,6 +189,12 @@ you didn't change it).
 If there was no error during `pingpong`, the content should be exact.
 Nevertheless, I recommend that you manually validate a few bytes using TRSDOS
 debugger before carrying on.
+
+*debugging tip*: Sometimes, the communication channel can be a bit stubborn and
+always fail, as if some leftover data was consistently blocking the channel. It
+would cause a data mismatch at the very beginning of the process, all the time.
+What I do in these cases is start a `COMM *cl` session on one side and a screen
+session on the other, type a few characters, and try `pingpong` again.
 
 ## Running Collapse OS
 

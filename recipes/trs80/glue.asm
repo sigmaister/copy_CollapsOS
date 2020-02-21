@@ -18,6 +18,9 @@
 .equ	STDIO_PUTC	trs80PutC
 .inc "stdio.asm"
 
+; The TRS-80 generates a double line feed if we give it both CR and LF.
+.equ	printcrlf	printcr
+
 ; *** BASIC ***
 
 ; RAM space used in different routines for short term processing.
@@ -43,5 +46,12 @@ init:
 	ld	sp, RAMEND
 	call	basInit
 	jp	basStart
+
+printcr:
+	push	af
+	ld	a, CR
+	call	STDIO_PUTC
+	pop	af
+	ret
 
 RAMSTART:
