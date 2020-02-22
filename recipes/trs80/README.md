@@ -204,4 +204,16 @@ get a usable Collapse OS prompt!
 Like with the `recv` program, nothing stops you from dumping that binary to a
 floppy.
 
-Have fun!
+## Configuration
+
+In addition to the generic basic shell, this build of Collapse OS has support
+for floppy drive `:1` as a block device (mapped to device `0`). Block device
+commands work as expected.
+
+In addition to this, there is a `flush` command to ensure that dirty buffers are
+synced to disk. Make sure you run this after a write operation or before
+swapping disks.
+
+There is also a custom `recv` command that does the same "ping pong" as in
+`recv.asm`, but once. It puts the result in `A`. This can be useful to send down
+a raw CFS: you just need a while loop that repeatedly call `recv:putb a`.
