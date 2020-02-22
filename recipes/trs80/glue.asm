@@ -6,14 +6,23 @@
 	jp	init
 
 .inc "err.h"
+.inc "blkdev.h"
 .inc "ascii.h"
 .inc "core.asm"
 .inc "str.asm"
 
 .inc "trs80/kbd.asm"
 .inc "trs80/vid.asm"
+.equ	FLOPPY_RAMSTART	RAMSTART
+.inc "trs80/floppy.asm"
 
-.equ	STDIO_RAMSTART	RAMSTART
+.equ	BLOCKDEV_RAMSTART	FLOPPY_RAMEND
+.equ	BLOCKDEV_COUNT		1
+.inc "blockdev.asm"
+; List of devices
+.dw	floppyGetB, floppyPutB
+
+.equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
 .equ	STDIO_GETC	trs80GetC
 .equ	STDIO_PUTC	trs80PutC
 .inc "stdio.asm"
@@ -39,12 +48,21 @@
 .inc "basic/var.asm"
 .equ	BUF_RAMSTART	VAR_RAMEND
 .inc "basic/buf.asm"
+.inc "basic/blk.asm"
 .equ	BAS_RAMSTART	BUF_RAMEND
 .inc "basic/main.asm"
 
 init:
 	ld	sp, RAMEND
+	call	floppyInit
 	call	basInit
+	ld	hl, basFindCmdExtra
+	ld	(BAS_FINDHOOK), hl
+
+	xor	a
+	ld	de, BLOCKDEV_SEL
+	call	blkSel
+
 	jp	basStart
 
 printcr:
@@ -53,5 +71,9 @@ printcr:
 	call	STDIO_PUTC
 	pop	af
 	ret
+
+basFindCmdExtra:
+	ld	hl, basBLKCmds
+	jp	basFindCmd
 
 RAMSTART:
