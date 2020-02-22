@@ -262,3 +262,21 @@ variables. If `A` is nonzero, an error is considered to have occurred.
 
 It doesn't do var-to-register transfers on input, however. Only HL is passed
 through (with the contents of the command line).
+
+### sdc
+
+`sdc.asm` provides SD card related commands:
+
+`sdci`: initializes a SD card for operation. This should be ran whenever you
+insert a new SD card.
+
+`sdcf`: flushes current buffers to the SD card. This is done automatically, but
+only on a "needs to flush" basis, that is, when dirty buffers need to be
+swapped. This command ensures that all buffers are clean (not dirty).
+
+### floppy
+
+`floppy.asm` provides TRS-80 floppy related commands:
+
+`flush`: Like `sdcf` above, but for floppies. Additionally, it invalidates all
+buffers, allowing you to swap disks and then read proper contents.

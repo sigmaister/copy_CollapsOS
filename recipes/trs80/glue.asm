@@ -49,6 +49,7 @@
 .equ	BUF_RAMSTART	VAR_RAMEND
 .inc "basic/buf.asm"
 .inc "basic/blk.asm"
+.inc "basic/floppy.asm"
 .equ	BAS_RAMSTART	BUF_RAMEND
 .inc "basic/main.asm"
 
@@ -73,6 +74,9 @@ printcr:
 	ret
 
 basFindCmdExtra:
+	ld	hl, basFloppyCmds
+	call	basFindCmd
+	ret	z
 	ld	hl, basBLKCmds
 	jp	basFindCmd
 

@@ -419,7 +419,7 @@ sdcReadBlk:
 ; A returns 0 in A on success (with Z set), non-zero (with Z unset) on error.
 sdcWriteBlk:
 	push	ix
-	ld	ix, (SDC_BUFPTR)	; HL points to sector LSB
+	ld	ix, (SDC_BUFPTR)	; IX points to sector LSB
 	xor	a
 	cp	(ix+2)			; dirty flag
 	pop	ix

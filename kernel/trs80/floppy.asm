@@ -33,10 +33,25 @@
 
 ; *** Code ***
 floppyInit:
-	; Make sure that both buffers are flagged as invalid
-	ld	a, 0xff
+	; Make sure that both buffers are flagged as invalid and not dirty
+	xor	a
+	ld	(FLOPPY_BUFDIRTY1), a
+	ld	(FLOPPY_BUFDIRTY2), a
+	dec	a
 	ld	(FLOPPY_BUFSEC1), a
 	ld	(FLOPPY_BUFSEC2), a
+	ret
+
+; Returns whether D (cylinder) and E (sector) are in proper range.
+; Z for success.
+_floppyInRange:
+	ld	a, e
+	cp	FLOPPY_SEC_PER_CYL
+	jp	nc, unsetZ
+	ld	a, d
+	cp	FLOPPY_MAX_CYL
+	jp	nc, unsetZ
+	xor	a	; set Z
 	ret
 
 ; Read sector index specified in E and cylinder specified in D and place the
@@ -44,12 +59,8 @@ floppyInit:
 ; If the operation is a success, updates buffer's sector to the value of DE.
 ; Z on success
 floppyRdSec:
-	ld	a, e
-	cp	FLOPPY_SEC_PER_CYL
-	jp	nc, unsetZ
-	ld	a, d
-	cp	FLOPPY_MAX_CYL
-	jp	nc, unsetZ
+	call	_floppyInRange
+	ret	nz
 
 	push	bc
 	push	hl
@@ -64,19 +75,48 @@ floppyRdSec:
 	inc	hl
 	ld	(hl), d		; cylinder
 	inc	hl		; dirty
-	xor	a
-	ld	(hl), a		; clear dirty
 	inc	hl		; data
 	ld	a, 0x31		; @RDSEC
-	rst	0x28		; sets Z appropriately
+	rst	0x28		; sets proper Z
 .end:
 	pop	hl
 	pop	bc
 	ret
 
-; not implemented yet.
+; Write the contents of buffer where (FLOPPY_BUFPTR) points to in sector
+; associated to it. Unsets the the buffer's dirty flag on success.
+; Z on success
 floppyWrSec:
+	push	ix
+	ld	ix, (FLOPPY_BUFPTR)	; IX points to sector
 	xor	a
+	cp	(ix+2)			; dirty flag
+	pop	ix
+	ret	z			; don't write if dirty flag is zero
+
+	push	hl
+	push	de
+	push	bc
+	ld	hl, (FLOPPY_BUFPTR)	; sector
+	ld	e, (hl)
+	inc	hl			; cylinder
+	ld	d, (hl)
+	call	_floppyInRange
+	jr	nz, .end
+	ld	c, 1			; drive
+	ld	a, 0x28			; @DCSTAT
+	rst	0x28
+	jr	nz, .end
+	inc	hl			; dirty
+	xor	a
+	ld	(hl), a			; undirty the buffer
+	inc	hl			; data
+	ld	a, 0x35			; @WRSEC
+	rst	0x28			; sets proper Z
+.end:
+	pop	bc
+	pop	de
+	pop	hl
 	ret
 
 ; Considering the first 15 bits of EHL, select the most appropriate of our two
@@ -169,6 +209,21 @@ floppySync:
 	; to .end
 .end:
 	pop	de
+	ret
+
+; Flush floppy buffers if dirty and then invalidates them.
+; We invalidate them so that we allow the case where we swap disks after a
+; flush. If we didn't invalidate the buffers, reading a swapped disk after a
+; flush would yield data from the previous disk.
+floppyFlush:
+	ld	hl, FLOPPY_BUFSEC1
+	ld	(FLOPPY_BUFPTR), hl
+	call	floppyWrSec
+	ld	hl, FLOPPY_BUFSEC2
+	ld	(FLOPPY_BUFPTR), hl
+	call	floppyWrSec
+	call	floppyInit
+	xor	a		; ensure Z
 	ret
 
 ; *** blkdev routines ***
