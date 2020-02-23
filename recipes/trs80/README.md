@@ -214,6 +214,11 @@ In addition to this, there is a `flush` command to ensure that dirty buffers are
 synced to disk. Make sure you run this after a write operation or before
 swapping disks.
 
+On top of that, there's CFS support builtin. To enable a FS, type `fson` while
+the active block device is properly placed (you can initialize a new FS by
+writing `CFS\0\0\0\0` to the disk). If it doesn't error out, commands like
+`fls` and `fnew` will work. Don't forget to flush when you're finished :)
+
 There is also a custom `recv` command that does the same "ping pong" as in
 `recv.asm`, but once. It puts the result in `A`. This can be useful to send down
 a raw CFS: you just need a while loop that repeatedly call `recv:putb a`.
