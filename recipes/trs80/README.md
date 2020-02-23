@@ -102,20 +102,20 @@ As stated in the overview, we need a program on the TRS-80 that:
 That program has already been written, it's in `recv.asm` in this folder. You
 can get the binary with `zasm < recv.asm | xxd`.
 
-It's designed to run from offset `0x4000` and write received data in `0x3000`
+It's designed to run from offset `0x5000` and write received data in `0x3000`
 and onwards.
 
 How will you punch that in? The `debug` program! This very useful piece of
 software is supplied in TRSDOS. To invoke it, first run `debug (on)` and then
 press the `BREAK` key. You'll get the debug interface which allows you to punch
-in any data in any memory address. Let's use `0x4000` which is the offset it's
+in any data in any memory address. Let's use `0x5000` which is the offset it's
 designed for.
 
 For reference: to go back to the TRSDOS prompt, it's `o<return>`.
 
-First, display the `0x4000-0x403f` range with the `d4000<space>` command (I
+First, display the `0x5000-0x503f` range with the `d5000<space>` command (I
 always press Enter by mistake, but it's space you need to press). Then, you can
-begin punching in with `h4000<space>`. This will bring up a visual indicator of
+begin punching in with `h5000<space>`. This will bring up a visual indicator of
 the address being edited. Punch in the stuff with a space in between each byte
 and end the edit session with `x`.
 
@@ -141,10 +141,10 @@ before `02`.
 
 If you want to save yourself typing for later sessions, why not save the
 program you've painfully typed to disk? TRSDOS enables that easily. Let's say
-that you typed your program at `0x4000` and that you want to save it to
+that you typed your program at `0x5000` and that you want to save it to
 `RECV/CMD` on your second floppy drive, you'd do:
 
-    dump recv/cmd:1 (start=x'4000',end=x'4030',tra='4000')
+    dump recv/cmd:1 (start=x'5000',end=x'5030',tra='5000')
 
 A memory range dumped this way will be re-loaded at the same offset through
 `load recv/cmd:1`. Even better, `TRA` indicates when to jump after load when
@@ -158,7 +158,7 @@ debugger.
 ## Sending binary through the RS-232 port
 
 Once you're finished punching your program in memory, you can run it with
-`g4000<enter>` (not space). If you've saved it to disk, run `recv` instead.
+`g5000<enter>` (not space). If you've saved it to disk, run `recv` instead.
 Because it's an infinite loop, your screen will freeze. You can start sending
 your data.
 
@@ -222,3 +222,13 @@ writing `CFS\0\0\0\0` to the disk). If it doesn't error out, commands like
 There is also a custom `recv` command that does the same "ping pong" as in
 `recv.asm`, but once. It puts the result in `A`. This can be useful to send down
 a raw CFS: you just need a while loop that repeatedly call `recv:putb a`.
+
+## Assembling programs
+
+Running `make` will yield a `floppy.cfs` file that you can dump on a disk. This
+CFS contains a properly configured `zasm` as well as a test `hello.asm` file.
+
+By mounting this CFS (running `fson` with the active device properly placed),
+you can assemble and run a binary from `hello.asm` in the same way that you
+would in any CFS-enabled shell. You'll then see those sweet "Assembled from a
+TRS-80" words!

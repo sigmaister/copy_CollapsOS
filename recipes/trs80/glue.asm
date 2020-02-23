@@ -9,6 +9,21 @@
 .org	0x3000
 	jp	init
 
+; *** Jump Table ***
+	jp	strncmp
+	jp	upcase
+	jp	findchar
+	jp	printstr
+	jp	blkSet
+	jp	blkSel
+	jp	_blkGetB
+	jp	_blkPutB
+	jp	_blkSeek
+	jp	_blkTell
+	jp	fsFindFN
+	jp	fsOpen
+	jp	fsGetB
+
 .inc "err.h"
 .inc "blkdev.h"
 .inc "fs.h"
@@ -142,7 +157,9 @@ basFindCmdExtra:
 	call	basFindCmd
 	ret	z
 	ld	hl, .cmds
-	jp	basFindCmd
+	call	basFindCmd
+	ret	z
+	jp	basPgmHook
 
 .cmds:
 	.db	"recv", 0
