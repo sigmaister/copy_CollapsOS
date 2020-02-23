@@ -26,6 +26,7 @@ jp	_blkPutB
 jp	_blkSeek
 jp	_blkTell
 jp	printstr
+jp	printcrlf
 
 .inc "core.asm"
 .inc "str.asm"

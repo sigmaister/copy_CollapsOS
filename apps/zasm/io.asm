@@ -287,11 +287,5 @@ _ioIncBlk:
 
 ; call printstr followed by newline
 ioPrintLN:
-	push	hl
 	call	printstr
-	ld	hl, .sCRLF
-	call	printstr
-	pop	hl
-	ret
-.sCRLF:
-	.db	0x0a, 0x0d, 0
+	jp	printcrlf

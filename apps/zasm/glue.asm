@@ -31,6 +31,7 @@
 ; _blkSeek
 ; _blkTell
 ; printstr
+; printcrlf
 
 .inc "user.h"
 

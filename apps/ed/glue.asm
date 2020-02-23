@@ -1,6 +1,4 @@
 ; *** Requirements ***
-; BLOCKDEV_SIZE
-; FS_HANDLE_SIZE
 ; _blkGetB
 ; _blkPutB
 ; _blkSeek
