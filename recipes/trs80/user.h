@@ -3,6 +3,7 @@
 .equ    upcase      @+3
 .equ    findchar    @+3
 .equ    printstr    @+3
+.equ    printcrlf   @+3
 .equ    blkSet      @+3
 .equ    blkSel      @+3
 .equ    _blkGetB    @+3
@@ -12,3 +13,7 @@
 .equ    fsFindFN    @+3
 .equ    fsOpen      @+3
 .equ    fsGetB      @+3
+.equ    fsPutB      @+3
+.equ    fsSetSize   @+3
+.equ    stdioPutC   @+3
+.equ    stdioReadLine @+3

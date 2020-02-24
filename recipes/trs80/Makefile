@@ -1,4 +1,4 @@
-SHELLAPPS = zasm
+SHELLAPPS = zasm ed
 APPTARGETS = ${SHELLAPPS:%=cfsin/%} 
 CFSTARGETS = $(APPTARGETS) cfsin/user.h
 TARGET = os.bin

@@ -9,11 +9,16 @@
 .org	0x3000
 	jp	init
 
+; The TRS-80 generates a double line feed if we give it both CR and LF.
+; Has to be defined before the jump table.
+.equ	printcrlf	printcr
+
 ; *** Jump Table ***
 	jp	strncmp
 	jp	upcase
 	jp	findchar
 	jp	printstr
+	jp	printcrlf
 	jp	blkSet
 	jp	blkSel
 	jp	_blkGetB
@@ -23,6 +28,10 @@
 	jp	fsFindFN
 	jp	fsOpen
 	jp	fsGetB
+	jp	fsPutB
+	jp	fsSetSize
+	jp	stdioPutC
+	jp	stdioReadLine
 
 .inc "err.h"
 .inc "blkdev.h"
@@ -52,9 +61,6 @@
 .equ	FS_RAMSTART	STDIO_RAMEND
 .equ	FS_HANDLE_COUNT	2
 .inc "fs.asm"
-
-; The TRS-80 generates a double line feed if we give it both CR and LF.
-.equ	printcrlf	printcr
 
 ; *** BASIC ***
 
