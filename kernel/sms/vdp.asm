@@ -17,22 +17,12 @@
 ;
 .equ	VDP_CTLPORT	0xbf
 .equ	VDP_DATAPORT	0xbe
-
-; *** Variables ***
-;
-; Row of cursor
-.equ	VDP_ROW		VDP_RAMSTART
-; Line of cursor
-.equ	VDP_LINE	@+1
-.equ	VDP_RAMEND	@+1
+.equ	VDP_COLS	32
+.equ	VDP_ROWS	24
 
 ; *** Code ***
 
 vdpInit:
-	xor	a
-	ld	(VDP_ROW), a
-	ld	(VDP_LINE), a
-
 	ld	hl, vdpInitData
 	ld	b, vdpInitDataEnd-vdpInitData
 	ld	c, VDP_CTLPORT
@@ -107,19 +97,30 @@ vdpInit:
 	out	(VDP_CTLPORT), a
 	ret
 
-; Spits char set in A at current cursor position. Doesn't move the cursor.
-; A is a "sega" char
-vdpSpitC:
+; Convert ASCII char in A into a tile index corresponding to that character.
+; When a character is unknown, returns 0x5e (a '~' char).
+vdpConv:
+	; The font is organized to closely match ASCII, so this is rather easy.
+	; We simply subtract 0x20 from incoming A
+	sub	0x20
+	cp	0x5f
+	ret	c		; A < 0x5f, good
+	ld	a, 0x5e
+	ret
+
+; grid routine. Sets cell at row D and column E to character A
+vdpSetCell:
+	call	vdpConv
 	; store A away
 	ex	af, af'
 	push	bc
-	ld	b, 0		; we push rotated bits from VDP_LINE into B so
+	ld	b, 0		; we push rotated bits from D into B so
 				; that we'll already have our low bits from the
 				; second byte we'll send right after.
 	; Here, we're fitting a 5-bit line, and a 5-bit column on 16-bit, right
 	; aligned. On top of that, our righmost bit is taken because our target
 	; cell is 2-bytes wide and our final number is a VRAM address.
-	ld	a, (VDP_LINE)
+	ld	a, d
 	sla	a		; should always push 0, so no pushing in B
 	sla	a		; same
 	sla	a		; same
@@ -127,9 +128,9 @@ vdpSpitC:
 	sla	a \ rl b
 	sla	a \ rl b
 	ld	c, a
-	ld	a, (VDP_ROW)
+	ld	a, e
 	sla	a		; A * 2
-	or	c		; bring in two low bits from VDP_LINE into high
+	or	c		; bring in two low bits from D into high
 				; two bits
 	out	(VDP_CTLPORT), a
 	ld	a, b		; 3 low bits set
@@ -140,147 +141,6 @@ vdpSpitC:
 	; We're ready to send our data now. Let's go
 	ex	af, af'
 	out	(VDP_DATAPORT), a
-	ret
-
-vdpPutC:
-	; Then, let's place our cursor. We need to first send our LSB, whose
-	; 6 low bits contain our row*2 (each tile is 2 bytes wide) and high
-	; 2 bits are the two low bits of our line
-	; special case: line feed, carriage return, back space
-	cp	LF
-	jr	z, vdpLF
-	cp	CR
-	jr	z, vdpCR
-	cp	BS
-	jr	z, vdpBS
-
-	push	af
-
-	; ... but first, let's convert it.
-	call	vdpConv
-
-	; and spit it on screen
-	call	vdpSpitC
-
-	; Move cursor. The screen is 32x24
-	ld	a, (VDP_ROW)
-	cp	31
-	jr	z, .incline
-	; We just need to increase row
-	inc	a
-	ld	(VDP_ROW), a
-
-	pop	af
-	ret
-.incline:
-	; increase line and start anew
-	call	vdpCR
-	call	vdpLF
-	pop	af
-	ret
-
-vdpCR:
-	call	vdpClrPos
-	push	af
-	xor	a
-	ld	(VDP_ROW), a
-	pop	af
-	ret
-
-vdpLF:
-	; we don't call vdpClrPos on LF because we expect it to be preceded by
-	; a CR, which already cleared the pos. If we cleared it now, we would
-	; clear the first char of the line.
-	push	af
-	ld	a, (VDP_LINE)
-	call	.incA
-	call	vdpClrLine
-	; Also clear the line after this one
-	push	af		; --> lvl 1
-	call	.incA
-	call	vdpClrLine
-	pop	af		; <-- lvl 1
-	ld	(VDP_LINE), a
-	pop	af
-	ret
-.incA:
-	inc	a
-	cp	24
-	ret	nz	; no rollover
-	; bottom reached, roll over to top of screen
-	xor	a
-	ret
-
-vdpBS:
-	call	vdpClrPos
-	push	af
-	ld	a, (VDP_ROW)
-	or	a
-	jr	z, .lineup
-	dec	a
-	ld	(VDP_ROW), a
-	pop	af
-	ret
-.lineup:
-	; end of line
-	ld	a, 31
-	ld	(VDP_ROW), a
-	; we have to go one line up
-	ld	a, (VDP_LINE)
-	or	a
-	jr	z, .nowrap
-	; We have to wrap to the bottom of the screen
-	ld	a, 24
-.nowrap:
-	dec	a
-	ld	(VDP_LINE), a
-	pop	af
-	ret
-
-; Clear tile under cursor
-vdpClrPos:
-	push	af
-	xor	a		; space
-	call	vdpSpitC
-	pop	af
-	ret
-
-; Clear line number A
-vdpClrLine:
-	; see comments in vdpSpitC for VRAM details.
-	push	af
-	; first, get the two LSB at MSB pos.
-	rrca \ rrca
-	push	af	; --> lvl 1
-	and	0b11000000
-	; That's our first address byte
-	out	(VDP_CTLPORT), a
-	pop	af	; <-- lvl 1
-	; Then, get those 3 other bits at LSB pos. Our popped A has already
-	; done 2 RRCA, which means that everything is in place.
-	and	0b00000111
-	or	0x78
-	out	(VDP_CTLPORT), a
-	; We're at the right place. Let's just spit 32*2 null bytes
-	xor	a
-	push	bc	; --> lvl 1
-	ld	b, 64
-.loop:
-	out	(VDP_DATAPORT), a
-	djnz	.loop
-	pop	bc	; <-- lvl 1
-	pop	af
-	ret
-
-; Convert ASCII char in A into a tile index corresponding to that character.
-; When a character is unknown, returns 0x5e (a '~' char).
-vdpConv:
-	; The font is organized to closely match ASCII, so this is rather easy.
-	; We simply subtract 0x20 from incoming A
-	sub	0x20
-	cp	0x5f
-	ret	c		; A < 0x5f, good
-	ld	a, 0x5e
 	ret
 
 ; VDP initialisation data

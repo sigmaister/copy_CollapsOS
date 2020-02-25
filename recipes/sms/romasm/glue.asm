@@ -47,12 +47,16 @@
 .equ	KBD_FETCHKC	smskbdFetchKCB
 .inc "kbd.asm"
 
-.equ	VDP_RAMSTART	KBD_RAMEND
 .inc "sms/vdp.asm"
+.equ	GRID_RAMSTART	KBD_RAMEND
+.equ	GRID_COLS	VDP_COLS
+.equ	GRID_ROWS	VDP_ROWS
+.equ	GRID_SETCELL	vdpSetCell
+.inc "grid.asm"
 
-.equ	STDIO_RAMSTART	VDP_RAMEND
+.equ	STDIO_RAMSTART	GRID_RAMEND
 .equ	STDIO_GETC	kbdGetC
-.equ	STDIO_PUTC	vdpPutC
+.equ	STDIO_PUTC	gridPutC
 .inc "stdio.asm"
 
 .equ	MMAP_START	0xd700
@@ -124,6 +128,7 @@ init:
 	call	fsOn
 
 	call	kbdInit
+	call	gridInit
 	call	vdpInit
 
 	call	basInit
@@ -165,7 +170,7 @@ f1PutB:
 	ld	ix, FS_HANDLES+FS_HANDLE_SIZE
 	jp	fsPutB
 
-; last time I checked, PC at this point was 0x1e92. Let's give us a nice margin
+; last time I checked, PC at this point was 0x128f. Let's give us a nice margin
 ; for the start of ed.
 .fill 0x1f00-$
 .bin "ed.bin"

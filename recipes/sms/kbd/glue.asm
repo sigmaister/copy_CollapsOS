@@ -18,12 +18,16 @@
 .equ	KBD_FETCHKC	smskbdFetchKCB
 .inc "kbd.asm"
 
-.equ	VDP_RAMSTART	KBD_RAMEND
 .inc "sms/vdp.asm"
+.equ	GRID_RAMSTART	KBD_RAMEND
+.equ	GRID_COLS	VDP_COLS
+.equ	GRID_ROWS	VDP_ROWS
+.equ	GRID_SETCELL	vdpSetCell
+.inc "grid.asm"
 
-.equ	STDIO_RAMSTART	VDP_RAMEND
+.equ	STDIO_RAMSTART	GRID_RAMEND
 .equ	STDIO_GETC	kbdGetC
-.equ	STDIO_PUTC	vdpPutC
+.equ	STDIO_PUTC	gridPutC
 .inc "stdio.asm"
 
 ; *** BASIC ***
@@ -64,6 +68,7 @@ init:
 	out	(0x3f), a
 
 	call	kbdInit
+	call	gridInit
 	call	vdpInit
 	call	basInit
 	jp	basStart

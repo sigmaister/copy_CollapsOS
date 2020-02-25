@@ -16,10 +16,13 @@ Launch the emulator with `./sms /path/to/rom` (you can use the binary from the
 This will show a window with the screen's content on it. The mappings to the
 pad are:
 
-* Arrows
-* Z --> A
-* X --> B
-* C --> C
-* S --> Start
+* W --> Up
+* A --> Left
+* S --> Down
+* D --> Right
+* H --> A
+* J --> B
+* K --> C
+* L --> Start
 
 Press ESC to quit.

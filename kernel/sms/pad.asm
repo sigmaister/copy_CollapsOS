@@ -181,8 +181,7 @@ padGetC:
 	; no action button pressed, but because our pad status changed, update
 	; VDP before looping.
 	ld	a, (PAD_SELCHR)
-	call	vdpConv
-	call	vdpSpitC
+	call	gridSetCur
 	jp	padGetC
 .return:
 	ld	a, LF

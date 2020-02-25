@@ -180,29 +180,29 @@ void event_loop()
             bool ispressed = e->response_type == XCB_KEY_PRESS;
             switch (ev->detail) {
                 case 0x09: return; // ESC
-                case 0x27:  // S
-                    pad_setbtn(&pad, PAD_BTN_START, ispressed);
-                    break;
-                case 0x34:  // Z
-                    pad_setbtn(&pad, PAD_BTN_A, ispressed);
-                    break;
-                case 0x35:  // X
-                    pad_setbtn(&pad, PAD_BTN_B, ispressed);
-                    break;
-                case 0x36:  // C
-                    pad_setbtn(&pad, PAD_BTN_C, ispressed);
-                    break;
-                case 0x62:
+                case 0x19: // W
                     pad_setbtn(&pad, PAD_BTN_UP, ispressed);
                     break;
-                case 0x64:
+                case 0x26: // A
                     pad_setbtn(&pad, PAD_BTN_LEFT, ispressed);
                     break;
-                case 0x66:
+                case 0x27: // S
+                    pad_setbtn(&pad, PAD_BTN_DOWN, ispressed);
+                    break;
+                case 0x28: // D
                     pad_setbtn(&pad, PAD_BTN_RIGHT, ispressed);
                     break;
-                case 0x68:
-                    pad_setbtn(&pad, PAD_BTN_DOWN, ispressed);
+                case 0x2b:  // H
+                    pad_setbtn(&pad, PAD_BTN_A, ispressed);
+                    break;
+                case 0x2c:  // J
+                    pad_setbtn(&pad, PAD_BTN_B, ispressed);
+                    break;
+                case 0x2d:  // K
+                    pad_setbtn(&pad, PAD_BTN_C, ispressed);
+                    break;
+                case 0x2e:  // L
+                    pad_setbtn(&pad, PAD_BTN_START, ispressed);
                     break;
             }
             break;

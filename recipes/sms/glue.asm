@@ -16,12 +16,16 @@
 .equ	PAD_RAMSTART	RAMSTART
 .inc "sms/pad.asm"
 
-.equ	VDP_RAMSTART	PAD_RAMEND
 .inc "sms/vdp.asm"
+.equ	GRID_RAMSTART	PAD_RAMEND
+.equ	GRID_COLS	VDP_COLS
+.equ	GRID_ROWS	VDP_ROWS
+.equ	GRID_SETCELL	vdpSetCell
+.inc "grid.asm"
 
-.equ	STDIO_RAMSTART	VDP_RAMEND
+.equ	STDIO_RAMSTART	GRID_RAMEND
 .equ	STDIO_GETC	padGetC
-.equ	STDIO_PUTC	vdpPutC
+.equ	STDIO_PUTC	gridPutC
 .inc "stdio.asm"
 
 ; *** BASIC ***
@@ -51,6 +55,7 @@ init:
 
 	ld	sp, RAMEND
 
+	call	gridInit
 	call	padInit
 	call	vdpInit
 	call	basInit
