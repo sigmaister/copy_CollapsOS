@@ -1,4 +1,4 @@
-.org    0x5800
+.org    0x6100
 .equ    strncmp     0x3003
 .equ    upcase      @+3
 .equ    findchar    @+3

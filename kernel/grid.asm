@@ -12,8 +12,10 @@
 ; can access those cells by their (X, Y) address. In addition to this, we have
 ; the concept of an active cursor, which will be indicated visually if possible.
 ;
-; Additionally, this module provides a PutC routine, suitable for plugging into
-; stdio.
+; This module provides PutC and GetC routines, suitable for plugging into stdio.
+; PutC, for obvious reasons, GetC, for less obvious reasons: We need to wrap
+; GetC because we need to update the cursor before calling actual GetC, but
+; also, because we need to know when a bulk update ends.
 ;
 ; *** Defines ***
 ;
@@ -21,7 +23,9 @@
 ; GRID_ROWS: Number of rows in the grid
 ; GRID_SETCELL: Pointer to routine that sets cell at row D and column E with
 ;               character in A. If C is nonzero, this cell must be displayed,
-;               if possible, as the cursor.
+;               if possible, as the cursor. This routine is never called with
+;		A < 0x20.
+; GRID_GETC: Routine that gridGetC will wrap around.
 ;
 ; *** Consts ***
 .equ	GRID_SIZE	GRID_COLS*GRID_ROWS
@@ -31,6 +35,10 @@
 .equ	GRID_CURX	GRID_RAMSTART
 ; Cursor's row
 .equ	GRID_CURY	@+1
+; Whether we scrolled recently. We don't refresh the screen immediately when
+; scrolling in case we have many lines being spit at once (refreshing the
+; display is then very slow). Instead, we wait until the next gridGetC call
+.equ	GRID_SCROLLED	@+1
 ; Grid's in-memory buffer of the contents on screen. Because we always push to
 ; display right after a change, this is almost always going to be a correct
 ; representation of on-screen display.
@@ -53,7 +61,7 @@ _gridPlaceCell:
 	ld	hl, GRID_BUF
 	ld	a, d
 	or	a
-	ret	z
+	jr	z, .setcol
 	push	de		; --> lvl 1
 	ld	de, GRID_COLS
 .loop:
@@ -61,9 +69,17 @@ _gridPlaceCell:
 	dec	a
 	jr	nz, .loop
 	pop	de		; <-- lvl 1
+.setcol:
 	; We're at the proper row, now let's advance to cell
 	ld	a, e
 	jp	addHL
+
+; Ensure that A >= 0x20
+_gridAdjustA:
+	cp	0x20
+	ret	nc
+	ld	a, 0x20
+	ret
 
 ; Push row D in the buffer onto the screen.
 gridPushRow:
@@ -78,6 +94,7 @@ gridPushRow:
 	ld	b, GRID_COLS
 .loop:
 	ld	a, (hl)
+	call	_gridAdjustA
 	; A, C, D and E have proper values
 	call	GRID_SETCELL
 	inc	hl
@@ -98,11 +115,10 @@ gridClrRow:
 	push	hl
 	ld	e, 0
 	call	_gridPlaceCell
-	xor	a
+	ld	a, ' '
 	ld	b, GRID_COLS
 	call	fill
 	call	gridPushRow
-
 	pop	hl
 	pop	de
 	pop	bc
@@ -131,6 +147,7 @@ gridSetCur:
 	call	_gridPlaceCell
 	pop	af \ push af	; <--> lvl 1
 	ld	(hl), a
+	call	_gridAdjustA
 	call	GRID_SETCELL
 	pop	af		; <-- lvl 1
 	pop	hl
@@ -166,19 +183,10 @@ gridLF:
 	push	de
 	push	af
 	ld	a, (GRID_CURY)
-	call	.incA
-	ld	d, a
-	call	gridClrRow
-	ld	(GRID_CURY), a
-	xor	a
-	ld	(GRID_CURX), a
-	pop	af
-	pop	de
-	ret
-.incA:
+	; increase A
 	inc	a
 	cp	GRID_ROWS
-	ret	nz	; no rollover
+	jr	nz, .noscroll
 	; bottom reached, stay on last line and scroll screen
 	push	hl
 	push	de
@@ -187,11 +195,21 @@ gridLF:
 	ld	hl, GRID_BUF+GRID_COLS
 	ld	bc, GRID_SIZE-GRID_COLS
 	ldir
+	ld	hl, GRID_SCROLLED
+	inc	(hl)			; mark as scrolled
 	pop	bc
 	pop	de
 	pop	hl
-	call	gridPushScr
 	dec	a
+.noscroll:
+	; A has been increased properly
+	ld	d, a
+	call	gridClrRow
+	ld	(GRID_CURY), a
+	xor	a
+	ld	(GRID_CURX), a
+	pop	af
+	pop	de
 	ret
 
 gridBS:
@@ -242,3 +260,16 @@ gridPutC:
 	call	gridLF
 	pop	af		; <-- lvl 1
 	ret
+
+gridGetC:
+	ld	a, (GRID_SCROLLED)
+	or	a
+	jr	z, .nopush
+	; We've scrolled recently, update screen
+	xor	a
+	ld	(GRID_SCROLLED), a
+	call	gridPushScr
+.nopush:
+	ld	a, ' '
+	call	gridSetCurH
+	jp	GRID_GETC

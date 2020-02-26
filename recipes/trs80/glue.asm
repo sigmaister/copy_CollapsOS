@@ -2,16 +2,12 @@
 .equ	RAMEND		0xcfff
 ; Address of the *CL driver. Same as in recv.asm
 .equ	COM_DRV_ADDR	0x0238
-; in sync with user.h. Last BAS_RAMEND: 0x5705
-.equ	USER_CODE	0x5800
+; in sync with user.h. Last BAS_RAMEND: 0x600b
+.equ	USER_CODE	0x6100
 
 ; Free memory in TRSDOS starts at 0x3000
 .org	0x3000
 	jp	init
-
-; The TRS-80 generates a double line feed if we give it both CR and LF.
-; Has to be defined before the jump table.
-.equ	printcrlf	printcr
 
 ; *** Jump Table ***
 	jp	strncmp
@@ -45,7 +41,14 @@
 .equ	FLOPPY_RAMSTART	RAMSTART
 .inc "trs80/floppy.asm"
 
-.equ	BLOCKDEV_RAMSTART	FLOPPY_RAMEND
+.equ	GRID_RAMSTART	FLOPPY_RAMEND
+.equ	GRID_ROWS	TRS80_ROWS
+.equ	GRID_COLS	TRS80_COLS
+.equ	GRID_SETCELL	trs80SetCell
+.equ	GRID_GETC	trs80GetC
+.equ	gridPushScr	fastPushScr
+.inc "grid.asm"
+.equ	BLOCKDEV_RAMSTART	GRID_RAMEND
 .equ	BLOCKDEV_COUNT		3
 .inc "blockdev.asm"
 ; List of devices
@@ -54,8 +57,9 @@
 .dw	blk2GetB, blk2PutB
 
 .equ	STDIO_RAMSTART	BLOCKDEV_RAMEND
-.equ	STDIO_GETC	trs80GetC
-.equ	STDIO_PUTC	trs80PutC
+.equ	STDIO_GETC	gridGetC
+.equ	STDIO_PUTC	gridPutC
+.equ	STDIO_SETCUR	gridSetCurH
 .inc "stdio.asm"
 
 .equ	FS_RAMSTART	STDIO_RAMEND
@@ -91,6 +95,7 @@
 
 init:
 	ld	sp, RAMEND
+	call	gridInit
 	call	floppyInit
 	call	fsInit
 	call	basInit
@@ -102,13 +107,6 @@ init:
 	call	blkSel
 
 	jp	basStart
-
-printcr:
-	push	af
-	ld	a, CR
-	call	STDIO_PUTC
-	pop	af
-	ret
 
 ; Receive a byte from *cl and put it in A.
 ; Returns A > 0xff when receiving the last byte
@@ -171,6 +169,13 @@ basFindCmdExtra:
 	.db	"recv", 0
 	.dw	recvCmd
 	.db	0xff		; end of table
+
+fastPushScr:
+	push	hl
+	ld	hl, GRID_BUF
+	call	trs80PushScr
+	pop	hl
+	ret
 
 ; *** blkdev 1: file handle 0 ***
 
