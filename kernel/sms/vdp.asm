@@ -23,8 +23,8 @@
 ; *** Code ***
 
 vdpInit:
-	ld	hl, vdpInitData
-	ld	b, vdpInitDataEnd-vdpInitData
+	ld	hl, .initData
+	ld	b, .initDataEnd-.initData
 	ld	c, VDP_CTLPORT
 	otir
 
@@ -47,10 +47,10 @@ vdpInit:
 	out	(VDP_CTLPORT), a
 	ld	a, 0xc0
 	out	(VDP_CTLPORT), a
-	xor	a			; palette 0: black
-	out	(VDP_DATAPORT), a
-	ld	a, 0x3f			; palette 1: white
-	out	(VDP_DATAPORT), a
+	ld	hl, .paletteData
+	ld	b, .paletteDataEnd-.paletteData
+	ld	c, VDP_DATAPORT
+	otir
 
 	; Define tiles
 	xor	a
@@ -97,6 +97,28 @@ vdpInit:
 	out	(VDP_CTLPORT), a
 	ret
 
+; VDP initialisation data
+.initData:
+; 0x8x == set register X
+.db 0b00000100, 0x80	; Bit 2: Select mode 4
+.db 0b00000000, 0x81
+.db 0b11111111, 0x82	; Name table: 0x3800
+.db 0b11111111, 0x85	; Sprite table: 0x3f00
+.db 0b11111111, 0x86	; sprite use tiles from 0x2000
+.db 0b11111111, 0x87	; Border uses palette 0xf
+.db 0b00000000, 0x88	; BG X scroll
+.db 0b00000000, 0x89	; BG Y scroll
+.db 0b11111111, 0x8a	; Line counter (why have this?)
+.initDataEnd:
+.paletteData:
+; BG palette
+.db 0x00, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+.db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+; Sprite palette (inverted colors)
+.db 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+.db 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+.paletteDataEnd:
+
 ; Convert ASCII char in A into a tile index corresponding to that character.
 ; When a character is unknown, returns 0x5e (a '~' char).
 vdpConv:
@@ -108,7 +130,8 @@ vdpConv:
 	ld	a, 0x5e
 	ret
 
-; grid routine. Sets cell at row D and column E to character A
+; grid routine. Sets cell at row D and column E to character A. If C is one, we
+; use the sprite palette.
 vdpSetCell:
 	call	vdpConv
 	; store A away
@@ -141,18 +164,11 @@ vdpSetCell:
 	; We're ready to send our data now. Let's go
 	ex	af, af'
 	out	(VDP_DATAPORT), a
+
+	; Palette select is on bit 3 of MSB
+	ld	a, 1
+	and	c
+	rla \ rla \ rla
+	out	(VDP_DATAPORT), a
 	ret
 
-; VDP initialisation data
-vdpInitData:
-; 0x8x == set register X
-.db 0b00000100, 0x80	; Bit 2: Select mode 4
-.db 0b00000000, 0x81
-.db 0b11111111, 0x82	; Name table: 0x3800
-.db 0b11111111, 0x85	; Sprite table: 0x3f00
-.db 0b11111111, 0x86	; sprite use tiles from 0x2000
-.db 0b11111111, 0x87	; Border uses palette 0xf
-.db 0b00000000, 0x88	; BG X scroll
-.db 0b00000000, 0x89	; BG Y scroll
-.db 0b11111111, 0x8a	; Line counter (why have this?)
-vdpInitDataEnd:

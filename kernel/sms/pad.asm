@@ -181,7 +181,7 @@ padGetC:
 	; no action button pressed, but because our pad status changed, update
 	; VDP before looping.
 	ld	a, (PAD_SELCHR)
-	call	gridSetCur
+	call	gridSetCurH
 	jp	padGetC
 .return:
 	ld	a, LF
@@ -190,7 +190,7 @@ padGetC:
 .advance:
 	ld	a, (PAD_SELCHR)
 	; Z was already set from previous BIT instruction
-	ret
+	jp	gridSetCurL
 .backspace:
 	ld	a, BS
 	; Z was already set from previous BIT instruction

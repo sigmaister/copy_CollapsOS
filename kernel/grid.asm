@@ -119,7 +119,7 @@ gridPushScr:
 	pop	de
 	ret
 
-; Set character under cursor to A
+; Set character under cursor to A. C is passed to GRID_SETCELL as-is.
 gridSetCur:
 	push	de
 	push	hl
@@ -137,11 +137,27 @@ gridSetCur:
 	pop	de
 	ret
 
+; Call gridSetCur with C = 1.
+gridSetCurH:
+	push	bc
+	ld	c, 1
+	call	gridSetCur
+	pop	bc
+	ret
+
+; Call gridSetCur with C = 0.
+gridSetCurL:
+	push	bc
+	ld	c, 0
+	call	gridSetCur
+	pop	bc
+	ret
+
 ; Clear character under cursor
 gridClrCur:
 	push	af
 	ld	a, ' '
-	call	gridSetCur
+	call	gridSetCurL
 	pop	af
 	ret
 
@@ -210,7 +226,7 @@ gridPutC:
 	cp	' '
 	ret	c		; ignore unhandled control characters
 
-	call	gridSetCur
+	call	gridSetCurL
 	push	af		; --> lvl 1
 	; Move cursor
 	ld	a, (GRID_CURX)

@@ -51,6 +51,7 @@ void vdp_data_wr(VDP *vdp, uint8_t val)
     }
 }
 
+// Returns a 8-bit RGB value (0b00bbggrr)
 uint8_t vdp_pixel(VDP *vdp, uint16_t x, uint16_t y)
 {
     if (x >= VDP_SCREENW) {
@@ -63,6 +64,8 @@ uint8_t vdp_pixel(VDP *vdp, uint16_t x, uint16_t y)
     uint16_t offset = 0x3800 + ((y/8) << 6) + ((x/8) << 1);
     uint16_t tableval = vdp->vram[offset] + (vdp->vram[offset+1] << 8);
     uint16_t tilenum = tableval & 0x1ff;
+    // is palette select bit on? if yes, use sprite palette instead
+    uint8_t palettemod = tableval & 0x800 ? 0x10 : 0;
     // tile offset this time. Each tile is 0x20 bytes long.
     offset = tilenum * 0x20;
     // Each 4 byte is a row. Find row first.
@@ -70,8 +73,10 @@ uint8_t vdp_pixel(VDP *vdp, uint16_t x, uint16_t y)
     uint8_t bitnum = 7 - (x%8);
     // Now, let's compose the result by pushing the right bit of our 4 bytes
     // into our result.
-    return ((vdp->vram[offset] >> bitnum) & 1) + \
+    uint8_t palette_id = ((vdp->vram[offset] >> bitnum) & 1) + \
            (((vdp->vram[offset+1] >> bitnum) & 1) << 1) + \
            (((vdp->vram[offset+2] >> bitnum) & 1) << 2) + \
            (((vdp->vram[offset+3] >> bitnum) & 1) << 3);
+    uint8_t rgb = vdp->vram[0x4000+palettemod+palette_id];
+    return rgb;
 }

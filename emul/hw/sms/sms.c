@@ -108,6 +108,9 @@ void create_window()
     xcb_map_window(conn, win);
 }
 
+// To make things simple with X11, we only support monochrome display, which is
+// inverted: As soon as the color of the pixel is non-black, we show a black
+// pixel. If the pixel is white, we show black.
 void draw_pixels()
 {
     xcb_get_geometry_reply_t *geom;
