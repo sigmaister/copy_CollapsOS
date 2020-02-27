@@ -628,19 +628,19 @@ _parseArgs:
 
 _readBit:
 	ld	a, 7
-	jr	_readExpr
+	jp	_readExpr
 
 _readA6:
 	ld	a, 0x3f
-	jr	_readExpr
+	jp	_readExpr
 
 _readA5:
 	ld	a, 0x1f
-	jr	_readExpr
+	jp	_readExpr
 
 _readK8:
 	ld	a, 0xff
-	jr	_readExpr
+	jp	_readExpr
 
 _readDouble:
 	push	de
@@ -707,6 +707,12 @@ _readR5:
 	push	de
 	ld	a, (hl)
 	call	upcase
+	cp	'X'
+	jr	z, .rdXYZ
+	cp	'Y'
+	jr	z, .rdXYZ
+	cp	'Z'
+	jr	z, .rdXYZ
 	cp	'R'
 	jr	nz, .end		; not a register
 	inc	hl
@@ -717,6 +723,34 @@ _readR5:
 .end:
 	pop	de
 	ret
+.rdXYZ:
+	; First, let's get a base value, that is, (A-'X'+26)*2, because XL, our
+	; lowest register, is equivalent to r26.
+	sub	'X'
+	rla			; no carry from sub
+	add	a, 26
+	ld	d, a		; store that
+	inc	hl
+	ld	a, (hl)
+	call	upcase
+	cp	'H'
+	jr	nz, .skip1
+	; second char is 'H'? our value is +1
+	inc	d
+	jr	.skip2
+.skip1:
+	cp	'L'
+	jr	nz, .end	; not L either? then it's not good
+.skip2:
+	; Good, we have our final value in D and we're almost sure it's a valid
+	; register. Our only check left is that the 3rd char is a null.
+	inc	hl
+	ld	a, (hl)
+	or	a
+	jr	nz, .end
+	; we're good
+	ld	a, d
+	jr	.end
 
 ; Put DE's LSB into A and, additionally, ensure that the new value is <=
 ; than what was previously in A.

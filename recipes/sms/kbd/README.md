@@ -55,7 +55,6 @@ either the low or high bits.
 * 74xx157 (multiplexer)
 * A NOR SR-latch. I used a 4043.
 * Proto board, wires, IC sockets, etc.
-* [AVRA][avra]
 
 ## Historical note
 
@@ -114,4 +113,3 @@ Just hook it on. I've tried it, it works.
 Did you get there? Feels pretty cool huh?
 
 [rc2014-ps2]: ../../rc2014/ps2
-[avra]: https://github.com/hsoft/avra

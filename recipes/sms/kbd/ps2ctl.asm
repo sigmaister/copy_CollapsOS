@@ -1,5 +1,3 @@
-.include "tn45def.inc"
-
 ; Receives keystrokes from PS/2 keyboard and send them to the '164. On the PS/2
 ; side, it works the same way as the controller in the rc2014/ps2 recipe.
 ; However, in this case, what we have on the other side isn't a z80 bus, it's
@@ -30,17 +28,22 @@
 ;    written.
 ; Z: pointer to the next scan code to push to the 595
 ;
+
+.inc "avr.h"
+.inc "tn254585.h"
+.inc "tn45.h"
+
 ; *** Constants ***
-.equ	CLK = PINB2
-.equ	DATA = PINB1
-.equ	CP = PINB3
+.equ	CLK	2	; Port B
+.equ	DATA	1	; Port B
+.equ	CP	3	; Port B
 ; SR-Latch's Q pin
-.equ	LQ = PINB0
+.equ	LQ	0	; Port B
 ; SR-Latch's R pin
-.equ	LR = PINB4
+.equ	LR	4	; Port B
 
 ; init value for TCNT0 so that overflow occurs in 100us
-.equ	TIMER_INITVAL = 0x100-100
+.equ	TIMER_INITVAL	0x100-100
 
 ; *** Code ***
 
@@ -56,9 +59,9 @@ hdlINT0:
 	reti
 
 main:
-        ldi     r16, low(RAMEND)
+        ldi     r16, RAMEND&0xff
         out     SPL, r16
-        ldi     r16, high(RAMEND)
+        ldi     r16, RAMEND}8
         out     SPH, r16
 
 	; init variables
@@ -67,23 +70,23 @@ main:
 
 	; Setup int0
 	; INT0, falling edge
-	ldi	r16, (1<<ISC01)
+	ldi	r16, 0x02	; ISC01
 	out	MCUCR, r16
 	; Enable INT0
-	ldi	r16, (1<<INT0)
+	ldi	r16, 0x40	; INT0
 	out	GIMSK, r16
 
 	; Setup buffer
 	clr	YH
-	ldi	YL, low(SRAM_START)
+	ldi	YL, SRAM_START&0xff
 	clr	ZH
-	ldi	ZL, low(SRAM_START)
+	ldi	ZL, SRAM_START&0xff
 
 	; Setup timer. We use the timer to clear up "processbit" registers after
 	; 100us without a clock. This allows us to start the next frame in a
 	; fresh state. at 1MHZ, no prescaling is necessary. Each TCNT0 tick is
 	; already 1us long.
-	ldi	r16, (1<<CS00)	; no prescaler
+	ldi	r16, 0x01	; CS00 - no prescaler
 	out	TCCR0B, r16
 
 	; init DDRB
@@ -101,7 +104,7 @@ loop:
 	; nothing to do. Before looping, let's check if our communication timer
 	; overflowed.
 	in	r16, TIFR
-	sbrc	r16, TOV0
+	sbrc	r16, 1		; TOV0
 	rjmp	processbitReset	; Timer0 overflow? reset processbit
 
 	; Nothing to do for real.
@@ -220,7 +223,7 @@ sendTo164Loop:
 resetTimer:
 	ldi	r16, TIMER_INITVAL
 	out	TCNT0, r16
-	ldi	r16, (1<<TOV0)
+	ldi	r16, 0x02	; TOV0
 	out	TIFR, r16
 	ret
 
@@ -237,8 +240,8 @@ sendToPS2:
 
 	; Wait until the timer overflows
 	in	r16, TIFR
-	sbrs	r16, TOV0
-	rjmp	PC-2
+	sbrs	r16, 1		; TOV0
+	rjmp	$-4
 	; Good, 100us passed.
 
 	; Pull Data low, that's our start bit.
@@ -258,7 +261,7 @@ sendToPS2:
 sendToPS2Loop:
 	; Wait for CLK to go low
 	sbic	PINB, CLK
-	rjmp	PC-1
+	rjmp	$-2
 
 	; set up DATA
 	cbi	PORTB, DATA
@@ -268,7 +271,7 @@ sendToPS2Loop:
 
 	; Wait for CLK to go high
 	sbis	PINB, CLK
-	rjmp	PC-1
+	rjmp	$-2
 
 	dec	r16
 	brne	sendToPS2Loop	; not zero? loop
@@ -279,7 +282,7 @@ sendToPS2Loop:
 
 	; Wait for CLK to go low
 	sbic	PINB, CLK
-	rjmp	PC-1
+	rjmp	$-2
 
 	; set parity bit
 	cbi	PORTB, DATA
@@ -288,22 +291,22 @@ sendToPS2Loop:
 
 	; Wait for CLK to go high
 	sbis	PINB, CLK
-	rjmp	PC-1
+	rjmp	$-2
 
 	; Wait for CLK to go low
 	sbic	PINB, CLK
-	rjmp	PC-1
+	rjmp	$-2
 
 	; We can now release the DATA line
 	cbi	DDRB, DATA
 
 	; Wait for DATA to go low. That's our ACK
 	sbic	PINB, DATA
-	rjmp	PC-1
+	rjmp	$-2
 
 	; Wait for CLK to go low
 	sbic	PINB, CLK
-	rjmp	PC-1
+	rjmp	$-2
 
 	; We're finished! Enable INT0, reset timer, everything back to normal!
 	rcall	resetTimer
@@ -314,21 +317,21 @@ sendToPS2Loop:
 ; Check that Y is within bounds, reset to SRAM_START if not.
 checkBoundsY:
 	tst	YL
-	breq	PC+2
+	breq	$+4
 	ret			; not zero, nothing to do
 	; YL is zero. Reset Y
 	clr	YH
-	ldi	YL, low(SRAM_START)
+	ldi	YL, SRAM_START&0xff
 	ret
 
 ; Check that Z is within bounds, reset to SRAM_START if not.
 checkBoundsZ:
 	tst	ZL
-	breq	PC+2
+	breq	$+4
 	ret			; not zero, nothing to do
 	; ZL is zero. Reset Z
 	clr	ZH
-	ldi	ZL, low(SRAM_START)
+	ldi	ZL, SRAM_START&0xff
 	ret
 
 ; Counts the number of 1s in r19 and set r16 to 1 if there's an even number of
@@ -336,10 +339,10 @@ checkBoundsZ:
 checkParity:
 	ldi	r16, 1
 	lsr	r19
-	brcc	PC+2		; Carry unset? skip next
+	brcc	$+4		; Carry unset? skip next
 	inc	r16		; Carry set? We had a 1
 	tst	r19		; is r19 zero yet?
-	brne	checkParity+1	; no? loop and skip first LDI
+	brne	checkParity+2	; no? loop and skip first LDI
 	andi	r16, 0x1	; Sets Z accordingly
 	ret
 

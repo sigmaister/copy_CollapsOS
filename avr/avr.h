@@ -1,12 +1,5 @@
 ; *** CPU registers aliases ***
 
-.equ	XH	27
-.equ	XL	26
-.equ	YH	29
-.equ	YL	28
-.equ	ZH	31
-.equ	ZL	30
-
 .equ	SREG_C	0	; Carry Flag
 .equ	SREG_Z	1	; Zero Flag
 .equ	SREG_N	2	; Negative Flag
