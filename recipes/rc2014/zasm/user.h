@@ -10,6 +10,7 @@
 .equ    fsOpen         @+3
 .equ    fsGetB         @+3
 .equ    printstr       @+3
+.equ    printcrlf      @+3
 .equ    _blkGetB       @+3
 .equ    _blkPutB       @+3
 .equ    _blkSeek       @+3
@@ -17,4 +18,6 @@
 .equ    sdcGetB        @+3
 .equ    sdcPutB        @+3
 .equ    blkGetB        @+3
-.equ    stdioPutC      @+3
+
+; *** cont. ***
+.equ    stdioPutC      0x3b

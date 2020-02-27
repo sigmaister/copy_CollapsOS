@@ -21,6 +21,7 @@
 	jp	fsOpen
 	jp	fsGetB
 	jp	printstr
+	jp	printcrlf
 	jp	_blkGetB
 	jp	_blkPutB
 	jp	_blkSeek
@@ -28,11 +29,14 @@
 	jp	sdcGetB
 	jp	sdcPutB
 	jp	blkGetB
-	jp	stdioPutC
 
 ; interrupt hook
 .fill	0x38-$
 jp	aciaInt
+
+; *** cont. ***
+
+	jp	stdioPutC
 
 .inc "err.h"
 .inc "ascii.h"

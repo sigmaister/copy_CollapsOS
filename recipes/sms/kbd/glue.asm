@@ -23,10 +23,11 @@
 .equ	GRID_COLS	VDP_COLS
 .equ	GRID_ROWS	VDP_ROWS
 .equ	GRID_SETCELL	vdpSetCell
+.equ	GRID_GETC	kbdGetC
 .inc "grid.asm"
 
 .equ	STDIO_RAMSTART	GRID_RAMEND
-.equ	STDIO_GETC	kbdGetC
+.equ	STDIO_GETC	gridGetC
 .equ	STDIO_PUTC	gridPutC
 .inc "stdio.asm"
 
