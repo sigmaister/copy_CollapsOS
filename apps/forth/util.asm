@@ -1,8 +1,8 @@
 ; Return address of scratchpad in HL
 pad:
 	ld	hl, (HERE)
-	ld	de, PADDING
-	add	hl, de
+	ld	a, PADDING
+	call	addHL
 	ret
 
 ; Read word from (INPUTPOS) and return, in HL, a null-terminated word.

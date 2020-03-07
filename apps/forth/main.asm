@@ -27,7 +27,7 @@ ENDPGM:
 
 forthMain:
 	ld	(INITIAL_SP), sp
-	ld	hl, INTERPRET	; last entry in hardcoded dict
+	ld	hl, DOT		; last entry in hardcoded dict
 	ld	(CURRENT), hl
 	ld	hl, FORTH_RAMEND
 	ld	(HERE), hl

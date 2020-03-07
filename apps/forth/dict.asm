@@ -108,3 +108,15 @@ INTERPRET:
 	jp	exit
 .msg:
 	.db	"not found", 0
+
+; ( n -- )
+DOT:
+	.db "."
+	.fill 7
+	.dw INTERPRET
+	.dw nativeWord
+	pop	de
+	call	pad
+	call	fmtDecimalS
+	call	printstr
+	jp	exit
