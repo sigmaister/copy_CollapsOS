@@ -103,11 +103,51 @@ executeCodeLink:
 	; IY points to PFA
 	jp	(hl)	; go!
 
+DEFINE:
+	.db ":"
+	.fill 7
+	.dw EXECUTE
+	.dw nativeWord
+	call	entryhead
+	jp	nz, quit
+	ld	de, compiledWord
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	inc	hl
+	push	hl \ pop iy
+.loop:
+	call	readword
+	jr	nz, .end
+	call	.issemicol
+	jr	z, .end
+	call	compile
+	jr	nz, quit
+	jr	.loop
+.end:
+	; end chain with EXIT
+	ld	hl, EXIT+CODELINK_OFFSET
+	ld	(iy), l
+	inc	iy
+	ld	(iy), h
+	inc	iy
+	ld	(HERE), iy
+	jp	exit
+.issemicol:
+	ld	a, (hl)
+	cp	';'
+	ret	nz
+	inc	hl
+	ld	a, (hl)
+	dec	hl
+	or	a
+	ret
+
 ; ( -- c )
 KEY:
 	.db "KEY"
 	.fill 5
-	.dw EXECUTE
+	.dw DEFINE
 	.dw nativeWord
 	call	stdioGetC
 	ld	h, 0
@@ -141,19 +181,8 @@ CREATE:
 	.db "CREATE", 0, 0
 	.dw INTERPRET
 	.dw nativeWord
-	call	readword
-	jp	nz, exit
-	ld	de, (HERE)
-	call	strcpy
-	ex	de, hl		; (HERE) now in HL
-	ld	de, (CURRENT)
-	ld	(CURRENT), hl
-	ld	a, NAMELEN
-	call	addHL
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
+	call	entryhead
+	jp	nz, quit
 	ld	de, cellWord
 	ld	(hl), e
 	inc	hl

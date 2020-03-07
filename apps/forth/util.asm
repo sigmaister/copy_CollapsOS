@@ -74,7 +74,7 @@ find:
 	inc	a
 	ret
 
-; Compile word at (DE) and write down its compiled version in IY,
+; Compile word string at (HL) and write down its compiled version in IY,
 ; advancing IY to the byte next to the last written byte.
 ; Set Z on success, unset on failure.
 compile:
@@ -88,4 +88,25 @@ compile:
 	ld	(iy), h
 	inc	iy
 	xor	a	; set Z
+	ret
+
+; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
+; HL points to new (HERE)
+; Set Z if name could be read, NZ if not
+entryhead:
+	call	readword
+	ret	nz
+	ld	de, (HERE)
+	call	strcpy
+	ex	de, hl		; (HERE) now in HL
+	ld	de, (CURRENT)
+	ld	(CURRENT), hl
+	ld	a, NAMELEN
+	call	addHL
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	inc	hl
+	ld	(HERE), hl
+	xor	a		; set Z
 	ret

@@ -2,6 +2,7 @@ Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
                 (TOS). For example, in "a b -- c d", b is TOS before, d is TOS
                 after. "R:" means that the Return Stack is modified.
 
+: x ... ;   --              Define a new word
 .           n --            Print n in its decimal form
 @           a -- n          Set n to value at address a
 !           n a --          Store n in address a
