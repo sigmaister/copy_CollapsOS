@@ -4,7 +4,7 @@ KERNEL = ../kernel
 APPS = ../apps
 ZASMBIN = zasm/zasm
 AVRABIN = zasm/avra
-SHELLAPPS = zasm ed
+SHELLAPPS = zasm ed forth
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
