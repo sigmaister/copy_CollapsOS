@@ -45,10 +45,19 @@ exit:
 	push	hl \ pop iy
 	jp	compiledWord
 
+BYE:
+	.db "BYE"
+	.fill 5
+	.dw EXIT
+	.dw nativeWord
+	ld	hl, FLAGS
+	set	FLAG_ENDPGM, (hl)
+	jp	exit
+
 ; ( c -- )
 EMIT:
 	.db "EMIT", 0, 0, 0, 0
-	.dw EXIT
+	.dw BYE
 	.dw nativeWord
 	pop	hl
 	ld	a, l
@@ -87,6 +96,7 @@ INTERPRET:
 	.db "INTERPRE"
 	.dw KEY
 	.dw nativeWord
+interpret:
 	call	pad
 	push	hl \ pop iy
 	call	stdioReadLine
