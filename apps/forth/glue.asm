@@ -2,6 +2,7 @@
 jp	forthMain
 
 .inc "core.asm"
+.inc "lib/util.asm"
 .inc "lib/ari.asm"
 .inc "lib/fmt.asm"
 .equ FORTH_RAMSTART RAMSTART

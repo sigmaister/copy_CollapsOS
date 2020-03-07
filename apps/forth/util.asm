@@ -2,8 +2,7 @@
 pad:
 	ld	hl, (HERE)
 	ld	a, PADDING
-	call	addHL
-	ret
+	jp	addHL
 
 ; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
 ; Advance (INPUTPOS) to the character following the whitespace ending the
@@ -48,7 +47,7 @@ readword:
 ; Z is set if DE point to 0 (no entry). NZ if not.
 prev:
 	push	hl		; --> lvl 1
-	ld	hl, 8		; prev field offset
+	ld	hl, NAMELEN	; prev field offset
 	add	hl, de
 	ex	de, hl
 	pop	hl		; <-- lvl 1
@@ -66,7 +65,7 @@ prev:
 find:
 	ld	de, (CURRENT)
 .inner:
-	ld	a, 8
+	ld	a, NAMELEN
 	call	strncmp
 	ret	z		; found
 	call	prev
@@ -75,7 +74,7 @@ find:
 	inc	a
 	ret
 
-; Compile word string at (HL) and write down its compiled version in IY,
+; Compile word at (DE) and write down its compiled version in IY,
 ; advancing IY to the byte next to the last written byte.
 ; Set Z on success, unset on failure.
 compile:
@@ -90,12 +89,3 @@ compile:
 	inc	iy
 	xor	a	; set Z
 	ret
-
-compileExit:
-	ld	hl, EXIT+CODELINK_OFFSET
-	ld	(iy), l
-	inc	iy
-	ld	(iy), h
-	inc	iy
-	ret
-

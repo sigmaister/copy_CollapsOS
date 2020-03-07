@@ -2,9 +2,15 @@ Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
                 (TOS). For example, in "a b -- c d", b is TOS before, d is TOS
                 after. "R:" means that the Return Stack is modified.
 
+.           n --            Print n in its decimal form
+@           a -- n          Set n to value at address a
+!           n a --          Store n in address a
+CREATE x    --              Create cell named x
 EMIT        c --            Spit char c to stdout
 EXECUTE     a --            Execute word at addr a
 EXIT        R:I --          Exit a colon definition
+HERE        -- a            Push HERE's address
+QUIT        R:drop --       Return to interpreter promp immediately
 KEY         -- c            Get char c from stdin
 INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.

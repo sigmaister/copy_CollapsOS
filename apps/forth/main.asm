@@ -3,9 +3,14 @@
 .equ	RS_ADDR		0xf000
 ; Number of bytes we keep as a padding between HERE and the scratchpad
 .equ	PADDING		0x20
+; Max length of dict entry names
+.equ	NAMELEN		8
 ; Offset of the code link relative to the beginning of the word
 .equ	CODELINK_OFFSET	10
-; When set, the interpret should quit
+; When set, the interpreter should abort parsing of current line and return to
+; prompt.
+.equ	FLAG_QUITTING	0
+; When set, the interpreter should quit
 .equ	FLAG_ENDPGM	1
 
 ; *** Variables ***
@@ -14,7 +19,9 @@
 .equ	HERE		@+2
 .equ	INPUTPOS	@+2
 .equ	FLAGS		@+2
-.equ	FORTH_RAMEND	@+1
+; Buffer where we compile the current input line. Same size as STDIO_BUFSIZE.
+.equ	COMPBUF		@+1
+.equ	FORTH_RAMEND	@+0x40
 
 ; *** Code ***
 MAIN:
@@ -28,22 +35,34 @@ CHKEND:
 	ld	hl, FLAGS
 	bit	FLAG_ENDPGM, (hl)
 	jr	nz, .endpgm
-	; not quitting, loop
-	jr	forthLoop
+	; not quitting program, are we supposed to continue parsing line?
+	ld	hl, FLAGS
+	bit	FLAG_QUITTING, (hl)
+	jr	nz, forthRdLine
+	; Not quitting line either.
+	jr	forthInterpret
 .endpgm:
 	ld	sp, (INITIAL_SP)
 	xor	a
 	ret
 
 forthMain:
-	xor	a
-	ld	(FLAGS), a
 	ld	(INITIAL_SP), sp
-	ld	hl, DOT		; last entry in hardcoded dict
+	ld	hl, FETCH		; last entry in hardcoded dict
 	ld	(CURRENT), hl
 	ld	hl, FORTH_RAMEND
 	ld	(HERE), hl
-forthLoop:
+forthRdLine:
+	xor	a
+	ld	(FLAGS), a
+	ld	hl, msgOk
+	call	printstr
+	call	printcrlf
+	call	stdioReadLine
+	ld	(INPUTPOS), hl
+forthInterpret:
 	ld	ix, RS_ADDR
 	ld	iy, MAIN
 	jp	executeCodeLink
+msgOk:
+	.db	" ok", 0
