@@ -102,6 +102,13 @@ compile:
 	call	wrCompHL
 	ex	de, hl		; number in HL
 	jr	wrCompHL
+	ret	z
+	; unknown name
+	ld	hl, .msg
+	call	printstr
+	jp	abort
+.msg:
+	.db "unknown name", 0
 
 ; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)

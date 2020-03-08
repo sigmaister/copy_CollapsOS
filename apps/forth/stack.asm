@@ -23,3 +23,19 @@ popRS:
 	dec ix
 	ld	l, (ix)
 	ret
+
+; Verifies that SP is within bounds. If it's not, call ABORT
+chkPS:
+	ld	hl, (INITIAL_SP)
+	; We have the return address for this very call on the stack. Let's
+	; compensate
+	dec	hl \ dec hl
+	or	a		; clear carry
+	sbc	hl, sp
+	ret	nc		; (INITIAL_SP) >= SP? good
+	; underflow
+	ld	hl, .msg
+	call	printstr
+	jr	abort
+.msg:
+	.db "stack underflow", 0

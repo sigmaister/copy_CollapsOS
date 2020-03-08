@@ -43,10 +43,19 @@ CHKEND:
 	jr	forthInterpret
 .endpgm:
 	ld	sp, (INITIAL_SP)
+	; restore stack
+	pop	af \ pop af \ pop af
 	xor	a
 	ret
 
 forthMain:
+	; STACK OVERFLOW PROTECTION:
+	; To avoid having to check for stack underflow after each pop operation
+	; (which can end up being prohibitive in terms of costs), we give
+	; ourselves a nice 6 bytes buffer. 6 bytes because we seldom have words
+	; requiring more than 3 items from the stack. Then, at each "exit" call
+	; we check for stack underflow.
+	push	af \ push af \ push af
 	ld	(INITIAL_SP), sp
 	ld	hl, DIV		; last entry in hardcoded dict
 	ld	(CURRENT), hl

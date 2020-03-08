@@ -71,10 +71,13 @@ EXIT:
 ; in fact, we want to continue processing the one above it.
 	call	popRS
 exit:
+	; Before we continue: is SP within bounds?
+	call	chkPS
+	; we're good
 	call	popRS
 	; We have a pointer to a word
 	push	hl \ pop iy
-	jp	compiledWord
+	jr	compiledWord
 
 ; ( R:I -- )
 QUIT:
@@ -84,12 +87,25 @@ QUIT:
 quit:
 	ld	hl, FLAGS
 	set	FLAG_QUITTING, (hl)
-	jp	exit
+	jr	exit
+
+ABORT:
+	.db "ABORT", 0, 0, 0
+	.dw QUIT
+	.dw nativeWord
+abort:
+	ld	sp, (INITIAL_SP)
+	ld	hl, .msg
+	call	printstr
+	call	printcrlf
+	jr	quit
+.msg:
+	.db " err", 0
 
 BYE:
 	.db "BYE"
 	.fill 5
-	.dw QUIT
+	.dw ABORT
 	.dw nativeWord
 	ld	hl, FLAGS
 	set	FLAG_ENDPGM, (hl)
@@ -141,7 +157,7 @@ DEFINE:
 	call	.issemicol
 	jr	z, .end
 	call	compile
-	jr	nz, quit
+	jp	nz, quit
 	jr	.loop
 .end:
 	; end chain with EXIT
@@ -221,6 +237,9 @@ DOT:
 	.dw HERE_
 	.dw nativeWord
 	pop	de
+	; We check PS explicitly because it doesn't look nice to spew gibberish
+	; before aborting the stack underflow.
+	call	chkPS
 	call	pad
 	call	fmtDecimalS
 	call	printstr
