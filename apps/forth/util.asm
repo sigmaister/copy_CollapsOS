@@ -74,21 +74,34 @@ find:
 	inc	a
 	ret
 
+; Write compiled data from HL into IY, advancing IY at the same time.
+wrCompHL:
+	ld	(iy), l
+	inc	iy
+	ld	(iy), h
+	inc	iy
+	ret
+
 ; Compile word string at (HL) and write down its compiled version in IY,
 ; advancing IY to the byte next to the last written byte.
 ; Set Z on success, unset on failure.
 compile:
 	call	find
+	jr	nz, .maybeNum
 	ret	nz
 	; DE is a word offset, we need a code link
 	ld	hl, CODELINK_OFFSET
 	add	hl, de
-	ld	(iy), l
-	inc	iy
-	ld	(iy), h
-	inc	iy
 	xor	a	; set Z
-	ret
+	jr	wrCompHL
+.maybeNum:
+	call	parseLiteral
+	ret	nz
+	; a valid number!
+	ld	hl, NUMBER
+	call	wrCompHL
+	ex	de, hl		; number in HL
+	jr	wrCompHL
 
 ; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)

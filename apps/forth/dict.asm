@@ -42,6 +42,25 @@ sysvarWord:
 	push	hl
 	jp	exit
 
+; This is not a word, but a number literal. This works a bit differently than
+; others: PF means nothing and the actual number is placed next to the
+; numberWord reference in the compiled word list. What we need to do to fetch
+; that number is to play with the Return stack: We pop it, read the number, push
+; it to the Parameter stack and then push an increase Interpreter Pointer back
+; to RS.
+numberWord:
+	call	popRS
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	inc	hl
+	call	pushRS
+	push	de
+	jp	exit
+NUMBER:
+	.dw	numberWord
+
+
 ; ( R:I -- )
 EXIT:
 	.db "EXIT", 0, 0, 0, 0
@@ -127,10 +146,7 @@ DEFINE:
 .end:
 	; end chain with EXIT
 	ld	hl, EXIT+CODELINK_OFFSET
-	ld	(iy), l
-	inc	iy
-	ld	(iy), h
-	inc	iy
+	call	wrCompHL
 	ld	(HERE), iy
 	jp	exit
 .issemicol:
