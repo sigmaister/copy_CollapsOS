@@ -42,6 +42,17 @@ sysvarWord:
 	push	hl
 	jp	exit
 
+; The word was spawned from a definition word that has a DOES>. PFA+2 (right
+; after the actual cell) is a link to the slot right after that DOES>.
+; Therefore, what we need to do push the cell addr like a regular cell, then
+; follow the link from the PFA, and then continue as a regular compiledWord.
+doesWord:
+	push	iy	; like a regular cell
+	ld	l, (iy+2)
+	ld	h, (iy+3)
+	push	hl \ pop iy
+	jr	compiledWord
+
 ; This is not a word, but a number literal. This works a bit differently than
 ; others: PF means nothing and the actual number is placed next to the
 ; numberWord reference in the compiled word list. What we need to do to fetch
@@ -175,11 +186,34 @@ DEFINE:
 	or	a
 	ret
 
+DOES:
+	.db "DOES>", 0, 0, 0
+	.dw DEFINE
+	.dw nativeWord
+	; We run this when we're in an entry creation context. Many things we
+	; need to do.
+	; 1. Change the code link to doesWord
+	; 2. Leave 2 bytes for regular cell variable.
+	; 3. Get the Interpreter pointer from the stack and write this down to
+	;    entry PFA+2.
+	; 3. exit. Because we've already popped RS, a regular exit will abort
+	;    colon definition, so we're good.
+	ld	iy, (CURRENT)
+	ld	de, CODELINK_OFFSET
+	add	iy, de
+	ld	hl, doesWord
+	call	wrCompHL
+	inc	iy \ inc iy		; cell variable space
+	call	popRS
+	call	wrCompHL
+	ld	(HERE), iy
+	jp	exit
+
 ; ( -- c )
 KEY:
 	.db "KEY"
 	.fill 5
-	.dw DEFINE
+	.dw DOES
 	.dw nativeWord
 	call	stdioGetC
 	ld	h, 0
@@ -230,11 +264,17 @@ HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
 	.dw HERE
 
+CURRENT_:
+	.db "CURRENT", 0
+	.dw HERE_
+	.dw sysvarWord
+	.dw CURRENT
+
 ; ( n -- )
 DOT:
 	.db "."
 	.fill 7
-	.dw HERE_
+	.dw CURRENT_
 	.dw nativeWord
 	pop	de
 	; We check PS explicitly because it doesn't look nice to spew gibberish
@@ -389,3 +429,18 @@ ALLOT:
 	.dw HERE_+CODELINK_OFFSET
 	.dw STOREINC+CODELINK_OFFSET
 	.dw EXIT+CODELINK_OFFSET
+
+; ( n -- )
+; CREATE HERE @ ! DOES> @
+CONSTANT:
+	.db "CONSTANT"
+	.dw ALLOT
+	.dw compiledWord
+	.dw CREATE+CODELINK_OFFSET
+	.dw HERE_+CODELINK_OFFSET
+	.dw FETCH+CODELINK_OFFSET
+	.dw STORE+CODELINK_OFFSET
+	.dw DOES+CODELINK_OFFSET
+	.dw FETCH+CODELINK_OFFSET
+	.dw EXIT+CODELINK_OFFSET
+

@@ -36,6 +36,6 @@ chkPS:
 	; underflow
 	ld	hl, .msg
 	call	printstr
-	jr	abort
+	jp	abort
 .msg:
 	.db "stack underflow", 0
