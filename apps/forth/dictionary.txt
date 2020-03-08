@@ -25,7 +25,7 @@ DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
 -           a b -- c        a - b -> c
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
-CREATE x    --              Create cell named x
+CREATE x    --              Create cell named x. Doesn't allocate a PF.
 DOES>       --              See description at top of file
 DUP         a -- a a
 EMIT        c --            Spit char c to stdout
@@ -45,3 +45,4 @@ SWAP        a b -- b a
 +!          n a --          Increase value of addr a by n
 ALLOT       n --            Move HERE by n bytes
 CONSTANT x  n --            Creates cell x that when called pushes its value
+VARIABLE c  --              Creates cell x with 2 bytes allocation.
