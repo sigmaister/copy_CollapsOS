@@ -6,6 +6,10 @@ Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
 .           n --            Print n in its decimal form
 @           a -- n          Set n to value at address a
 !           n a --          Store n in address a
++           a b -- c        a + b -> c
+-           a b -- c        a - b -> c
+*           a b -- c        a * b -> c
+/           a b -- c        a / b -> c
 CREATE x    --              Create cell named x
 EMIT        c --            Spit char c to stdout
 EXECUTE     a --            Execute word at addr a

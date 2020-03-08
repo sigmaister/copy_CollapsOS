@@ -48,7 +48,7 @@ CHKEND:
 
 forthMain:
 	ld	(INITIAL_SP), sp
-	ld	hl, FETCH		; last entry in hardcoded dict
+	ld	hl, DIV		; last entry in hardcoded dict
 	ld	(CURRENT), hl
 	ld	hl, FORTH_RAMEND
 	ld	(HERE), hl

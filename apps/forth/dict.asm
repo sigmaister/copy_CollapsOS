@@ -248,3 +248,53 @@ FETCH:
 	call	intoHL
 	push	hl
 	jp	exit
+
+; ( a b -- c ) A + B
+PLUS:
+	.db "+"
+	.fill 7
+	.dw FETCH
+	.dw nativeWord
+	pop	hl
+	pop	de
+	add	hl, de
+	push	hl
+	jp	exit
+
+; ( a b -- c ) A - B
+MINUS:
+	.db "-"
+	.fill 7
+	.dw PLUS
+	.dw nativeWord
+	pop	de		; B
+	pop	hl		; A
+	or	a		; reset carry
+	sbc	hl, de
+	push	hl
+	jp	exit
+
+; ( a b -- c ) A * B
+MULT:
+	.db "*"
+	.fill 7
+	.dw MINUS
+	.dw nativeWord
+	pop	de
+	pop	bc
+	call	multDEBC
+	push	hl
+	jp	exit
+
+; ( a b -- c ) A / B
+DIV:
+	.db "/"
+	.fill 7
+	.dw MULT
+	.dw nativeWord
+	pop	de
+	pop	hl
+	call	divide
+	push	bc
+	jp	exit
+
