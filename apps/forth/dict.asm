@@ -268,11 +268,46 @@ FETCH:
 	push	hl
 	jp	exit
 
+; ( a b -- b a )
+SWAP:
+	.db "SWAP"
+	.fill 4
+	.dw FETCH
+	.dw nativeWord
+	pop	hl
+	ex	(sp), hl
+	push	hl
+	jp	exit
+
+; ( a -- a a )
+DUP:
+	.db "DUP"
+	.fill 5
+	.dw SWAP
+	.dw nativeWord
+	pop	hl
+	push	hl
+	push	hl
+	jp	exit
+
+; ( a b -- a b a )
+OVER:
+	.db "OVER"
+	.fill 4
+	.dw DUP
+	.dw nativeWord
+	pop	hl	; B
+	pop	de	; A
+	push	de
+	push	hl
+	push	de
+	jp	exit
+
 ; ( a b -- c ) A + B
 PLUS:
 	.db "+"
 	.fill 7
-	.dw FETCH
+	.dw OVER
 	.dw nativeWord
 	pop	hl
 	pop	de
@@ -317,3 +352,40 @@ DIV:
 	push	bc
 	jp	exit
 
+; End of native words
+
+; ( a -- )
+; @ .
+FETCHDOT:
+	.db "?"
+	.fill 7
+	.dw DIV
+	.dw compiledWord
+	.dw FETCH+CODELINK_OFFSET
+	.dw DOT+CODELINK_OFFSET
+	.dw EXIT+CODELINK_OFFSET
+
+; ( n a -- )
+; SWAP OVER @ + SWAP !
+STOREINC:
+	.db "+!"
+	.fill 6
+	.dw FETCHDOT
+	.dw compiledWord
+	.dw SWAP+CODELINK_OFFSET
+	.dw OVER+CODELINK_OFFSET
+	.dw FETCH+CODELINK_OFFSET
+	.dw PLUS+CODELINK_OFFSET
+	.dw SWAP+CODELINK_OFFSET
+	.dw STORE+CODELINK_OFFSET
+	.dw EXIT+CODELINK_OFFSET
+
+; ( n -- )
+; HERE +!
+ALLOT:
+	.db "ALLOT", 0, 0, 0
+	.dw STOREINC
+	.dw compiledWord
+	.dw HERE_+CODELINK_OFFSET
+	.dw STOREINC+CODELINK_OFFSET
+	.dw EXIT+CODELINK_OFFSET

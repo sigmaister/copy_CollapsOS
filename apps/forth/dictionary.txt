@@ -2,6 +2,8 @@ Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
                 (TOS). For example, in "a b -- c d", b is TOS before, d is TOS
                 after. "R:" means that the Return Stack is modified.
 
+*** Native Words ***
+
 : x ... ;   --              Define a new word
 .           n --            Print n in its decimal form
 @           a -- n          Set n to value at address a
@@ -11,6 +13,7 @@ Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
 CREATE x    --              Create cell named x
+DUP         a -- a a
 EMIT        c --            Spit char c to stdout
 EXECUTE     a --            Execute word at addr a
 EXIT        R:I --          Exit a colon definition
@@ -19,3 +22,11 @@ QUIT        R:drop --       Return to interpreter promp immediately
 KEY         -- c            Get char c from stdin
 INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
+OVER        a b -- a b a
+SWAP        a b -- b a
+
+*** Core-but-Forth Words ***
+
+?           a --            Print value of addr a
++!          n a --          Increase value of addr a by n
+ALLOT       n --            Move HERE by n bytes
