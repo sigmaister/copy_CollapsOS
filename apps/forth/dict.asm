@@ -53,6 +53,69 @@ doesWord:
 	push	hl \ pop iy
 	jr	compiledWord
 
+; The IF word checks the stack for zero. If it's non-zero, it does nothing and
+; allow compiledWord to continue.
+; If it's zero, it tracksback RS, advance it until it finds a ELSE, a THEN, or
+; an EXIT (not supposed to happen unless the IF is misconstructed). Whether
+; it's a ELSE or THEN, the same thing happens: we resume execution after the
+; ELSE/THEN. If it's a EXIT, we simply execute it.
+ifWord:
+	pop	hl
+	ld	a, h
+	or	l
+	jp	nz, exit	; non-zero, continue
+	; Zero, seek ELSE, THEN or EXIT. Continue to elseWord
+
+; If a ELSE word is executed, it means that the preceding IF had a non-zero
+; condition and continued execution. This means that upon encountering an ELSE,
+; we must search for a THEN or an EXIT.
+; To simplify implementation and share code with ifWord, we also match ELSE,
+; which is only possible in malformed construct. Therefore "IF ELSE ELSE" is
+; valid and interpreted as "IF ELSE THEN".
+elseWord:
+	; to save processing, we test EXIT, ELSE and THEN in the order they
+	; appear, address-wise. This way, we don't need to push/pop HL: we can
+	; SUB the difference between the words and check for zeroes.
+	call	popRS
+	; We need to save that IP somewhere. Let it be BC
+	ld	b, h
+	ld	c, l
+.loop:
+	; Whether there's a match or not, we will resume the operation at IP+2,
+	; which means that we have to increase BC anyways. Let's do it now.
+	inc	bc \ inc bc
+	call	intoHL
+	or	a		; clear carry
+	ld	de, EXIT+CODELINK_OFFSET
+	sbc	hl, de
+	jp	z, exit
+	; Not EXIT, let's continue with ELSE. No carry possible because EXIT
+	; is first word. No need to clear.
+	ld	de, ELSE-EXIT
+	sbc	hl, de
+	jr	c, .nomatch	; A word between EXIT and ELSE. No match.
+	jr	z, .match	; We have a ELSE
+	; Let's try with THEN. Again, no carry possible, C cond was handled.
+	ld	de, THEN-ELSE
+	sbc	hl, de
+	jr	z, .match	; We have a THEN
+.nomatch:
+	; Nothing matched, which means that we need to continue looking.
+	; BC is already IP+2
+	ld	h, b
+	ld	l, c
+	jr	.loop
+.match:
+	; Matched a ELSE or a THEN, which means we need to continue executing
+	; word from IP+2, which is already in BC.
+	push	bc \ pop iy
+	jp	compiledWord
+
+; This word does nothing. It's never going to be executed unless the wordlist
+; is misconstructed.
+thenWord:
+	jp	exit
+
 ; This is not a word, but a number literal. This works a bit differently than
 ; others: PF means nothing and the actual number is placed next to the
 ; numberWord reference in the compiled word list. What we need to do to fetch
@@ -410,6 +473,24 @@ DIV:
 	push	bc
 	jp	exit
 
+IF:
+	.db "IF"
+	.fill 6
+	.dw DIV
+	.dw ifWord
+
+ELSE:
+	.db "ELSE"
+	.fill 4
+	.dw IF
+	.dw elseWord
+
+THEN:
+	.db "THEN"
+	.fill 4
+	.dw ELSE
+	.dw thenWord
+
 ; End of native words
 
 ; ( a -- )
@@ -417,7 +498,7 @@ DIV:
 FETCHDOT:
 	.db "?"
 	.fill 7
-	.dw DIV
+	.dw THEN
 	.dw compiledWord
 	.dw FETCH+CODELINK_OFFSET
 	.dw DOT+CODELINK_OFFSET

@@ -29,15 +29,19 @@ DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
 DOES>       --              See description at top of file
 DUP         a -- a a
+ELSE        --              Branch to THEN
 EMIT        c --            Spit char c to stdout
 EXECUTE     a --            Execute word at addr a
 HERE        -- a            Push HERE's address
+IF          n --            Branch to ELSE or THEN if n is zero
 QUIT        R:drop --       Return to interpreter promp immediately
 KEY         -- c            Get char c from stdin
 INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
 OVER        a b -- a b a
 SWAP        a b -- b a
+THEN        --              Does nothing. Serves as a branching merker for IF
+                            and ELSE.
 
 *** Core-but-Forth Words ***
 
