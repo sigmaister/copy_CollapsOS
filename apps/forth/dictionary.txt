@@ -17,7 +17,8 @@ DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
 
 *** Native Words ***
 
-: x ... ;   --              Define a new word
+: x ...     --              Define a new word
+;           R:I --          Exit a colon definition
 .           n --            Print n in its decimal form
 @           a -- n          Set n to value at address a
 !           n a --          Store n in address a
@@ -30,7 +31,6 @@ DOES>       --              See description at top of file
 DUP         a -- a a
 EMIT        c --            Spit char c to stdout
 EXECUTE     a --            Execute word at addr a
-EXIT        R:I --          Exit a colon definition
 HERE        -- a            Push HERE's address
 QUIT        R:drop --       Return to interpreter promp immediately
 KEY         -- c            Get char c from stdin

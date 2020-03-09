@@ -71,10 +71,27 @@ numberWord:
 NUMBER:
 	.dw	numberWord
 
+; Similarly to numberWord, this is not a real word, but a string literal.
+; Instead of being followed by a 2 bytes number, it's followed by a
+; null-terminated string. This is not expected to be called in a regular
+; context. Only words expecting those literals will look for them. This is why
+; the litWord triggers abort.
+litWord:
+	call	popRS
+	call	intoHL
+	call	printstr	; let's print the word before abort.
+	ld	hl, .msg
+	call	printstr
+	jp	abort
+.msg:
+	.db "undefined word", 0
+LIT:
+	.dw	litWord
 
 ; ( R:I -- )
 EXIT:
-	.db "EXIT", 0, 0, 0, 0
+	.db ";"
+	.fill 7
 	.dw 0
 	.dw nativeWord
 ; When we call the EXIT word, we have to do a "double exit" because our current
@@ -88,7 +105,7 @@ exit:
 	call	popRS
 	; We have a pointer to a word
 	push	hl \ pop iy
-	jr	compiledWord
+	jp	compiledWord
 
 ; ( R:I -- )
 QUIT:
@@ -96,31 +113,29 @@ QUIT:
 	.dw EXIT
 	.dw nativeWord
 quit:
-	ld	hl, FLAGS
-	set	FLAG_QUITTING, (hl)
-	jr	exit
+	jp	forthRdLine
 
 ABORT:
 	.db "ABORT", 0, 0, 0
 	.dw QUIT
 	.dw nativeWord
 abort:
+	; Reinitialize PS (RS is reinitialized in forthInterpret
 	ld	sp, (INITIAL_SP)
-	ld	hl, .msg
-	call	printstr
-	call	printcrlf
-	jr	quit
-.msg:
-	.db " err", 0
+	jp	forthRdLine
 
 BYE:
 	.db "BYE"
 	.fill 5
 	.dw ABORT
 	.dw nativeWord
-	ld	hl, FLAGS
-	set	FLAG_ENDPGM, (hl)
-	jp	exit
+	; Goodbye Forth! Before we go, let's restore the stack
+	ld	sp, (INITIAL_SP)
+	; unwind stack underflow buffer
+	pop	af \ pop af \ pop af
+	; success
+	xor	a
+	ret
 
 ; ( c -- )
 EMIT:
@@ -155,36 +170,44 @@ DEFINE:
 	.dw EXECUTE
 	.dw nativeWord
 	call	entryhead
-	jp	nz, quit
 	ld	de, compiledWord
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
 	inc	hl
-	push	hl \ pop iy
+	; At this point, we've processed the name literal following the ':'.
+	; What's next? We have, in IP, a pointer to words that *have already
+	; been compiled by INTERPRET*. All those bytes will be copied as-is.
+	; All we need to do is to know how many bytes to copy. To do so, we
+	; skip compwords until EXIT is reached.
+	ld	(HERE), hl	; where we write compwords.
+	; Let's save old RS TOS
+	ld	e, (ix)
+	ld	d, (ix+1)
 .loop:
-	call	readword
-	jr	nz, .end
-	call	.issemicol
-	jr	z, .end
-	call	compile
-	jp	nz, quit
+	call	RSIsEXIT
+	jr	z, .loopend
+	call	compSkip
 	jr	.loop
-.end:
-	; end chain with EXIT
-	ld	hl, EXIT+CODELINK_OFFSET
-	call	wrCompHL
-	ld	(HERE), iy
+.loopend:
+	; At this point, RS' TOS points to EXIT compword. We'll copy it too.
+	; We'll use LDIR. BC will be RSTOP-OLDRSTOP+2
+	ld	l, (ix)
+	ld	h, (ix+1)
+	inc	hl \ inc hl	; our +2
+	or	a		; clear carry
+	sbc	hl, de
+	ld	b, h
+	ld	c, l
+	; BC has proper count
+	ex	de, hl		; HL is our source (old RS' TOS)
+	ld	de, (HERE)	; and DE is our dest
+	ldir			; go!
+	; HL has our new RS' TOS
+	ld	(ix), l
+	ld	(ix+1), h
+	ld	(HERE), de	; update HERE
 	jp	exit
-.issemicol:
-	ld	a, (hl)
-	cp	';'
-	ret	nz
-	inc	hl
-	ld	a, (hl)
-	dec	hl
-	or	a
-	ret
 
 DOES:
 	.db "DOES>", 0, 0, 0
@@ -226,22 +249,17 @@ INTERPRET:
 	.dw KEY
 	.dw nativeWord
 interpret:
-	call	readword
-	jp	nz, quit
 	ld	iy, COMPBUF
+.loop:
+	call	readword
+	jr	nz, .end
 	call	compile
-	jp	nz, .notfound
-	ld	hl, EXIT+CODELINK_OFFSET
-	ld	(iy), l
-	ld	(iy+1), h
+	jr	.loop
+.end:
+	ld	hl, QUIT+CODELINK_OFFSET
+	call	wrCompHL
 	ld	iy, COMPBUF
 	jp	compiledWord
-.notfound:
-	ld	hl, .msg
-	call	printstr
-	jp	quit
-.msg:
-	.db	"not found", 0
 
 CREATE:
 	.db "CREATE", 0, 0
@@ -454,4 +472,3 @@ CONSTANT:
 	.dw DOES+CODELINK_OFFSET
 	.dw FETCH+CODELINK_OFFSET
 	.dw EXIT+CODELINK_OFFSET
-

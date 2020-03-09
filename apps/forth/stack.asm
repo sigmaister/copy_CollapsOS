@@ -3,25 +3,26 @@
 ; PS is the most frequently used. However, this causes a problem with routine
 ; calls: because in Forth, the stack isn't balanced within each call, our return
 ; offset, when placed by a CALL, messes everything up. This is one of the
-; reasons why we need stack management routines below.
+; reasons why we need stack management routines below. IX always points to RS'
+; Top Of Stack (TOS)
 ;
 ; This return stack contain "Interpreter pointers", that is a pointer to the
 ; address of a word, as seen in a compiled list of words.
 
 ; Push value HL to RS
 pushRS:
+	inc	ix
+	inc	ix
 	ld	(ix), l
-	inc	ix
-	ld	(ix), h
-	inc	ix
+	ld	(ix+1), h
 	ret
 
 ; Pop RS' TOS to HL
 popRS:
-	dec ix
-	ld	h, (ix)
-	dec ix
 	ld	l, (ix)
+	ld	h, (ix+1)
+	dec ix
+	dec ix
 	ret
 
 ; Verifies that SP is within bounds. If it's not, call ABORT
