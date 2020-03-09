@@ -4,9 +4,9 @@
 ; Number of bytes we keep as a padding between HERE and the scratchpad
 .equ	PADDING		0x20
 ; Max length of dict entry names
-.equ	NAMELEN		8
+.equ	NAMELEN		7
 ; Offset of the code link relative to the beginning of the word
-.equ	CODELINK_OFFSET	NAMELEN+2
+.equ	CODELINK_OFFSET	NAMELEN+3
 
 ; *** Variables ***
 .equ	INITIAL_SP	FORTH_RAMSTART

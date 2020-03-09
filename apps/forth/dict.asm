@@ -1,5 +1,6 @@
 ; A dictionary entry has this structure:
-; - 8b name (zero-padded)
+; - 7b name (zero-padded)
+; - 1b flags (bit 0: IMMEDIATE)
 ; - 2b prev pointer
 ; - 2b code pointer
 ; - Parameter field (PF)
@@ -168,14 +169,16 @@ exit:
 	jp	compiledWord
 
 ; ( R:I -- )
-	.db "QUIT", 0, 0, 0, 0
+	.db "QUIT"
+	.fill 4
 	.dw EXIT
 QUIT:
 	.dw nativeWord
 quit:
 	jp	forthRdLine
 
-	.db "ABORT", 0, 0, 0
+	.db "ABORT"
+	.fill 3
 	.dw QUIT
 ABORT:
 	.dw nativeWord
@@ -198,7 +201,8 @@ BYE:
 	ret
 
 ; ( c -- )
-	.db "EMIT", 0, 0, 0, 0
+	.db "EMIT"
+	.fill 4
 	.dw BYE
 EMIT:
 	.dw nativeWord
@@ -208,7 +212,8 @@ EMIT:
 	jp	exit
 
 ; ( addr -- )
-	.db "EXECUTE", 0
+	.db "EXECUTE"
+	.db 0
 	.dw EMIT
 EXECUTE:
 	.dw nativeWord
@@ -239,19 +244,18 @@ DEFINE:
 	; All we need to do is to know how many bytes to copy. To do so, we
 	; skip compwords until EXIT is reached.
 	ld	(HERE), hl	; where we write compwords.
-	; Let's save old RS TOS
-	ld	e, (ix)
-	ld	d, (ix+1)
+	ld	l, (ix)
+	ld	h, (ix+1)
 .loop:
-	call	RSIsEXIT
+	call	HLPointsEXIT
 	jr	z, .loopend
 	call	compSkip
 	jr	.loop
 .loopend:
-	; At this point, RS' TOS points to EXIT compword. We'll copy it too.
+	; At this point, HL points to EXIT compword. We'll copy it too.
 	; We'll use LDIR. BC will be RSTOP-OLDRSTOP+2
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	e, (ix)
+	ld	d, (ix+1)
 	inc	hl \ inc hl	; our +2
 	or	a		; clear carry
 	sbc	hl, de
@@ -267,7 +271,8 @@ DEFINE:
 	ld	(HERE), de	; update HERE
 	jp	exit
 
-	.db "DOES>", 0, 0, 0
+	.db "DOES>"
+	.fill 3
 	.dw DEFINE
 DOES:
 	.dw nativeWord
@@ -300,7 +305,8 @@ KEY:
 	push	hl
 	jp	exit
 
-	.db "INTERPRE"
+	.db "INTERPR"
+	.db 0
 	.dw KEY
 INTERPRET:
 	.dw nativeWord
@@ -317,7 +323,8 @@ interpret:
 	ld	iy, COMPBUF
 	jp	compiledWord
 
-	.db "CREATE", 0, 0
+	.db "CREATE"
+	.fill 2
 	.dw INTERPRET
 CREATE:
 	.dw nativeWord
@@ -338,7 +345,8 @@ HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
 	.dw HERE
 
-	.db "CURRENT", 0
+	.db "CURRENT"
+	.db 0
 	.dw HERE_
 CURRENT_:
 	.dw sysvarWord
@@ -514,7 +522,8 @@ STOREINC:
 
 ; ( n -- )
 ; HERE +!
-	.db "ALLOT", 0, 0, 0
+	.db "ALLOT"
+	.fill 3
 	.dw STOREINC
 ALLOT:
 	.dw compiledWord
@@ -523,7 +532,8 @@ ALLOT:
 	.dw EXIT
 
 ; CREATE 2 ALLOT
-	.db "VARIABLE"
+	.db "VARIABL"
+	.db 0
 	.dw ALLOT
 VARIABLE:
 	.dw compiledWord
@@ -535,7 +545,8 @@ VARIABLE:
 
 ; ( n -- )
 ; CREATE HERE @ ! DOES> @
-	.db "CONSTANT"
+	.db "CONSTAN"
+	.db 0
 	.dw VARIABLE
 CONSTANT:
 	.dw compiledWord

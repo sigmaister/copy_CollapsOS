@@ -43,78 +43,78 @@ readword:
 	inc	a	; unset Z
 	ret
 
-RSIsDE:
-	push	hl
-	ld	l, (ix)
-	ld	h, (ix+1)
+; Sets Z if (HL) == E and (HL+1) == D
+HLPointsDE:
 	ld	a, (hl)
 	cp	e
-	jr	nz, .end	; no
+	ret	nz		; no
 	inc	hl
 	ld	a, (hl)
+	dec	hl
 	cp	d		; Z has our answer
-.end:
-	pop	hl
 	ret
 
 
-; Is RS' TOS pointing to a NUMBER word?
-; Z if yes, NZ if no.
-RSIsNUMBER:
+HLPointsNUMBER:
 	push	de
 	ld	de, NUMBER
-	call	RSIsDE
+	call	HLPointsDE
 	pop	de
 	ret
 
-; Is RS' TOS pointing to a LIT word?
-; Z if yes, NZ if no.
-RSIsLIT:
+HLPointsLIT:
 	push	de
 	ld	de, LIT
-	call	RSIsDE
+	call	HLPointsDE
 	pop	de
 	ret
 
-; Is RS' TOS pointing to EXIT?
-; Z if yes, NZ if no.
-RSIsEXIT:
+HLPointsEXIT:
 	push	de
 	ld	de, EXIT
-	call	RSIsDE
+	call	HLPointsDE
 	pop	de
 	ret
 
-; Skip the compword where RS' TOS is currently pointing. If it's a regular word,
+; Skip the compword where HL is currently pointing. If it's a regular word,
 ; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
 ; to after null-termination.
 compSkip:
-	push	hl
-	ld	l, (ix)
-	ld	h, (ix+1)
-	; At the minimum, we skip by 2
-	inc	hl \ inc hl
-	call	RSIsNUMBER
+	call	HLPointsNUMBER
 	jr	z, .isNum
-	call	RSIsLIT
-	jr	nz, .end	; A word
+	call	HLPointsLIT
+	jr	nz, .isWord
 	; We have a literal
+	inc	hl \ inc hl
 	call	strskip
 	inc	hl		; byte after word termination
-	jr	.end
+	ret
 .isNum:
 	; skip by 4
 	inc	hl \ inc hl
-.end:
-	; HL is good, write it to RS
-	ld	(ix), l
-	ld	(ix+1), h
-	pop	hl
+	; continue to isWord
+.isWord:
+	; skip by 2
+	inc	hl \ inc hl
 	ret
 
-; Checks RS' TOS and, if it points to a string literal (LIT), makes HL point
-; to it and advance IP to byte following null-termination.
-; If it doesn't, things get interesting: If it's a word reference, then it's
+; The goal of this routine is to read a string literal following the currently
+; executed words. For example, CREATE and DEFINE need this. Things are a little
+; twisted, so bear with me while I explain how it works.
+;
+; When we call this routine, everything has been compiled. We're on an atom and
+; we're executing it. Now, we're looking for a string literal or a word-with-a
+; name that follows our readCompWord caller. We could think that this word is
+; right there on RS' TOS, but no! You have to account for words wrapping the
+; caller. For example, "VARIABLE" calls "CREATE". If you call "VARIABLE foo",
+; if CREATE looks at what follows in RS' TOS, it will only find the "2" in
+; "CREATE 2 ALLOT".
+;
+; Therefore, we actually need to check in RS' *bottom of stack* for our answer.
+; If that atom is a LIT, we're good. We make HL point to it and advance IP to
+; byte following null-termination.
+;
+; If it isn't, things get interesting: If it's a word reference, then it's
 ; not an invalid literal. For example, one could want to redefine an existing
 ; word. So in that case, we'll copy the word's name on the pad (it might not be
 ; null-terminated) and set HL to point to it.
@@ -124,18 +124,22 @@ compSkip:
 ; word. Yeah, it means that ";" can't be overridden...
 ; If name can't be read, we abort
 readCompWord:
-	; In all cases, we want RS' TOS in HL. Let's get it now.
-	ld	l, (ix)
-	ld	h, (ix+1)
-	call	RSIsLIT
+	; In all cases, we want RS' BOS in HL. Let's get it now.
+	ld	hl, (RS_ADDR)
+	call	HLPointsLIT
 	jr	nz, .notLIT
-	; RS TOS is a LIT, make HL point to string, then skip this RS compword.
+	; RS BOS is a LIT, make HL point to string, then skip this RS compword.
 	inc	hl \ inc hl	; HL now points to string itself
-	jr	compSkip
+	push	hl		; --> lvl 1, our result
+	call	strskip
+	inc	hl		; byte after word termination
+	ld	(RS_ADDR), hl
+	pop	hl		; <-- lvl 1, our result
+	ret
 .notLIT:
 	; Alright, not a literal, but is it a word? If it's not a number, then
 	; it's a word.
-	call	RSIsNUMBER
+	call	HLPointsNUMBER
 	jr	z, .notWord
 	; Not a number, then it's a word. Copy word to pad and point to it.
 	call	intoHL
@@ -153,7 +157,9 @@ readCompWord:
 	; null-terminate
 	xor	a
 	ld	(de), a
-	call	compSkip
+	; Advance RS' BOS by 2
+	ld	hl, RS_ADDR
+	inc	(hl) \ inc (hl)
 	pop	hl		; <-- lvl 1
 	ret
 .notWord:
@@ -251,13 +257,15 @@ compile:
 ; HL points to new (HERE)
 entryhead:
 	call	readCompWord
-	call	printstr
 	ld	de, (HERE)
 	call	strcpy
 	ex	de, hl		; (HERE) now in HL
 	ld	de, (CURRENT)
 	ld	a, NAMELEN
 	call	addHL
+	xor	a		; IMMED
+	ld	(hl), a
+	inc	hl
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
