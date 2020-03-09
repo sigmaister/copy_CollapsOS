@@ -1,19 +1,29 @@
 Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
-                (TOS). For example, in "a b -- c d", b is TOS before, d is TOS
-                after. "R:" means that the Return Stack is modified.
+(TOS). For example, in "a b -- c d", b is TOS before, d is TOS after. "R:" means
+that the Return Stack is modified.
 
 DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
-       that newly created word into a "does cell", that is, a regular cell (
-       when called, puts the cell's addr on PS), but right after that, it
-       executes words that appear after the DOES>.
+that newly created word into a "does cell", that is, a regular cell ( when
+called, puts the cell's addr on PS), but right after that, it executes words
+that appear after the DOES>.
 
-       "does cells" always allocate 4 bytes (2 for the cell, 2 for the DOES>
-       link) and there is no need for ALLOT in colon definition.
+"does cells" always allocate 4 bytes (2 for the cell, 2 for the DOES> link) and
+there is no need for ALLOT in colon definition.
 
-       At compile time, colon definition stops processing words when reaching
-       the DOES>.
+At compile time, colon definition stops processing words when reaching the
+DOES>.
 
-       Example: ": CONSTANT CREATE HERE @ ! DOES> @ ;"
+Example: ": CONSTANT CREATE HERE @ ! DOES> @ ;"
+
+Word references (wordref): When we say we have a "word reference", it's a
+pointer to a words *code link*. For example, the label "PLUS:" in this unit is a
+word reference. Why not refer to the beginning of the word struct? Because we
+actually seldom refer to the name and prev link, except during compilation, so
+defining "word reference" this way makes the code easier to understand.
+
+Atom: A word of the type compiledWord contains, in its PF, a list of what we
+call "atoms". Those atoms are most of the time word references, but they can
+also be references to NUMBER and LIT.
 
 *** Native Words ***
 
@@ -27,11 +37,12 @@ DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
+CURRENT     -- n            Set n to wordref of last added entry.
 DOES>       --              See description at top of file
 DUP         a -- a a
 ELSE        --              Branch to THEN
 EMIT        c --            Spit char c to stdout
-EXECUTE     a --            Execute word at addr a
+EXECUTE     a --            Execute wordref at addr a
 HERE        -- a            Push HERE's address
 IF          n --            Branch to ELSE or THEN if n is zero
 QUIT        R:drop --       Return to interpreter promp immediately

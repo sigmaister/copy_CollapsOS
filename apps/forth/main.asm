@@ -6,7 +6,7 @@
 ; Max length of dict entry names
 .equ	NAMELEN		8
 ; Offset of the code link relative to the beginning of the word
-.equ	CODELINK_OFFSET	10
+.equ	CODELINK_OFFSET	NAMELEN+2
 
 ; *** Variables ***
 .equ	INITIAL_SP	FORTH_RAMSTART
@@ -39,7 +39,7 @@ forthRdLine:
 	ld	(INPUTPOS), hl
 forthInterpret:
 	ld	ix, RS_ADDR-2		; -2 because we inc-before-push
-	ld	iy, INTERPRET+CODELINK_OFFSET
+	ld	iy, INTERPRET
 	jp	executeCodeLink
 msgOk:
 	.db	" ok", 0

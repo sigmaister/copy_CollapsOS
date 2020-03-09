@@ -13,11 +13,8 @@
 nativeWord:
 	jp	(iy)
 
-; Execute a compiled word containing a list of references to other words,
-; usually ended by a reference to EXIT.
-; A reference to a word in a compiledWord section is *not* a direct reference,
-; but a word+CODELINK_OFFSET reference. Therefore, for a code link "link",
-; (link) is the routine to call.
+; Execute a list of atoms, which usually ends with EXIT.
+; IY points to that list.
 compiledWord:
 	push	iy \ pop hl
 	inc	hl
@@ -86,7 +83,7 @@ elseWord:
 	inc	bc \ inc bc
 	call	intoHL
 	or	a		; clear carry
-	ld	de, EXIT+CODELINK_OFFSET
+	ld	de, EXIT
 	sbc	hl, de
 	jp	z, exit
 	; Not EXIT, let's continue with ELSE. No carry possible because EXIT
@@ -152,10 +149,10 @@ LIT:
 	.dw	litWord
 
 ; ( R:I -- )
-EXIT:
 	.db ";"
 	.fill 7
 	.dw 0
+EXIT:
 	.dw nativeWord
 ; When we call the EXIT word, we have to do a "double exit" because our current
 ; Interpreter pointer is pointing to the word *next* to our EXIT reference when,
@@ -171,26 +168,26 @@ exit:
 	jp	compiledWord
 
 ; ( R:I -- )
-QUIT:
 	.db "QUIT", 0, 0, 0, 0
 	.dw EXIT
+QUIT:
 	.dw nativeWord
 quit:
 	jp	forthRdLine
 
-ABORT:
 	.db "ABORT", 0, 0, 0
 	.dw QUIT
+ABORT:
 	.dw nativeWord
 abort:
 	; Reinitialize PS (RS is reinitialized in forthInterpret
 	ld	sp, (INITIAL_SP)
 	jp	forthRdLine
 
-BYE:
 	.db "BYE"
 	.fill 5
 	.dw ABORT
+BYE:
 	.dw nativeWord
 	; Goodbye Forth! Before we go, let's restore the stack
 	ld	sp, (INITIAL_SP)
@@ -201,9 +198,9 @@ BYE:
 	ret
 
 ; ( c -- )
-EMIT:
 	.db "EMIT", 0, 0, 0, 0
 	.dw BYE
+EMIT:
 	.dw nativeWord
 	pop	hl
 	ld	a, l
@@ -211,13 +208,11 @@ EMIT:
 	jp	exit
 
 ; ( addr -- )
-EXECUTE:
 	.db "EXECUTE", 0
 	.dw EMIT
+EXECUTE:
 	.dw nativeWord
-	pop	iy	; Points to word_offset
-	ld	de, CODELINK_OFFSET
-	add	iy, de
+	pop	iy	; is a wordref
 executeCodeLink:
 	ld	l, (iy)
 	ld	h, (iy+1)
@@ -227,10 +222,10 @@ executeCodeLink:
 	; IY points to PFA
 	jp	(hl)	; go!
 
-DEFINE:
 	.db ":"
 	.fill 7
 	.dw EXECUTE
+DEFINE:
 	.dw nativeWord
 	call	entryhead
 	ld	de, compiledWord
@@ -272,9 +267,9 @@ DEFINE:
 	ld	(HERE), de	; update HERE
 	jp	exit
 
-DOES:
 	.db "DOES>", 0, 0, 0
 	.dw DEFINE
+DOES:
 	.dw nativeWord
 	; We run this when we're in an entry creation context. Many things we
 	; need to do.
@@ -285,8 +280,6 @@ DOES:
 	; 3. exit. Because we've already popped RS, a regular exit will abort
 	;    colon definition, so we're good.
 	ld	iy, (CURRENT)
-	ld	de, CODELINK_OFFSET
-	add	iy, de
 	ld	hl, doesWord
 	call	wrCompHL
 	inc	iy \ inc iy		; cell variable space
@@ -296,10 +289,10 @@ DOES:
 	jp	exit
 
 ; ( -- c )
-KEY:
 	.db "KEY"
 	.fill 5
 	.dw DOES
+KEY:
 	.dw nativeWord
 	call	stdioGetC
 	ld	h, 0
@@ -307,9 +300,9 @@ KEY:
 	push	hl
 	jp	exit
 
-INTERPRET:
 	.db "INTERPRE"
 	.dw KEY
+INTERPRET:
 	.dw nativeWord
 interpret:
 	ld	iy, COMPBUF
@@ -319,14 +312,14 @@ interpret:
 	call	compile
 	jr	.loop
 .end:
-	ld	hl, QUIT+CODELINK_OFFSET
+	ld	hl, QUIT
 	call	wrCompHL
 	ld	iy, COMPBUF
 	jp	compiledWord
 
-CREATE:
 	.db "CREATE", 0, 0
 	.dw INTERPRET
+CREATE:
 	.dw nativeWord
 	call	entryhead
 	jp	nz, quit
@@ -338,24 +331,24 @@ CREATE:
 	ld	(HERE), hl
 	jp	exit
 
-HERE_:	; Caution: conflicts with actual variable name
 	.db "HERE"
 	.fill 4
 	.dw CREATE
+HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
 	.dw HERE
 
-CURRENT_:
 	.db "CURRENT", 0
 	.dw HERE_
+CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
 ; ( n -- )
-DOT:
 	.db "."
 	.fill 7
 	.dw CURRENT_
+DOT:
 	.dw nativeWord
 	pop	de
 	; We check PS explicitly because it doesn't look nice to spew gibberish
@@ -367,10 +360,10 @@ DOT:
 	jp	exit
 
 ; ( n a -- )
-STORE:
 	.db "!"
 	.fill 7
 	.dw DOT
+STORE:
 	.dw nativeWord
 	pop	iy
 	pop	hl
@@ -379,10 +372,10 @@ STORE:
 	jp	exit
 
 ; ( a -- n )
-FETCH:
 	.db "@"
 	.fill 7
 	.dw STORE
+FETCH:
 	.dw nativeWord
 	pop	hl
 	call	intoHL
@@ -390,10 +383,10 @@ FETCH:
 	jp	exit
 
 ; ( a b -- b a )
-SWAP:
 	.db "SWAP"
 	.fill 4
 	.dw FETCH
+SWAP:
 	.dw nativeWord
 	pop	hl
 	ex	(sp), hl
@@ -401,10 +394,10 @@ SWAP:
 	jp	exit
 
 ; ( a -- a a )
-DUP:
 	.db "DUP"
 	.fill 5
 	.dw SWAP
+DUP:
 	.dw nativeWord
 	pop	hl
 	push	hl
@@ -412,10 +405,10 @@ DUP:
 	jp	exit
 
 ; ( a b -- a b a )
-OVER:
 	.db "OVER"
 	.fill 4
 	.dw DUP
+OVER:
 	.dw nativeWord
 	pop	hl	; B
 	pop	de	; A
@@ -425,10 +418,10 @@ OVER:
 	jp	exit
 
 ; ( a b -- c ) A + B
-PLUS:
 	.db "+"
 	.fill 7
 	.dw OVER
+PLUS:
 	.dw nativeWord
 	pop	hl
 	pop	de
@@ -437,10 +430,10 @@ PLUS:
 	jp	exit
 
 ; ( a b -- c ) A - B
-MINUS:
 	.db "-"
 	.fill 7
 	.dw PLUS
+MINUS:
 	.dw nativeWord
 	pop	de		; B
 	pop	hl		; A
@@ -450,10 +443,10 @@ MINUS:
 	jp	exit
 
 ; ( a b -- c ) A * B
-MULT:
 	.db "*"
 	.fill 7
 	.dw MINUS
+MULT:
 	.dw nativeWord
 	pop	de
 	pop	bc
@@ -462,10 +455,10 @@ MULT:
 	jp	exit
 
 ; ( a b -- c ) A / B
-DIV:
 	.db "/"
 	.fill 7
 	.dw MULT
+DIV:
 	.dw nativeWord
 	pop	de
 	pop	hl
@@ -473,83 +466,83 @@ DIV:
 	push	bc
 	jp	exit
 
-IF:
 	.db "IF"
 	.fill 6
 	.dw DIV
+IF:
 	.dw ifWord
 
-ELSE:
 	.db "ELSE"
 	.fill 4
 	.dw IF
+ELSE:
 	.dw elseWord
 
-THEN:
 	.db "THEN"
 	.fill 4
 	.dw ELSE
+THEN:
 	.dw thenWord
 
 ; End of native words
 
 ; ( a -- )
 ; @ .
-FETCHDOT:
 	.db "?"
 	.fill 7
 	.dw THEN
+FETCHDOT:
 	.dw compiledWord
-	.dw FETCH+CODELINK_OFFSET
-	.dw DOT+CODELINK_OFFSET
-	.dw EXIT+CODELINK_OFFSET
+	.dw FETCH
+	.dw DOT
+	.dw EXIT
 
 ; ( n a -- )
 ; SWAP OVER @ + SWAP !
-STOREINC:
 	.db "+!"
 	.fill 6
 	.dw FETCHDOT
+STOREINC:
 	.dw compiledWord
-	.dw SWAP+CODELINK_OFFSET
-	.dw OVER+CODELINK_OFFSET
-	.dw FETCH+CODELINK_OFFSET
-	.dw PLUS+CODELINK_OFFSET
-	.dw SWAP+CODELINK_OFFSET
-	.dw STORE+CODELINK_OFFSET
-	.dw EXIT+CODELINK_OFFSET
+	.dw SWAP
+	.dw OVER
+	.dw FETCH
+	.dw PLUS
+	.dw SWAP
+	.dw STORE
+	.dw EXIT
 
 ; ( n -- )
 ; HERE +!
-ALLOT:
 	.db "ALLOT", 0, 0, 0
 	.dw STOREINC
+ALLOT:
 	.dw compiledWord
-	.dw HERE_+CODELINK_OFFSET
-	.dw STOREINC+CODELINK_OFFSET
-	.dw EXIT+CODELINK_OFFSET
+	.dw HERE_
+	.dw STOREINC
+	.dw EXIT
 
 ; CREATE 2 ALLOT
-VARIABLE:
 	.db "VARIABLE"
 	.dw ALLOT
+VARIABLE:
 	.dw compiledWord
-	.dw CREATE+CODELINK_OFFSET
+	.dw CREATE
 	.dw NUMBER
 	.dw 2
-	.dw ALLOT+CODELINK_OFFSET
-	.dw EXIT+CODELINK_OFFSET
+	.dw ALLOT
+	.dw EXIT
 
 ; ( n -- )
 ; CREATE HERE @ ! DOES> @
-CONSTANT:
 	.db "CONSTANT"
 	.dw VARIABLE
+CONSTANT:
 	.dw compiledWord
-	.dw CREATE+CODELINK_OFFSET
-	.dw HERE_+CODELINK_OFFSET
-	.dw FETCH+CODELINK_OFFSET
-	.dw STORE+CODELINK_OFFSET
-	.dw DOES+CODELINK_OFFSET
-	.dw FETCH+CODELINK_OFFSET
-	.dw EXIT+CODELINK_OFFSET
+	.dw CREATE
+	.dw HERE_
+	.dw FETCH
+	.dw STORE
+	.dw DOES
+	.dw FETCH
+	.dw EXIT

@@ -80,7 +80,7 @@ RSIsLIT:
 ; Z if yes, NZ if no.
 RSIsEXIT:
 	push	de
-	ld	de, EXIT+CODELINK_OFFSET
+	ld	de, EXIT
 	call	RSIsDE
 	pop	de
 	ret
@@ -163,14 +163,10 @@ readCompWord:
 .msg:
 	.db "word expected", 0
 
-; For DE pointing to a dict entry, set DE to point to the previous entry.
+; For DE being a wordref, move DE to the previous wordref.
 ; Z is set if DE point to 0 (no entry). NZ if not.
 prev:
-	push	hl		; --> lvl 1
-	ld	hl, NAMELEN	; prev field offset
-	add	hl, de
-	ex	de, hl
-	pop	hl		; <-- lvl 1
+	dec	de \ dec de	; prev field
 	call	intoDE
 	; DE points to prev. Is it zero?
 	xor	a
@@ -183,15 +179,28 @@ prev:
 ; point to that entry.
 ; Z if found, NZ if not.
 find:
+	push	hl
+	push	bc
 	ld	de, (CURRENT)
+	ld	bc, CODELINK_OFFSET
 .inner:
+	; DE is a wordref, let's go to beginning of struct
+	push	de		; --> lvl 1
+	or	a		; clear carry
+	ex	de, hl
+	sbc	hl, bc
+	ex	de, hl		; We're good, DE points to word name
 	ld	a, NAMELEN
 	call	strncmp
-	ret	z		; found
+	pop	de		; <-- lvl 1, return to wordref
+	jr	z, .end		; found
 	call	prev
 	jr	nz, .inner
 	; Z set? end of dict unset Z
 	inc	a
+.end:
+	pop	bc
+	pop	hl
 	ret
 
 ; Write compiled data from HL into IY, advancing IY at the same time.
@@ -207,10 +216,7 @@ wrCompHL:
 compile:
 	call	find
 	jr	nz, .maybeNum
-	; DE is a word offset, we need a code link
-	ld	hl, CODELINK_OFFSET
-	add	hl, de
-	xor	a	; set Z
+	ex	de, hl
 	jr	wrCompHL
 .maybeNum:
 	push	hl		; --> lvl 1. save string addr
@@ -250,13 +256,13 @@ entryhead:
 	call	strcpy
 	ex	de, hl		; (HERE) now in HL
 	ld	de, (CURRENT)
-	ld	(CURRENT), hl
 	ld	a, NAMELEN
 	call	addHL
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
 	inc	hl
+	ld	(CURRENT), hl
 	ld	(HERE), hl
 	xor	a		; set Z
 	ret
