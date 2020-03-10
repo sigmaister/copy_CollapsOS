@@ -70,4 +70,6 @@ HERE        -- a            Push HERE's address
 .           n --            Print n in its decimal form
 EMIT        c --            Spit char c to stdout
 KEY         -- c            Get char c from stdin
+PC!         c a --          Spit c to port a
+PC@         a -- c          Fetch c from port a
 

@@ -211,10 +211,33 @@ EMIT:
 	call	stdioPutC
 	jp	exit
 
+; ( c port -- )
+	.db "PC!"
+	.fill 5
+	.dw EMIT
+PSTORE:
+	.dw nativeWord
+	pop	bc
+	pop	hl
+	out	(c), l
+	jp	exit
+
+; ( port -- c )
+	.db "PC@"
+	.fill 5
+	.dw PSTORE
+PFETCH:
+	.dw nativeWord
+	pop	bc
+	ld	h, 0
+	in	l, (c)
+	push	hl
+	jp	exit
+
 ; ( addr -- )
 	.db "EXECUTE"
 	.db 0
-	.dw EMIT
+	.dw PFETCH
 EXECUTE:
 	.dw nativeWord
 	pop	iy	; is a wordref
