@@ -52,7 +52,7 @@ strcpy:
 	ret
 
 ; Compares strings pointed to by HL and DE until one of them hits its null char.
-; If equal, Z is set. If not equal, Z is reset.
+; If equal, Z is set. If not equal, Z is reset. C is set if HL > DE
 strcmp:
 	push	hl
 	push	de

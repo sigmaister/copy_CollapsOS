@@ -27,7 +27,7 @@ forthMain:
 	; we check for stack underflow.
 	push	af \ push af \ push af
 	ld	(INITIAL_SP), sp
-	ld	hl, CONSTANT		; last entry in hardcoded dict
+	ld	hl, LATEST
 	ld	(CURRENT), hl
 	ld	hl, FORTH_RAMEND
 	ld	(HERE), hl

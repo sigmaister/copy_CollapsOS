@@ -282,9 +282,7 @@ DEFINE:
 	; is lit
 	ldi
 	ldi
-	inc	hl \ inc hl
 	call	strcpyM
-	inc	hl		; byte after word termination
 	jr	.loop
 .notLIT:
 	; it's a word
@@ -309,7 +307,7 @@ DEFINE:
 	; a good old regular word. We have 2 bytes to copy. But before we do,
 	; let's check whether it's an EXIT. LDI doesn't affect Z, so we can
 	; make our jump later.
-	call	HLPointsEXIT
+	call	HLPointsEXITQUIT
 	ldi
 	ldi
 	jr	nz, .loop
@@ -487,10 +485,20 @@ FETCH:
 	push	hl
 	jp	exit
 
+; ( -- a )
+	.db "LIT@"
+	.fill 4
+	.dw FETCH
+LITFETCH:
+	.dw nativeWord
+	call	readLITTOS
+	push	hl
+	jp	exit
+
 ; ( a b -- b a )
 	.db "SWAP"
 	.fill 4
-	.dw FETCH
+	.dw LITFETCH
 SWAP:
 	.dw nativeWord
 	pop	hl
@@ -571,9 +579,36 @@ DIV:
 	push	bc
 	jp	exit
 
+; ( a1 a2 -- b )
+	.db "SCMP"
+	.fill 4
+	.dw DIV
+SCMP:
+	.dw nativeWord
+	pop	de
+	pop	hl
+	call	strcmp
+	call	flagsToBC
+	push	bc
+	jp	exit
+
+; ( n1 n2 -- f )
+	.db "CMP"
+	.fill 5
+	.dw SCMP
+CMP:
+	.dw nativeWord
+	pop	hl
+	pop	de
+	or	a	; clear carry
+	sbc	hl, de
+	call	flagsToBC
+	push	bc
+	jp	exit
+
 	.db "IF"
 	.fill 6
-	.dw DIV
+	.dw CMP
 IF:
 	.dw ifWord
 
@@ -589,13 +624,25 @@ ELSE:
 THEN:
 	.dw thenWord
 
+	.db "RECURSE"
+	.db 0
+	.dw THEN
+RECURSE:
+	.dw nativeWord
+	call	popRS
+	ld	l, (ix)
+	ld	h, (ix+1)
+	dec	hl \ dec hl
+	push	hl \ pop iy
+	jp	compiledWord
+
 ; End of native words
 
 ; ( a -- )
 ; @ .
 	.db "?"
 	.fill 7
-	.dw THEN
+	.dw RECURSE
 FETCHDOT:
 	.dw compiledWord
 	.dw FETCH
@@ -654,3 +701,59 @@ CONSTANT:
 	.dw DOES
 	.dw FETCH
 	.dw EXIT
+
+; ( f -- f )
+; IF 0 ELSE 1 THEN
+	.db "NOT"
+	.fill 5
+	.dw CONSTANT
+NOT:
+	.dw compiledWord
+	.dw IF
+	.dw NUMBER
+	.dw 0
+	.dw ELSE
+	.dw NUMBER
+	.dw 1
+	.dw THEN
+	.dw EXIT
+
+; ( n1 n2 -- f )
+; CMP NOT
+	.db "="
+	.fill 7
+	.dw NOT
+EQ:
+	.dw compiledWord
+	.dw CMP
+	.dw NOT
+	.dw EXIT
+
+; ( n1 n2 -- f )
+; CMP -1 =
+	.db "<"
+	.fill 7
+	.dw EQ
+LT:
+	.dw compiledWord
+	.dw CMP
+	.dw NUMBER
+	.dw -1
+	.dw EQ
+	.dw EXIT
+
+; ( n1 n2 -- f )
+; CMP 1 =
+	.db ">"
+	.fill 7
+	.dw LT
+GT:
+LATEST:
+	.dw compiledWord
+	.dw CMP
+	.dw NUMBER
+	.dw 1
+	.dw EQ
+	.dw EXIT
+
+;

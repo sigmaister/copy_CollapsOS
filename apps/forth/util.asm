@@ -69,10 +69,14 @@ HLPointsLIT:
 	pop	de
 	ret
 
-HLPointsEXIT:
+HLPointsEXITQUIT:
 	push	de
 	ld	de, EXIT
 	call	HLPointsDE
+	jr	z, .end
+	ld	de, QUIT
+	call	HLPointsDE
+.end:
 	pop	de
 	ret
 
@@ -98,21 +102,22 @@ compSkip:
 	inc	hl \ inc hl
 	ret
 
+; ***readLIT***
 ; The goal of this routine is to read a string literal following the currently
 ; executed words. For example, CREATE and DEFINE need this. Things are a little
 ; twisted, so bear with me while I explain how it works.
 ;
 ; When we call this routine, everything has been compiled. We're on an atom and
 ; we're executing it. Now, we're looking for a string literal or a word-with-a
-; name that follows our readCompWord caller. We could think that this word is
-; right there on RS' TOS, but no! You have to account for words wrapping the
-; caller. For example, "VARIABLE" calls "CREATE". If you call "VARIABLE foo",
-; if CREATE looks at what follows in RS' TOS, it will only find the "2" in
-; "CREATE 2 ALLOT".
+; name that follows our readLIT caller. We could think that this word is
+; right there on RS' TOS, but not always! You have to account for words wrapping
+; the caller. For example, "VARIABLE" calls "CREATE". If you call
+; "VARIABLE foo", if CREATE looks at what follows in RS' TOS, it will only find
+; the "2" in "CREATE 2 ALLOT".
 ;
-; Therefore, we actually need to check in RS' *bottom of stack* for our answer.
-; If that atom is a LIT, we're good. We make HL point to it and advance IP to
-; byte following null-termination.
+; In this case, we actually need to check in RS' *bottom of stack* for our
+; answer. If that atom is a LIT, we're good. We make HL point to it and advance
+; IP to byte following null-termination.
 ;
 ; If it isn't, things get interesting: If it's a word reference, then it's
 ; not an invalid literal. For example, one could want to redefine an existing
@@ -123,31 +128,48 @@ compSkip:
 ; second word in our dict. We don't accept EXIT because it's the termination
 ; word. Yeah, it means that ";" can't be overridden...
 ; If name can't be read, we abort
-readCompWord:
-	; In all cases, we want RS' BOS in HL. Let's get it now.
-	ld	hl, (RS_ADDR)
+;
+; BOS vs TOS: What we cover so far is the "CREATE" and friends cases, where we
+; want to read BOS. There are, however, cases where we want to read TOS, that is
+; that we want to read the LIT right next to our atom. Example: "(". When
+; processing comments, we are at compile time and want to read words from BOS,
+; yes), however, in "("'s definition, there's "LIT@ )", which means "fetch LIT
+; next to me and push this to stack". This LIT we want to fetch is *not* from
+; BOS, it's from TOS.
+;
+; This is why we have readLITBOS and readLITTOS. readLIT uses HL and DE and is
+; not used directly.
+
+; Given a RS stack pointer HL, read LIT next to it (or abort) and set HL to
+; point to its associated string. Set DE to there the RS stack pointer should
+; point next.
+readLIT:
 	call	HLPointsLIT
 	jr	nz, .notLIT
 	; RS BOS is a LIT, make HL point to string, then skip this RS compword.
 	inc	hl \ inc hl	; HL now points to string itself
-	push	hl		; --> lvl 1, our result
+	; HL has our its final value
+	ld	d, h
+	ld	e, l
 	call	strskip
 	inc	hl		; byte after word termination
-	ld	(RS_ADDR), hl
-	pop	hl		; <-- lvl 1, our result
+	ex	de, hl
 	ret
 .notLIT:
 	; Alright, not a literal, but is it a word? If it's not a number, then
 	; it's a word.
 	call	HLPointsNUMBER
 	jr	z, .notWord
+	call	HLPointsEXITQUIT
+	jr	z, .notWord
 	; Not a number, then it's a word. Copy word to pad and point to it.
+	push	hl		; --> lvl 1. we need it to set DE later
 	call	intoHL
 	or	a		; clear carry
 	ld	de, CODELINK_OFFSET
 	sbc	hl, de
 	; That's our return value
-	push	hl		; --> lvl 1
+	push	hl		; --> lvl 2
 	; HL now points to word offset, let'd copy it to pad
 	ex	de, hl
 	call	pad
@@ -157,10 +179,10 @@ readCompWord:
 	; null-terminate
 	xor	a
 	ld	(de), a
-	; Advance RS' BOS by 2
-	ld	hl, RS_ADDR
-	inc	(hl) \ inc (hl)
-	pop	hl		; <-- lvl 1
+	pop	hl		; <-- lvl 2
+	pop	de		; <-- lvl 1
+	; Advance IP by 2
+	inc	de \ inc de
 	ret
 .notWord:
 	ld	hl, .msg
@@ -168,6 +190,24 @@ readCompWord:
 	jp	abort
 .msg:
 	.db "word expected", 0
+
+readLITBOS:
+	push	de
+	ld	hl, (RS_ADDR)
+	call	readLIT
+	ld	(RS_ADDR), de
+	pop	de
+	ret
+
+readLITTOS:
+	push	de
+	ld	l, (ix)
+	ld	h, (ix+1)
+	call	readLIT
+	ld	(ix), e
+	ld	(ix+1), d
+	pop	de
+	ret
 
 ; For DE being a wordref, move DE to the previous wordref.
 ; Z is set if DE point to 0 (no entry). NZ if not.
@@ -238,7 +278,7 @@ compile:
 	; When encountering an undefined word during compilation, we spit a
 	; reference to litWord, followed by the null-terminated word.
 	; This way, if a preceding word expect a string literal, it will read it
-	; by calling readCompWord, and if it doesn't, the routine will be
+	; by calling readLIT, and if it doesn't, the routine will be
 	; called, triggering an abort.
 	ld	hl, LIT
 	call	wrCompHL
@@ -256,7 +296,7 @@ compile:
 ; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
 entryhead:
-	call	readCompWord
+	call	readLITBOS
 	ld	de, (HERE)
 	call	strcpy
 	ex	de, hl		; (HERE) now in HL
@@ -291,3 +331,15 @@ HLPointsIMMED:
 	inc	hl
 	pop	hl
 	ret
+
+; Checks flags Z and C and sets BC to 0 if Z, 1 if C and -1 otherwise
+flagsToBC:
+	ld	bc, 0
+	ret	z	; equal
+	inc	bc
+	ret	c	; >
+	; <
+	dec	bc
+	dec	bc
+	ret
+

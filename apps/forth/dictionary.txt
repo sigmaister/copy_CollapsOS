@@ -43,6 +43,7 @@ IF          n --            Branch to ELSE or THEN if n is zero
 INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
 QUIT        R:drop --       Return to interpreter promp immediately
+RECURSE     R:I -- R:I-2    Run the current word again.
 THEN        --              Does nothing. Serves as a branching merker for IF
                             and ELSE.
 
@@ -65,6 +66,18 @@ HERE        -- a            Push HERE's address
 -           a b -- c        a - b -> c
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
+
+*** Logic ***
+=           n1 n2 -- f      Push true if n1 == n2
+<           n1 n2 -- f      Push true if n1 < n2
+>           n1 n2 -- f      Push true if n1 > n2
+CMP         n1 n2 -- n      Compare n1 and n2 and set n to -1, 0, or 1.
+                            n=0: a1=a2. n=1: a1>a2. n=-1: a1<a2.
+NOT         f -- f          Push the logical opposite of f
+
+*** Strings ***
+LIT@ x      -- a            Read folloing LIT and push its addr to a
+S=          a1 a2 -- n      Compare strings a1 and a2. See CMP
 
 *** I/O ***
 .           n --            Print n in its decimal form
