@@ -1,5 +1,5 @@
 /shell/shell
-/bshell/shell
+/forth/forth
 /zasm/zasm
 /zasm/avra
 /runbin/runbin
@@ -7,6 +7,4 @@
 /*/*.bin
 /cfsin/zasm
 /cfsin/ed
-/cfsin/basic
-/cfsin/forth
 /cfsin/user.h

@@ -1,10 +1,10 @@
 CFSPACK_OBJ = ../tools/cfspack/libcfs.o
-TARGETS = shell/shell zasm/zasm runbin/runbin
+TARGETS = shell/shell zasm/zasm runbin/runbin forth/forth
 KERNEL = ../kernel
 APPS = ../apps
 ZASMBIN = zasm/zasm
 AVRABIN = zasm/avra
-SHELLAPPS = zasm ed forth
+SHELLAPPS = zasm ed
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
@@ -23,6 +23,15 @@ shell/shell-bin.h: shell/shell.bin
 
 shell/shell: shell/shell.c $(SHELLOBJS) shell/shell-bin.h 
 	$(CC) shell/shell.c $(SHELLOBJS) -o $@
+
+forth/forth.bin: forth/glue.asm $(ZASMBIN)
+	$(ZASMBIN) $(KERNEL) $(APPS) < forth/glue.asm | tee $@ > /dev/null
+
+forth/forth-bin.h: forth/forth.bin
+	./bin2c.sh KERNEL < forth/forth.bin | tee $@ > /dev/null
+
+forth/forth: forth/forth.c $(OBJS) forth/forth-bin.h 
+	$(CC) forth/forth.c $(OBJS) -o $@
 
 zasm/kernel-bin.h: zasm/kernel.bin
 	./bin2c.sh KERNEL < zasm/kernel.bin | tee $@ > /dev/null
