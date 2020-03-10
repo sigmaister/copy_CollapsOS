@@ -243,33 +243,74 @@ DEFINE:
 	; been compiled by INTERPRET*. All those bytes will be copied as-is.
 	; All we need to do is to know how many bytes to copy. To do so, we
 	; skip compwords until EXIT is reached.
-	ld	(HERE), hl	; where we write compwords.
+	ex	de, hl		; DE is our dest
 	ld	l, (ix)
 	ld	h, (ix+1)
 .loop:
-	call	HLPointsEXIT
-	jr	z, .loopend
-	call	compSkip
+	call	HLPointsNUMBER
+	jr	nz, .notNUMBER
+	; is number
+	ld	bc, 4
+	ldir
 	jr	.loop
-.loopend:
-	; At this point, HL points to EXIT compword. We'll copy it too.
-	; We'll use LDIR. BC will be RSTOP-OLDRSTOP+2
-	ld	e, (ix)
-	ld	d, (ix+1)
-	inc	hl \ inc hl	; our +2
-	or	a		; clear carry
-	sbc	hl, de
-	ld	b, h
-	ld	c, l
-	; BC has proper count
-	ex	de, hl		; HL is our source (old RS' TOS)
-	ld	de, (HERE)	; and DE is our dest
-	ldir			; go!
+.notNUMBER:
+	call	HLPointsLIT
+	jr	nz, .notLIT
+	; is lit
+	ldi
+	ldi
+	inc	hl \ inc hl
+	call	strcpyM
+	inc	hl		; byte after word termination
+	jr	.loop
+.notLIT:
+	; it's a word
+	call	HLPointsIMMED
+	jr	nz, .notIMMED
+	; Immediate word, we'll have to call it.
+	; Before we make our call, let's save our current HL/DE position
+	ld	(HERE), de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	inc	hl			; point to next word
+	push	de \ pop iy		; prepare for executeCodeLink
+	ld	(ix), l
+	ld	(ix+1), h
+	; Push return address
+	ld	hl, .retList
+	call	pushRS
+	; Ready!
+	jp	executeCodeLink
+.notIMMED:
+	; a good old regular word. We have 2 bytes to copy. But before we do,
+	; let's check whether it's an EXIT. LDI doesn't affect Z, so we can
+	; make our jump later.
+	call	HLPointsEXIT
+	ldi
+	ldi
+	jr	nz, .loop
 	; HL has our new RS' TOS
 	ld	(ix), l
 	ld	(ix+1), h
 	ld	(HERE), de	; update HERE
 	jp	exit
+
+; This label is pushed to RS when an IMMED word is called. When that word calls
+; exit, this is where it returns. When we return, RS will need to be popped so
+; that we stay on the proper RS level.
+.retList:
+	.dw	.retWord
+.retWord:
+	.dw	.retEntry
+.retEntry:
+	call	popRS		; unwind stack
+	; recall old HL / DE values
+	ld	l, (ix)
+	ld	h, (ix+1)
+	ld	de, (HERE)
+	; continue!
+	jr	.loop
 
 	.db "DOES>"
 	.fill 3
@@ -293,10 +334,43 @@ DOES:
 	ld	(HERE), iy
 	jp	exit
 
+
+	.db "IMMEDIA"
+	.db 0
+	.dw DOES
+IMMEDIATE:
+	.dw nativeWord
+	ld	hl, (CURRENT)
+	dec	hl
+	dec	hl
+	dec	hl
+	inc	(hl)
+	jp	exit
+
+; ( n -- )
+	.db "LITERAL"
+	.db 1		; IMMEDIATE
+	.dw IMMEDIATE
+LITERAL:
+	.dw nativeWord
+	ld	hl, (HERE)
+	ld	de, NUMBER
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	inc	hl
+	pop	de		; number from stack
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	inc	hl
+	ld	(HERE), hl
+	jp	exit
+
 ; ( -- c )
 	.db "KEY"
 	.fill 5
-	.dw DOES
+	.dw LITERAL
 KEY:
 	.dw nativeWord
 	call	stdioGetC

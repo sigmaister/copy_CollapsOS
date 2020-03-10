@@ -25,39 +25,49 @@ Atom: A word of the type compiledWord contains, in its PF, a list of what we
 call "atoms". Those atoms are most of the time word references, but they can
 also be references to NUMBER and LIT.
 
-*** Native Words ***
-
+*** Defining words ***
 : x ...     --              Define a new word
 ;           R:I --          Exit a colon definition
-.           n --            Print n in its decimal form
+ALLOT       n --            Move HERE by n bytes
+CREATE x    --              Create cell named x. Doesn't allocate a PF.
+CONSTANT x  n --            Creates cell x that when called pushes its value
+DOES>       --              See description at top of file
+IMMEDIATE   --              Flag the latest defined word as immediate.
+LITERAL     n --            Inserts number from TOS as a literal
+VARIABLE c  --              Creates cell x with 2 bytes allocation.
+
+*** Flow ***
+ELSE        --              Branch to THEN
+EXECUTE     a --            Execute wordref at addr a
+IF          n --            Branch to ELSE or THEN if n is zero
+INTERPRET   --              Get a line from stdin, compile it in tmp memory,
+                            then execute the compiled contents.
+QUIT        R:drop --       Return to interpreter promp immediately
+THEN        --              Does nothing. Serves as a branching merker for IF
+                            and ELSE.
+
+*** Stack ***
+DUP         a -- a a
+OVER        a b -- a b a
+SWAP        a b -- b a
+
+*** Memory ***
 @           a -- n          Set n to value at address a
 !           n a --          Store n in address a
+?           a --            Print value of addr a
++!          n a --          Increase value of addr a by n
+CURRENT     -- n            Set n to wordref of last added entry.
+HERE        -- a            Push HERE's address
+
+*** Arithmetic ***
+
 +           a b -- c        a + b -> c
 -           a b -- c        a - b -> c
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
-CREATE x    --              Create cell named x. Doesn't allocate a PF.
-CURRENT     -- n            Set n to wordref of last added entry.
-DOES>       --              See description at top of file
-DUP         a -- a a
-ELSE        --              Branch to THEN
+
+*** I/O ***
+.           n --            Print n in its decimal form
 EMIT        c --            Spit char c to stdout
-EXECUTE     a --            Execute wordref at addr a
-HERE        -- a            Push HERE's address
-IF          n --            Branch to ELSE or THEN if n is zero
-QUIT        R:drop --       Return to interpreter promp immediately
 KEY         -- c            Get char c from stdin
-INTERPRET   --              Get a line from stdin, compile it in tmp memory,
-                            then execute the compiled contents.
-OVER        a b -- a b a
-SWAP        a b -- b a
-THEN        --              Does nothing. Serves as a branching merker for IF
-                            and ELSE.
 
-*** Core-but-Forth Words ***
-
-?           a --            Print value of addr a
-+!          n a --          Increase value of addr a by n
-ALLOT       n --            Move HERE by n bytes
-CONSTANT x  n --            Creates cell x that when called pushes its value
-VARIABLE c  --              Creates cell x with 2 bytes allocation.

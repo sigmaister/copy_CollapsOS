@@ -274,3 +274,20 @@ entryhead:
 	ld	(HERE), hl
 	xor	a		; set Z
 	ret
+
+; Sets Z if wordref at (HL) is of the IMMEDIATE type
+HLPointsIMMED:
+	push	hl
+	call	intoHL
+	dec	hl
+	dec	hl
+	dec	hl
+	; We need an invert flag. We want to Z to be set when flag is non-zero.
+	ld	a, 1
+	and	(hl)
+	dec	a	; if A was 1, Z is set. Otherwise, Z is unset
+	inc	hl
+	inc	hl
+	inc	hl
+	pop	hl
+	ret
