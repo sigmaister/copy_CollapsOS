@@ -69,14 +69,28 @@ HLPointsLIT:
 	pop	de
 	ret
 
-HLPointsEXITQUIT:
+HLPointsBRANCH:
+	push	de
+	ld	de, BRANCH
+	call	HLPointsDE
+	jr	z, .end
+	ld	de, CBRANCH
+	call	HLPointsDE
+.end:
+	pop	de
+	ret
+
+HLPointsEXIT:
 	push	de
 	ld	de, EXIT
 	call	HLPointsDE
-	jr	z, .end
+	pop	de
+	ret
+
+HLPointsQUIT:
+	push	de
 	ld	de, QUIT
 	call	HLPointsDE
-.end:
 	pop	de
 	ret
 
@@ -85,7 +99,9 @@ HLPointsEXITQUIT:
 ; to after null-termination.
 compSkip:
 	call	HLPointsNUMBER
-	jr	z, .isNum
+	jr	z, .isNumOrBranch
+	call	HLPointsBRANCH
+	jr	z, .isNumOrBranch
 	call	HLPointsLIT
 	jr	nz, .isWord
 	; We have a literal
@@ -93,7 +109,7 @@ compSkip:
 	call	strskip
 	inc	hl		; byte after word termination
 	ret
-.isNum:
+.isNumOrBranch:
 	; skip by 4
 	inc	hl \ inc hl
 	; continue to isWord
@@ -160,7 +176,11 @@ readLIT:
 	; it's a word.
 	call	HLPointsNUMBER
 	jr	z, .notWord
-	call	HLPointsEXITQUIT
+	call	HLPointsBRANCH
+	jr	z, .notWord
+	call	HLPointsEXIT
+	jr	z, .notWord
+	call	HLPointsQUIT
 	jr	z, .notWord
 	; Not a number, then it's a word. Copy word to pad and point to it.
 	push	hl		; --> lvl 1. we need it to set DE later

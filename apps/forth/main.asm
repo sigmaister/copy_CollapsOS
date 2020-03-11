@@ -123,7 +123,9 @@ forthInterpret:
 
 .retRef:
 	.dw $+2
-	.dw forthInterpret
+	.dw $+2
+	call	popRS
+	jr	forthInterpret
 
 msgOk:
 	.db	" ok", 0
