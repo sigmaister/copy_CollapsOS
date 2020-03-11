@@ -99,9 +99,9 @@ HLPointsQUIT:
 ; to after null-termination.
 compSkip:
 	call	HLPointsNUMBER
-	jr	z, .isNumOrBranch
+	jr	z, .isNum
 	call	HLPointsBRANCH
-	jr	z, .isNumOrBranch
+	jr	z, .isBranch
 	call	HLPointsLIT
 	jr	nz, .isWord
 	; We have a literal
@@ -109,9 +109,13 @@ compSkip:
 	call	strskip
 	inc	hl		; byte after word termination
 	ret
-.isNumOrBranch:
+.isNum:
 	; skip by 4
-	inc	hl \ inc hl
+	inc	hl
+	; continue to isBranch
+.isBranch:
+	; skip by 3
+	inc	hl
 	; continue to isWord
 .isWord:
 	; skip by 2

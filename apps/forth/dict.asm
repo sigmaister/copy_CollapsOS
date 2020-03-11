@@ -51,19 +51,15 @@ doesWord:
 	push	hl \ pop iy
 	jr	compiledWord
 
-; This word is followed by *relative* offset (to the cell's addr) to where to
-; branch to. For example, The branching cell of "IF THEN" would contain 4. Add
+; This word is followed by 1b *relative* offset (to the cell's addr) to where to
+; branch to. For example, The branching cell of "IF THEN" would contain 3. Add
 ; this value to RS.
 branchWord:
 	push	de
 	ld	l, (ix)
 	ld	h, (ix+1)
-	ld	e, (hl)
-	inc	hl
-	ld	d, (hl)
-	dec	hl
-	or	a		; clear carry
-	add	hl, de
+	ld	a, (hl)
+	call	addHL
 	ld	(ix), l
 	ld	(ix+1), h
 	pop	de
@@ -78,8 +74,12 @@ cbranchWord:
 	ld	a, h
 	or	l
 	jr	z, branchWord
-	; skip next 2 bytes
-	call	skipRS
+	; skip next byte in RS
+	ld	l, (ix)
+	ld	h, (ix+1)
+	inc	hl
+	ld	(ix), l
+	ld	(ix+1), h
 	jp	exit
 
 CBRANCH:
@@ -527,17 +527,14 @@ CMP:
 	.dw CMP
 IF:
 	.dw nativeWord
-	; Spit a conditional branching atom, followed by 2 empty bytes. Then,
-	; push the address of those 2 bytes on the PS. ELSE or THEN will pick
-	; them up and set their own address in those 2 bytes.
+	; Spit a conditional branching atom, followed by an empty 1b cell. Then,
+	; push the address of that cell on the PS. ELSE or THEN will pick
+	; them up and set the offset.
 	ld	hl, (CMPDST)
 	ld	de, CBRANCH
 	call	DEinHL
 	push	hl		; address of cell to fill
-	; For now, let's fill it with a reference to ABORT in case we have a
-	; malformed construct
-	ld	de, ABORTREF
-	call	DEinHL
+	inc	hl		; empty 1b cell
 	ld	(CMPDST), hl
 	jp	exit
 
@@ -551,11 +548,11 @@ ELSE:
 	pop	de		; cell's address
 	ld	hl, (CMPDST)
 	; also skip ELSE word.
-	inc	hl \ inc hl \ inc hl \ inc hl
+	inc	hl \ inc hl \ inc hl
 	or	a		; clear carry
 	sbc	hl, de		; HL now has relative offset
-	ex	de, hl		; HL has branching cell
-	call	DEinHL
+	ld	a, l
+	ld	(de), a
 	; Set IF's branching cell to current atom address and spit our own
 	; uncondition branching cell, which will then be picked up by THEN.
 	; First, let's spit our 4 bytes
@@ -563,8 +560,7 @@ ELSE:
 	ld	de, BRANCH
 	call	DEinHL
 	push	hl		; address of cell to fill
-	ld	de, ABORTREF
-	call	DEinHL
+	inc	hl		; empty 1b cell
 	ld	(CMPDST), hl
 	jp	exit
 
@@ -580,8 +576,8 @@ THEN:
 	; There is nothing to skip because THEN leaves nothing.
 	or	a		; clear carry
 	sbc	hl, de		; HL now has relative offset
-	ex	de, hl		; HL has branching cell
-	call	DEinHL
+	ld	a, l
+	ld	(de), a
 	jp	exit
 
 	.db "RECURSE"
