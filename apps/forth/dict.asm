@@ -51,68 +51,30 @@ doesWord:
 	push	hl \ pop iy
 	jr	compiledWord
 
-; The IF word checks the stack for zero. If it's non-zero, it does nothing and
-; allow compiledWord to continue.
-; If it's zero, it tracksback RS, advance it until it finds a ELSE, a THEN, or
-; an EXIT (not supposed to happen unless the IF is misconstructed). Whether
-; it's a ELSE or THEN, the same thing happens: we resume execution after the
-; ELSE/THEN. If it's a EXIT, we simply execute it.
-ifWord:
+; This word is followed by a wordref to branch to. Set RS to that address.
+branchWord:
+	ld	l, (ix)
+	ld	h, (ix+1)
+	call	intoHL
+	ld	(ix), l
+	ld	(ix+1), h
+	jp	exit
+
+BRANCH:
+	.dw	branchWord
+
+; Conditional branch, only branch if TOS is zero
+cbranchWord:
 	pop	hl
 	ld	a, h
 	or	l
-	jp	nz, exit	; non-zero, continue
-	; Zero, seek ELSE, THEN or EXIT. Continue to elseWord
-
-; If a ELSE word is executed, it means that the preceding IF had a non-zero
-; condition and continued execution. This means that upon encountering an ELSE,
-; we must search for a THEN or an EXIT.
-; To simplify implementation and share code with ifWord, we also match ELSE,
-; which is only possible in malformed construct. Therefore "IF ELSE ELSE" is
-; valid and interpreted as "IF ELSE THEN".
-elseWord:
-	; to save processing, we test EXIT, ELSE and THEN in the order they
-	; appear, address-wise. This way, we don't need to push/pop HL: we can
-	; SUB the difference between the words and check for zeroes.
-	call	popRS
-	; We need to save that IP somewhere. Let it be BC
-	ld	b, h
-	ld	c, l
-.loop:
-	; Whether there's a match or not, we will resume the operation at IP+2,
-	; which means that we have to increase BC anyways. Let's do it now.
-	inc	bc \ inc bc
-	call	intoHL
-	or	a		; clear carry
-	ld	de, EXIT
-	sbc	hl, de
-	jp	z, exit
-	; Not EXIT, let's continue with ELSE. No carry possible because EXIT
-	; is first word. No need to clear.
-	ld	de, ELSE-EXIT
-	sbc	hl, de
-	jr	c, .nomatch	; A word between EXIT and ELSE. No match.
-	jr	z, .match	; We have a ELSE
-	; Let's try with THEN. Again, no carry possible, C cond was handled.
-	ld	de, THEN-ELSE
-	sbc	hl, de
-	jr	z, .match	; We have a THEN
-.nomatch:
-	; Nothing matched, which means that we need to continue looking.
-	; BC is already IP+2
-	ld	h, b
-	ld	l, c
-	jr	.loop
-.match:
-	; Matched a ELSE or a THEN, which means we need to continue executing
-	; word from IP+2, which is already in BC.
-	push	bc \ pop iy
-	jp	compiledWord
-
-; This word does nothing. It's never going to be executed unless the wordlist
-; is misconstructed.
-thenWord:
+	jr	z, branchWord
+	; skip next 2 bytes
+	call	skipRS
 	jp	exit
+
+CBRANCH:
+	.dw	cbranchWord
 
 ; This is not a word, but a number literal. This works a bit differently than
 ; others: PF means nothing and the actual number is placed next to the
@@ -121,12 +83,14 @@ thenWord:
 ; it to the Parameter stack and then push an increase Interpreter Pointer back
 ; to RS.
 numberWord:
-	call	popRS
+	ld	l, (ix)
+	ld	h, (ix+1)
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
 	inc	hl
-	call	pushRS
+	ld	(ix), l
+	ld	(ix+1), h
 	push	de
 	jp	exit
 NUMBER:
@@ -186,6 +150,8 @@ abort:
 	; Reinitialize PS (RS is reinitialized in forthInterpret
 	ld	sp, (INITIAL_SP)
 	jp	forthRdLine
+ABORTREF:
+	.dw ABORT
 
 	.db "BYE"
 	.fill 5
@@ -290,7 +256,7 @@ DEFINE:
 	jr	nz, .notIMMED
 	; Immediate word, we'll have to call it.
 	; Before we make our call, let's save our current HL/DE position
-	ld	(HERE), de
+	ld	(CMPDST), de
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
@@ -329,7 +295,7 @@ DEFINE:
 	; recall old HL / DE values
 	ld	l, (ix)
 	ld	h, (ix+1)
-	ld	de, (HERE)
+	ld	de, (CMPDST)
 	; continue!
 	jr	.loop
 
@@ -374,18 +340,12 @@ IMMEDIATE:
 	.dw IMMEDIATE
 LITERAL:
 	.dw nativeWord
-	ld	hl, (HERE)
+	ld	hl, (CMPDST)
 	ld	de, NUMBER
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
+	call	DEinHL
 	pop	de		; number from stack
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
-	ld	(HERE), hl
+	call	DEinHL
+	ld	(CMPDST), hl
 	jp	exit
 
 ; ( -- c )
@@ -400,27 +360,9 @@ KEY:
 	push	hl
 	jp	exit
 
-	.db "INTERPR"
-	.db 0
-	.dw KEY
-INTERPRET:
-	.dw nativeWord
-interpret:
-	ld	iy, COMPBUF
-.loop:
-	call	readword
-	jr	nz, .end
-	call	compile
-	jr	.loop
-.end:
-	ld	hl, QUIT
-	call	wrCompHL
-	ld	iy, COMPBUF
-	jp	compiledWord
-
 	.db "CREATE"
 	.fill 2
-	.dw INTERPRET
+	.dw KEY
 CREATE:
 	.dw nativeWord
 	call	entryhead
@@ -607,22 +549,61 @@ CMP:
 	jp	exit
 
 	.db "IF"
-	.fill 6
+	.fill 5
+	.db 1		; IMMEDIATE
 	.dw CMP
 IF:
-	.dw ifWord
+	.dw nativeWord
+	; Spit a conditional branching atom, followed by 2 empty bytes. Then,
+	; push the address of those 2 bytes on the PS. ELSE or THEN will pick
+	; them up and set their own address in those 2 bytes.
+	ld	hl, (CMPDST)
+	ld	de, CBRANCH
+	call	DEinHL
+	push	hl		; address of cell to fill
+	; For now, let's fill it with a reference to ABORT in case we have a
+	; malformed construct
+	ld	de, ABORTREF
+	call	DEinHL
+	ld	(CMPDST), hl
+	jp	exit
 
 	.db "ELSE"
-	.fill 4
+	.fill 3
+	.db 1		; IMMEDIATE
 	.dw IF
 ELSE:
-	.dw elseWord
+	.dw nativeWord
+	; Set IF's branching cell to current atom address and spit our own
+	; uncondition branching cell, which will then be picked up by THEN.
+	; First, let's spit our 4 bytes
+	ld	hl, (CMPDST)
+	ld	de, BRANCH
+	call	DEinHL
+	push	hl		; address of cell to fill
+	ld	de, ABORTREF
+	call	DEinHL
+	ld	(CMPDST), hl
+	; We've spit our ELSE bytes, but we haven't updated our IF's forward
+	; branching cell. That cell's address is currently at (SP-2). Let's do
+	; some stack-fu to get it.
+	ex	de, hl		; value to write now in DE
+	pop	hl
+	ex	(sp), hl	; IF's cell's address now in HL
+	call	DEinHL
+	jp	exit
 
 	.db "THEN"
-	.fill 4
+	.fill 3
+	.db 1		; IMMEDIATE
 	.dw ELSE
 THEN:
-	.dw thenWord
+	.dw nativeWord
+	; See comments in IF and ELSE
+	pop	hl		; where to put our own address
+	ld	de, (CMPDST)	; that's our branching address
+	call	DEinHL
+	jp	exit
 
 	.db "RECURSE"
 	.db 0
@@ -755,5 +736,3 @@ LATEST:
 	.dw 1
 	.dw EQ
 	.dw EXIT
-
-;

@@ -257,42 +257,6 @@ wrCompHL:
 	inc	iy
 	ret
 
-; Compile word string at (HL) and write down its compiled version in IY,
-; advancing IY to the byte next to the last written byte.
-compile:
-	call	find
-	jr	nz, .maybeNum
-	ex	de, hl
-	jr	wrCompHL
-.maybeNum:
-	push	hl		; --> lvl 1. save string addr
-	call	parseLiteral
-	jr	nz, .undef
-	pop	hl		; <-- lvl 1
-	; a valid number!
-	ld	hl, NUMBER
-	call	wrCompHL
-	ex	de, hl		; number in HL
-	jr	wrCompHL
-.undef:
-	; When encountering an undefined word during compilation, we spit a
-	; reference to litWord, followed by the null-terminated word.
-	; This way, if a preceding word expect a string literal, it will read it
-	; by calling readLIT, and if it doesn't, the routine will be
-	; called, triggering an abort.
-	ld	hl, LIT
-	call	wrCompHL
-	pop	hl		; <-- lvl 1. recall string addr
-.writeLit:
-	ld	a, (hl)
-	ld	(iy), a
-	inc	hl
-	inc	iy
-	or	a
-	jr	nz, .writeLit
-	ret
-
-
 ; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
 entryhead:
@@ -315,10 +279,8 @@ entryhead:
 	xor	a		; set Z
 	ret
 
-; Sets Z if wordref at (HL) is of the IMMEDIATE type
-HLPointsIMMED:
-	push	hl
-	call	intoHL
+; Sets Z if wordref at HL is of the IMMEDIATE type
+HLisIMMED:
 	dec	hl
 	dec	hl
 	dec	hl
@@ -329,6 +291,13 @@ HLPointsIMMED:
 	inc	hl
 	inc	hl
 	inc	hl
+	ret
+
+; Sets Z if wordref at (HL) is of the IMMEDIATE type
+HLPointsIMMED:
+	push	hl
+	call	intoHL
+	call	HLisIMMED
 	pop	hl
 	ret
 
@@ -343,3 +312,10 @@ flagsToBC:
 	dec	bc
 	ret
 
+; Write DE in (HL), advancing HL by 2.
+DEinHL:
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	inc	hl
+	ret

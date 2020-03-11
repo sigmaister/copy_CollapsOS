@@ -25,6 +25,17 @@ popRS:
 	dec ix
 	ret
 
+; Skip the next two bytes in RS' TOS
+skipRS:
+	push	hl
+	ld	l, (ix)
+	ld	h, (ix+1)
+	inc	hl \ inc hl
+	ld	(ix), l
+	ld	(ix+1), h
+	pop	hl
+	ret
+
 ; Verifies that SP is within bounds. If it's not, call ABORT
 chkPS:
 	ld	hl, (INITIAL_SP)
