@@ -658,6 +658,7 @@ CONSTANT:
 	.dw FETCH
 	.dw EXIT
 
+; TODO: find a way to express IF/THEN/ELSE in core dict more easily.
 ; ( f -- f )
 ; IF 0 ELSE 1 THEN
 	.db "NOT"
@@ -665,13 +666,14 @@ CONSTANT:
 	.dw CONSTANT
 NOT:
 	.dw compiledWord
-	.dw IF
+	.dw CBRANCH
+	.db 8
 	.dw NUMBER
 	.dw 0
-	.dw ELSE
+	.dw BRANCH
+	.db 5
 	.dw NUMBER
 	.dw 1
-	.dw THEN
 	.dw EXIT
 
 ; ( n1 n2 -- f )
