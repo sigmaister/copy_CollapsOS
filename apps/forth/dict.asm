@@ -51,13 +51,22 @@ doesWord:
 	push	hl \ pop iy
 	jr	compiledWord
 
-; This word is followed by a wordref to branch to. Set RS to that address.
+; This word is followed by *relative* offset (to the cell's addr) to where to
+; branch to. For example, The branching cell of "IF THEN" would contain 4. Add
+; this value to RS.
 branchWord:
+	push	de
 	ld	l, (ix)
 	ld	h, (ix+1)
-	call	intoHL
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	or	a		; clear carry
+	add	hl, de
 	ld	(ix), l
 	ld	(ix+1), h
+	pop	de
 	jp	exit
 
 BRANCH:
@@ -574,6 +583,15 @@ IF:
 	.dw IF
 ELSE:
 	.dw nativeWord
+	; First, let's set IF's branching cell.
+	pop	de		; cell's address
+	ld	hl, (CMPDST)
+	; also skip ELSE word.
+	inc	hl \ inc hl \ inc hl \ inc hl
+	or	a		; clear carry
+	sbc	hl, de		; HL now has relative offset
+	ex	de, hl		; HL has branching cell
+	call	DEinHL
 	; Set IF's branching cell to current atom address and spit our own
 	; uncondition branching cell, which will then be picked up by THEN.
 	; First, let's spit our 4 bytes
@@ -584,13 +602,6 @@ ELSE:
 	ld	de, ABORTREF
 	call	DEinHL
 	ld	(CMPDST), hl
-	; We've spit our ELSE bytes, but we haven't updated our IF's forward
-	; branching cell. That cell's address is currently at (SP-2). Let's do
-	; some stack-fu to get it.
-	ex	de, hl		; value to write now in DE
-	pop	hl
-	ex	(sp), hl	; IF's cell's address now in HL
-	call	DEinHL
 	jp	exit
 
 	.db "THEN"
@@ -600,8 +611,12 @@ ELSE:
 THEN:
 	.dw nativeWord
 	; See comments in IF and ELSE
-	pop	hl		; where to put our own address
-	ld	de, (CMPDST)	; that's our branching address
+	pop	de		; cell's address
+	ld	hl, (CMPDST)
+	; There is nothing to skip because THEN leaves nothing.
+	or	a		; clear carry
+	sbc	hl, de		; HL now has relative offset
+	ex	de, hl		; HL has branching cell
 	call	DEinHL
 	jp	exit
 
