@@ -321,8 +321,6 @@ IMMEDIATE:
 	.dw nativeWord
 	ld	hl, (CURRENT)
 	dec	hl
-	dec	hl
-	dec	hl
 	set	FLAG_IMMED, (hl)
 	jp	exit
 
@@ -675,24 +673,9 @@ ELSE:
 	ld	(HERE), hl
 	jp	exit
 
-	.db "THEN"
-	.fill 3
-	.dw ELSE
-	.db 1		; IMMEDIATE
-THEN:
-	.dw nativeWord
-	; See comments in IF and ELSE
-	pop	de		; cell's address
-	ld	hl, (HERE)
-	; There is nothing to skip because THEN leaves nothing.
-	or	a		; clear carry
-	sbc	hl, de		; HL now has relative offset
-	ld	a, l
-	ld	(de), a
-	jp	exit
 
 	.db "RECURSE"
-	.dw THEN
+	.dw ELSE
 	.db 0
 RECURSE:
 	.dw nativeWord

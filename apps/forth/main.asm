@@ -19,6 +19,7 @@
 .equ	INITIAL_SP	FORTH_RAMSTART
 .equ	CURRENT		@+2
 .equ	HERE		@+2
+.equ	OLDHERE		@+2
 ; Pointer to where we currently are in the interpretation of the current line.
 .equ	INPUTPOS	@+2
 ; Buffer where we compile the current input line. Same size as STDIO_BUFSIZE.
@@ -88,7 +89,7 @@ forthRdLine:
 	; We're about to compile the line and possibly execute IMMEDIATE words.
 	; Let's save current (HERE) and temporarily set it to COMPBUF.
 	ld	hl, (HERE)
-	push	hl			; Saving HERE
+	ld	(OLDHERE), hl
 	ld	hl, COMPBUF
 	ld	(HERE), hl
 forthInterpret:
@@ -136,7 +137,7 @@ forthInterpret:
 	ld	de, QUIT
 	call	.writeDE
 	; Compilation done, let's restore (HERE) and execute!
-	pop	hl		; Restore old (HERE)
+	ld	hl, (OLDHERE)
 	ld	(HERE), hl
 	ld	iy, COMPBUF
 	jp	compiledWord

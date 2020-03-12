@@ -28,7 +28,9 @@ also be references to NUMBER and LIT.
 *** Defining words ***
 : x ...     --              Define a new word
 ;           R:I --          Exit a colon definition
+,           n --            Write n in HERE and advance it.
 ALLOT       n --            Move HERE by n bytes
+C,          b --            Write byte b in HERE and advance it.
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
 CONSTANT x  n --            Creates cell x that when called pushes its value
 DOES>       --              See description at top of file
