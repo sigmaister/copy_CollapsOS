@@ -8,6 +8,13 @@
 ; Offset of the code link relative to the beginning of the word
 .equ	CODELINK_OFFSET	NAMELEN+3
 
+; Flags for the "flag field" of the word structure
+; IMMEDIATE word
+.equ	FLAG_IMMED	0
+; This wordref is not a regular word (it's not preceeded by a name). It's one
+; of the NUMBER, LIT, BRANCH etc. entities.
+.equ	FLAG_UNWORD	1
+
 ; *** Variables ***
 .equ	INITIAL_SP	FORTH_RAMSTART
 .equ	CURRENT		@+2

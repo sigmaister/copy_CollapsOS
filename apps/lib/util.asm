@@ -105,3 +105,10 @@ strlen:
 	dec	a
 	pop	bc
 	ret
+
+; make Z the opposite of what it is now
+toggleZ:
+	jp	z, unsetZ
+	cp	a
+	ret
+

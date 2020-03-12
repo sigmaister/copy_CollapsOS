@@ -87,13 +87,6 @@ HLPointsEXIT:
 	pop	de
 	ret
 
-HLPointsQUIT:
-	push	de
-	ld	de, QUIT
-	call	HLPointsDE
-	pop	de
-	ret
-
 ; Skip the compword where HL is currently pointing. If it's a regular word,
 ; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
 ; to after null-termination.
@@ -176,16 +169,9 @@ readLIT:
 	ex	de, hl
 	ret
 .notLIT:
-	; Alright, not a literal, but is it a word? If it's not a number, then
-	; it's a word.
-	call	HLPointsNUMBER
-	jr	z, .notWord
-	call	HLPointsBRANCH
-	jr	z, .notWord
-	call	HLPointsEXIT
-	jr	z, .notWord
-	call	HLPointsQUIT
-	jr	z, .notWord
+	; Alright, not a literal, but is it a word?
+	call	HLPointsUNWORD
+	jr	nz, .notWord
 	; Not a number, then it's a word. Copy word to pad and point to it.
 	push	hl		; --> lvl 1. we need it to set DE later
 	call	intoHL
@@ -233,18 +219,6 @@ readLITTOS:
 	pop	de
 	ret
 
-; For DE being a wordref, move DE to the previous wordref.
-; Z is set if DE point to 0 (no entry). NZ if not.
-prev:
-	dec	de \ dec de	; prev field
-	call	intoDE
-	; DE points to prev. Is it zero?
-	xor	a
-	or	d
-	or	e
-	; Z will be set if DE is zero
-	ret
-
 ; Find the entry corresponding to word where (HL) points to and sets DE to
 ; point to that entry.
 ; Z if found, NZ if not.
@@ -264,13 +238,25 @@ find:
 	call	strncmp
 	pop	de		; <-- lvl 1, return to wordref
 	jr	z, .end		; found
-	call	prev
+	call	.prev
 	jr	nz, .inner
 	; Z set? end of dict unset Z
 	inc	a
 .end:
 	pop	bc
 	pop	hl
+	ret
+
+; For DE being a wordref, move DE to the previous wordref.
+; Z is set if DE point to 0 (no entry). NZ if not.
+.prev:
+	dec	de \ dec de \ dec de	; prev field
+	call	intoDE
+	; DE points to prev. Is it zero?
+	xor	a
+	or	d
+	or	e
+	; Z will be set if DE is zero
 	ret
 
 ; Write compiled data from HL into IY, advancing IY at the same time.
@@ -291,12 +277,10 @@ entryhead:
 	ld	de, (CURRENT)
 	ld	a, NAMELEN
 	call	addHL
-	xor	a		; IMMED
+	call	DEinHL
+	; Set word flags: not IMMED, not UNWORD, so it's 0
+	xor	a
 	ld	(hl), a
-	inc	hl
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
 	inc	hl
 	ld	(CURRENT), hl
 	ld	(HERE), hl
@@ -306,22 +290,32 @@ entryhead:
 ; Sets Z if wordref at HL is of the IMMEDIATE type
 HLisIMMED:
 	dec	hl
-	dec	hl
-	dec	hl
+	bit	FLAG_IMMED, (hl)
+	inc	hl
 	; We need an invert flag. We want to Z to be set when flag is non-zero.
-	ld	a, 1
-	and	(hl)
-	dec	a	; if A was 1, Z is set. Otherwise, Z is unset
-	inc	hl
-	inc	hl
-	inc	hl
-	ret
+	jp	toggleZ
 
 ; Sets Z if wordref at (HL) is of the IMMEDIATE type
 HLPointsIMMED:
 	push	hl
 	call	intoHL
 	call	HLisIMMED
+	pop	hl
+	ret
+
+; Sets Z if wordref at HL is of the UNWORD type
+HLisUNWORD:
+	dec	hl
+	bit	FLAG_UNWORD, (hl)
+	inc	hl
+	; We need an invert flag. We want to Z to be set when flag is non-zero.
+	jp	toggleZ
+
+; Sets Z if wordref at (HL) is of the IMMEDIATE type
+HLPointsUNWORD:
+	push	hl
+	call	intoHL
+	call	HLisUNWORD
 	pop	hl
 	ret
 

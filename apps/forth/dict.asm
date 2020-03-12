@@ -1,7 +1,7 @@
 ; A dictionary entry has this structure:
 ; - 7b name (zero-padded)
-; - 1b flags (bit 0: IMMEDIATE)
 ; - 2b prev pointer
+; - 1b flags (bit 0: IMMEDIATE. bit 1: UNWORD)
 ; - 2b code pointer
 ; - Parameter field (PF)
 ;
@@ -9,6 +9,11 @@
 ; with IY pointing to the PF. They themselves are expected to end by jumping
 ; to the address at the top of the Return Stack. They will usually do so with
 ; "jp exit".
+;
+; That's for "regular" words (words that are part of the dict chain). There are
+; also "special words", for example NUMBER, LIT, BRANCH, that have a slightly
+; different structure. They're also a pointer to an executable, but as for the
+; other fields, the only one they have is the "flags" field.
 
 ; Execute a word containing native code at its PF address (PFA)
 nativeWord:
@@ -65,6 +70,7 @@ branchWord:
 	pop	de
 	jp	exit
 
+	.db	0b10		; Flags
 BRANCH:
 	.dw	branchWord
 
@@ -82,6 +88,7 @@ cbranchWord:
 	ld	(ix+1), h
 	jp	exit
 
+	.db	0b10		; Flags
 CBRANCH:
 	.dw	cbranchWord
 
@@ -102,6 +109,8 @@ numberWord:
 	ld	(ix+1), h
 	push	de
 	jp	exit
+
+	.db	0b10		; Flags
 NUMBER:
 	.dw	numberWord
 
@@ -119,6 +128,8 @@ litWord:
 	jp	abort
 .msg:
 	.db "undefined word", 0
+
+	.db	0b10		; Flags
 LIT:
 	.dw	litWord
 
@@ -143,16 +154,18 @@ exit:
 
 ; ( R:I -- )
 	.db "QUIT"
-	.fill 4
+	.fill 3
 	.dw EXIT
+	.db 0
 QUIT:
 	.dw nativeWord
 quit:
 	jp	forthRdLine
 
 	.db "ABORT"
-	.fill 3
+	.fill 2
 	.dw QUIT
+	.db 0
 ABORT:
 	.dw nativeWord
 abort:
@@ -163,8 +176,9 @@ ABORTREF:
 	.dw ABORT
 
 	.db "BYE"
-	.fill 5
+	.fill 4
 	.dw ABORT
+	.db 0
 BYE:
 	.dw nativeWord
 	; Goodbye Forth! Before we go, let's restore the stack
@@ -177,8 +191,9 @@ BYE:
 
 ; ( c -- )
 	.db "EMIT"
-	.fill 4
+	.fill 3
 	.dw BYE
+	.db 0
 EMIT:
 	.dw nativeWord
 	pop	hl
@@ -188,8 +203,9 @@ EMIT:
 
 ; ( c port -- )
 	.db "PC!"
-	.fill 5
+	.fill 4
 	.dw EMIT
+	.db 0
 PSTORE:
 	.dw nativeWord
 	pop	bc
@@ -199,8 +215,9 @@ PSTORE:
 
 ; ( port -- c )
 	.db "PC@"
-	.fill 5
+	.fill 4
 	.dw PSTORE
+	.db 0
 PFETCH:
 	.dw nativeWord
 	pop	bc
@@ -211,8 +228,8 @@ PFETCH:
 
 ; ( addr -- )
 	.db "EXECUTE"
-	.db 0
 	.dw PFETCH
+	.db 0
 EXECUTE:
 	.dw nativeWord
 	pop	iy	; is a wordref
@@ -226,8 +243,9 @@ executeCodeLink:
 	jp	(hl)	; go!
 
 	.db ":"
-	.fill 7
+	.fill 6
 	.dw EXECUTE
+	.db 0
 DEFINE:
 	.dw nativeWord
 	call	entryhead
@@ -273,8 +291,9 @@ DEFINE:
 
 
 	.db "DOES>"
-	.fill 3
+	.fill 2
 	.dw DEFINE
+	.db 0
 DOES:
 	.dw nativeWord
 	; We run this when we're in an entry creation context. Many things we
@@ -296,21 +315,21 @@ DOES:
 
 
 	.db "IMMEDIA"
-	.db 0
 	.dw DOES
+	.db 0
 IMMEDIATE:
 	.dw nativeWord
 	ld	hl, (CURRENT)
 	dec	hl
 	dec	hl
 	dec	hl
-	inc	(hl)
+	set	FLAG_IMMED, (hl)
 	jp	exit
 
 ; ( n -- )
 	.db "LITERAL"
-	.db 1		; IMMEDIATE
 	.dw IMMEDIATE
+	.db 1		; IMMEDIATE
 LITERAL:
 	.dw nativeWord
 	ld	hl, (CMPDST)
@@ -323,8 +342,9 @@ LITERAL:
 
 ; ( -- c )
 	.db "KEY"
-	.fill 5
+	.fill 4
 	.dw LITERAL
+	.db 0
 KEY:
 	.dw nativeWord
 	call	stdioGetC
@@ -334,8 +354,9 @@ KEY:
 	jp	exit
 
 	.db "CREATE"
-	.fill 2
+	.fill 1
 	.dw KEY
+	.db 0
 CREATE:
 	.dw nativeWord
 	call	entryhead
@@ -349,23 +370,25 @@ CREATE:
 	jp	exit
 
 	.db "HERE"
-	.fill 4
+	.fill 3
 	.dw CREATE
+	.db 0
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
 	.dw HERE
 
 	.db "CURRENT"
-	.db 0
 	.dw HERE_
+	.db 0
 CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
 ; ( n -- )
 	.db "."
-	.fill 7
+	.fill 6
 	.dw CURRENT_
+	.db 0
 DOT:
 	.dw nativeWord
 	pop	de
@@ -379,8 +402,9 @@ DOT:
 
 ; ( n a -- )
 	.db "!"
-	.fill 7
+	.fill 6
 	.dw DOT
+	.db 0
 STORE:
 	.dw nativeWord
 	pop	iy
@@ -391,8 +415,9 @@ STORE:
 
 ; ( n a -- )
 	.db "C!"
-	.fill 6
+	.fill 5
 	.dw STORE
+	.db 0
 CSTORE:
 	.dw nativeWord
 	pop	hl
@@ -402,8 +427,9 @@ CSTORE:
 
 ; ( a -- n )
 	.db "@"
-	.fill 7
+	.fill 6
 	.dw CSTORE
+	.db 0
 FETCH:
 	.dw nativeWord
 	pop	hl
@@ -413,8 +439,9 @@ FETCH:
 
 ; ( a -- c )
 	.db "C@"
-	.fill 6
+	.fill 5
 	.dw FETCH
+	.db 0
 CFETCH:
 	.dw nativeWord
 	pop	hl
@@ -425,8 +452,9 @@ CFETCH:
 
 ; ( -- a )
 	.db "LIT@"
-	.fill 4
+	.fill 3
 	.dw CFETCH
+	.db 0
 LITFETCH:
 	.dw nativeWord
 	call	readLITTOS
@@ -435,8 +463,9 @@ LITFETCH:
 
 ; ( a b -- b a )
 	.db "SWAP"
-	.fill 4
+	.fill 3
 	.dw LITFETCH
+	.db 0
 SWAP:
 	.dw nativeWord
 	pop	hl
@@ -446,8 +475,9 @@ SWAP:
 
 ; ( a b c d -- c d a b )
 	.db "2SWAP"
-	.fill 3
+	.fill 2
 	.dw SWAP
+	.db 0
 SWAP2:
 	.dw nativeWord
 	pop	de		; D
@@ -462,8 +492,9 @@ SWAP2:
 
 ; ( a -- a a )
 	.db "DUP"
-	.fill 5
+	.fill 4
 	.dw SWAP2
+	.db 0
 DUP:
 	.dw nativeWord
 	pop	hl
@@ -473,8 +504,9 @@ DUP:
 
 ; ( a b -- a b a b )
 	.db "2DUP"
-	.fill 4
+	.fill 3
 	.dw DUP
+	.db 0
 DUP2:
 	.dw nativeWord
 	pop	hl	; B
@@ -487,8 +519,9 @@ DUP2:
 
 ; ( a b -- a b a )
 	.db "OVER"
-	.fill 4
+	.fill 3
 	.dw DUP2
+	.db 0
 OVER:
 	.dw nativeWord
 	pop	hl	; B
@@ -500,8 +533,9 @@ OVER:
 
 ; ( a b c d -- a b c d a b )
 	.db "2OVER"
-	.fill 3
+	.fill 2
 	.dw OVER
+	.db 0
 OVER2:
 	.dw nativeWord
 	pop	hl	; D
@@ -518,8 +552,9 @@ OVER2:
 
 ; ( a b -- c ) A + B
 	.db "+"
-	.fill 7
+	.fill 6
 	.dw OVER2
+	.db 0
 PLUS:
 	.dw nativeWord
 	pop	hl
@@ -530,8 +565,9 @@ PLUS:
 
 ; ( a b -- c ) A - B
 	.db "-"
-	.fill 7
+	.fill 6
 	.dw PLUS
+	.db 0
 MINUS:
 	.dw nativeWord
 	pop	de		; B
@@ -543,8 +579,9 @@ MINUS:
 
 ; ( a b -- c ) A * B
 	.db "*"
-	.fill 7
+	.fill 6
 	.dw MINUS
+	.db 0
 MULT:
 	.dw nativeWord
 	pop	de
@@ -555,8 +592,9 @@ MULT:
 
 ; ( a b -- c ) A / B
 	.db "/"
-	.fill 7
+	.fill 6
 	.dw MULT
+	.db 0
 DIV:
 	.dw nativeWord
 	pop	de
@@ -567,8 +605,9 @@ DIV:
 
 ; ( a1 a2 -- b )
 	.db "SCMP"
-	.fill 4
+	.fill 3
 	.dw DIV
+	.db 0
 SCMP:
 	.dw nativeWord
 	pop	de
@@ -580,8 +619,9 @@ SCMP:
 
 ; ( n1 n2 -- f )
 	.db "CMP"
-	.fill 5
+	.fill 4
 	.dw SCMP
+	.db 0
 CMP:
 	.dw nativeWord
 	pop	hl
@@ -594,8 +634,8 @@ CMP:
 
 	.db "IF"
 	.fill 5
-	.db 1		; IMMEDIATE
 	.dw CMP
+	.db 1		; IMMEDIATE
 IF:
 	.dw nativeWord
 	; Spit a conditional branching atom, followed by an empty 1b cell. Then,
@@ -611,8 +651,8 @@ IF:
 
 	.db "ELSE"
 	.fill 3
-	.db 1		; IMMEDIATE
 	.dw IF
+	.db 1		; IMMEDIATE
 ELSE:
 	.dw nativeWord
 	; First, let's set IF's branching cell.
@@ -637,8 +677,8 @@ ELSE:
 
 	.db "THEN"
 	.fill 3
-	.db 1		; IMMEDIATE
 	.dw ELSE
+	.db 1		; IMMEDIATE
 THEN:
 	.dw nativeWord
 	; See comments in IF and ELSE
@@ -652,8 +692,8 @@ THEN:
 	jp	exit
 
 	.db "RECURSE"
-	.db 0
 	.dw THEN
+	.db 0
 RECURSE:
 	.dw nativeWord
 	call	popRS

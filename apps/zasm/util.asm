@@ -24,12 +24,6 @@ subDEFromHL:
 	pop	af
 	ret
 
-; make Z the opposite of what it is now
-toggleZ:
-	jp	z, unsetZ
-	cp	a
-	ret
-
 ; Compares strings pointed to by HL and DE up to A count of characters in a
 ; case-insensitive manner.
 ; If equal, Z is set. If not equal, Z is reset.
