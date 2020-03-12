@@ -21,9 +21,6 @@
 .equ	HERE		@+2
 ; Pointer to where we currently are in the interpretation of the current line.
 .equ	INPUTPOS	@+2
-; Pointer to where compiling words should output. During interpret, it's a
-; moving target in (COMPBUF). During DEFINE, it's (HERE).
-.equ	CMPDST		@+2
 ; Buffer where we compile the current input line. Same size as STDIO_BUFSIZE.
 .equ	COMPBUF		@+2
 .equ	FORTH_RAMEND	@+0x40
@@ -38,19 +35,29 @@
 ;
 ; 1. read single word from line
 ; 2. compile word to atom
-; 3. execute atom
-; 4. goto 1
+; 3. if immediate, execute atom
+; 4. goto 1 until we exhaust words
+; 5. Execute compiled atom list as if it was a regular compiledWord.
 ;
-; During step 3, it's possible that atom read from input, so INPUTPOS might
-; have moved between 3 and 4.
-;
-; Because the Parameter Stack uses PS, we can't just go around calling routines:
+; Because the Parameter Stack uses SP, we can't just go around calling routines:
 ; This messes with the PS. This is why we almost always jump (unless our call
 ; doesn't involve Forth words in any way).
 ;
 ; This presents a challenge for our interpret loop because step 4, "goto 1"
 ; isn't obvious. To be able to do that, we must push a "return routine" to the
 ; Return Stack before step 3.
+;
+; HERE and IMMEDIATE: When compiling in step 2, we spit compiled atoms in
+; (HERE) to simplify "," semantic in Forth (spitting, in all cases, is done in
+; (HERE)). However, suring input line compilation, it isn't like during ":", we
+; aren't creating a new entry.
+;
+; Compiling and executing from (HERE) would be dangerous because an
+; entry-creation word, during runtime, could end up overwriting the atom list
+; we're executing. This is why we have this list in COMPBUF.
+;
+; During IMMEDIATE mode, (HERE) is temporarily set to COMPBUF, and when we're
+; done, we restore (HERE) for runtime. This way, everyone is happy.
 
 ; *** Code ***
 forthMain:
@@ -78,8 +85,12 @@ forthRdLine:
 	call	stdioReadLine
 	ld	ix, RS_ADDR-2		; -2 because we inc-before-push
 	ld	(INPUTPOS), hl
+	; We're about to compile the line and possibly execute IMMEDIATE words.
+	; Let's save current (HERE) and temporarily set it to COMPBUF.
+	ld	hl, (HERE)
+	push	hl			; Saving HERE
 	ld	hl, COMPBUF
-	ld	(CMPDST), hl
+	ld	(HERE), hl
 forthInterpret:
 	call	readword
 	jr	nz, .execute
@@ -111,9 +122,9 @@ forthInterpret:
 	; called, triggering an abort.
 	ld	de, LIT
 	call	.writeDE
-	ld	de, (CMPDST)
+	ld	de, (HERE)
 	call	strcpyM
-	ld	(CMPDST), de
+	ld	(HERE), de
 	jr	forthInterpret
 .immed:
 	push	hl		; --> lvl 1
@@ -124,16 +135,19 @@ forthInterpret:
 .execute:
 	ld	de, QUIT
 	call	.writeDE
+	; Compilation done, let's restore (HERE) and execute!
+	pop	hl		; Restore old (HERE)
+	ld	(HERE), hl
 	ld	iy, COMPBUF
 	jp	compiledWord
 .writeDE:
 	push	hl
-	ld	hl, (CMPDST)
+	ld	hl, (HERE)
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
 	inc	hl
-	ld	(CMPDST), hl
+	ld	(HERE), hl
 	pop	hl
 	ret
 
