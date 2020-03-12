@@ -421,10 +421,26 @@ SWAP:
 	push	hl
 	jp	exit
 
+; ( a b c d -- c d a b )
+	.db "2SWAP"
+	.fill 3
+	.dw SWAP
+SWAP2:
+	.dw nativeWord
+	pop	de		; D
+	pop	hl		; C
+	pop	bc		; B
+
+	ex	(sp), hl	; A in HL
+	push	de		; D
+	push	hl		; A
+	push	bc		; B
+	jp	exit
+
 ; ( a -- a a )
 	.db "DUP"
 	.fill 5
-	.dw SWAP
+	.dw SWAP2
 DUP:
 	.dw nativeWord
 	pop	hl
@@ -432,10 +448,24 @@ DUP:
 	push	hl
 	jp	exit
 
+; ( a b -- a b a b )
+	.db "2DUP"
+	.fill 4
+	.dw DUP
+DUP2:
+	.dw nativeWord
+	pop	hl	; B
+	pop	de	; A
+	push	de
+	push	hl
+	push	de
+	push	hl
+	jp	exit
+
 ; ( a b -- a b a )
 	.db "OVER"
 	.fill 4
-	.dw DUP
+	.dw DUP2
 OVER:
 	.dw nativeWord
 	pop	hl	; B
@@ -445,10 +475,28 @@ OVER:
 	push	de
 	jp	exit
 
+; ( a b c d -- a b c d a b )
+	.db "2OVER"
+	.fill 3
+	.dw OVER
+OVER2:
+	.dw nativeWord
+	pop	hl	; D
+	pop	de	; C
+	pop	bc	; B
+	pop	iy	; A
+	push	iy	; A
+	push	bc	; B
+	push	de	; C
+	push	hl	; D
+	push	iy	; A
+	push	bc	; B
+	jp	exit
+
 ; ( a b -- c ) A + B
 	.db "+"
 	.fill 7
-	.dw OVER
+	.dw OVER2
 PLUS:
 	.dw nativeWord
 	pop	hl
@@ -712,4 +760,3 @@ LATEST:
 	.dw NUMBER
 	.dw 1
 	.dw EQ
-	.dw EXIT

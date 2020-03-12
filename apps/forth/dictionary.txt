@@ -51,6 +51,9 @@ THEN        --              Does nothing. Serves as a branching merker for IF
 DUP         a -- a a
 OVER        a b -- a b a
 SWAP        a b -- b a
+2DUP        a b -- a b a b
+2OVER       a b c d -- a b c d a b
+2SWAP       a b c d -- c d a b
 
 *** Memory ***
 @           a -- n          Set n to value at address a
