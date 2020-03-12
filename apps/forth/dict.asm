@@ -389,10 +389,21 @@ STORE:
 	ld	(iy+1), h
 	jp	exit
 
+; ( n a -- )
+	.db "C!"
+	.fill 6
+	.dw STORE
+CSTORE:
+	.dw nativeWord
+	pop	hl
+	pop	de
+	ld	(hl), e
+	jp	exit
+
 ; ( a -- n )
 	.db "@"
 	.fill 7
-	.dw STORE
+	.dw CSTORE
 FETCH:
 	.dw nativeWord
 	pop	hl
@@ -400,10 +411,22 @@ FETCH:
 	push	hl
 	jp	exit
 
+; ( a -- c )
+	.db "C@"
+	.fill 6
+	.dw FETCH
+CFETCH:
+	.dw nativeWord
+	pop	hl
+	ld	l, (hl)
+	ld	h, 0
+	push	hl
+	jp	exit
+
 ; ( -- a )
 	.db "LIT@"
 	.fill 4
-	.dw FETCH
+	.dw CFETCH
 LITFETCH:
 	.dw nativeWord
 	call	readLITTOS
