@@ -21,6 +21,10 @@
 .equ	COMPBUF		@+2
 .equ	FORTH_RAMEND	@+0x40
 
+; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
+; (HERE) will begin at a strategic place.
+.equ	HERE_INITIAL	FORTH_RAMEND
+
 ; EXECUTION MODEL
 ; After having read a line through stdioReadLine, we want to interpret it. As
 ; a general rule, we go like this:
@@ -51,9 +55,14 @@ forthMain:
 	; we check for stack underflow.
 	push	af \ push af \ push af
 	ld	(INITIAL_SP), sp
+	; LATEST is a *indirect* label to the latest entry of the dict. See
+	; default at the bottom of dict.asm. This indirection allows us to
+	; override latest to a value set in a binary dict compiled separately,
+	; for example by the stage0 bin.
 	ld	hl, LATEST
+	call	intoHL
 	ld	(CURRENT), hl
-	ld	hl, FORTH_RAMEND
+	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
 forthRdLine:
 	ld	hl, msgOk

@@ -3,10 +3,10 @@
 #include <unistd.h>
 #include <termios.h>
 #include "../emul.h"
-#include "forth-bin.h"
+#include "forth1-bin.h"
 
 // in sync with glue.asm
-#define RAMSTART 0x2000
+#define RAMSTART 0x900
 #define STDIO_PORT 0x00
 
 static int running;

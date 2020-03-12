@@ -24,13 +24,25 @@ shell/shell-bin.h: shell/shell.bin
 shell/shell: shell/shell.c $(SHELLOBJS) shell/shell-bin.h 
 	$(CC) shell/shell.c $(SHELLOBJS) -o $@
 
-forth/forth.bin: forth/glue.asm $(ZASMBIN)
-	$(ZASMBIN) $(KERNEL) $(APPS) < forth/glue.asm | tee $@ > /dev/null
+forth/forth0.bin: forth/glue0.asm $(ZASMBIN)
+	$(ZASMBIN) $(KERNEL) $(APPS) < forth/glue0.asm | tee $@ > /dev/null
 
-forth/forth-bin.h: forth/forth.bin
-	./bin2c.sh KERNEL < forth/forth.bin | tee $@ > /dev/null
+forth/forth0-bin.h: forth/forth0.bin
+	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
 
-forth/forth: forth/forth.c $(OBJS) forth/forth-bin.h 
+forth/stage1: forth/stage1.c $(OBJS) forth/forth0-bin.h 
+	$(CC) forth/stage1.c $(OBJS) -o $@
+
+forth/core.bin: $(APPS)/forth/core.fth forth/stage1
+	./forth/stage1 $(APPS)/forth/core.fth | tee $@ > /dev/null
+
+forth/forth1.bin: forth/glue1.asm forth/core.bin $(ZASMBIN)
+	$(ZASMBIN) $(KERNEL) $(APPS) forth/core.bin < forth/glue1.asm | tee $@ > /dev/null
+
+forth/forth1-bin.h: forth/forth1.bin
+	./bin2c.sh KERNEL < forth/forth1.bin | tee $@ > /dev/null
+
+forth/forth: forth/forth.c $(OBJS) forth/forth1-bin.h 
 	$(CC) forth/forth.c $(OBJS) -o $@
 
 zasm/kernel-bin.h: zasm/kernel.bin
