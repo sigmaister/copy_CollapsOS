@@ -69,12 +69,12 @@ HLPointsLIT:
 	pop	de
 	ret
 
-HLPointsBRANCH:
+HLPointsBR:
 	push	de
-	ld	de, BRANCH
+	ld	de, FBR
 	call	HLPointsDE
 	jr	z, .end
-	ld	de, CBRANCH
+	ld	de, FBRC
 	call	HLPointsDE
 .end:
 	pop	de
@@ -93,7 +93,7 @@ HLPointsEXIT:
 compSkip:
 	call	HLPointsNUMBER
 	jr	z, .isNum
-	call	HLPointsBRANCH
+	call	HLPointsBR
 	jr	z, .isBranch
 	call	HLPointsLIT
 	jr	nz, .isWord
@@ -171,7 +171,7 @@ readLIT:
 .notLIT:
 	; Alright, not a literal, but is it a word?
 	call	HLPointsUNWORD
-	jr	nz, .notWord
+	jr	z, .notWord
 	; Not a number, then it's a word. Copy word to pad and point to it.
 	push	hl		; --> lvl 1. we need it to set DE later
 	call	intoHL

@@ -1,6 +1,7 @@
 Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
 (TOS). For example, in "a b -- c d", b is TOS before, d is TOS after. "R:" means
-that the Return Stack is modified.
+that the Return Stack is modified. "I:" prefix means "IMMEDIATE", that is, that
+this stack transformation is made at compile time.
 
 DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
 that newly created word into a "does cell", that is, a regular cell ( when
@@ -25,29 +26,39 @@ Atom: A word of the type compiledWord contains, in its PF, a list of what we
 call "atoms". Those atoms are most of the time word references, but they can
 also be references to NUMBER and LIT.
 
+Words between "()" are "support words" that aren't really meant to be used
+directly, but as part of another word.
+
+"*I*" in description indicates an IMMEDIATE word.
+
 *** Defining words ***
 : x ...     --              Define a new word
 ;           R:I --          Exit a colon definition
 ,           n --            Write n in HERE and advance it.
+' x         -- a            Push addr of word x to a.
+['] x       --              *I* Like "'", but spits the addr as a number literal.
 ALLOT       n --            Move HERE by n bytes
 C,          b --            Write byte b in HERE and advance it.
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
 CONSTANT x  n --            Creates cell x that when called pushes its value
 DOES>       --              See description at top of file
 IMMEDIATE   --              Flag the latest defined word as immediate.
-LITERAL     n --            Inserts number from TOS as a literal
+LITERAL     n --            *I* Inserts number from TOS as a literal
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
 
 *** Flow ***
-ELSE        --              Branch to THEN
+(fbr?)      f --            Conditionally branches forward by the number
+                            specified in its atom's cell.
+(fbr)       --              Branches forward by the number specified in its
+                            atom's cell.
+ELSE        I:a --          *I* Compiles a (fbr) and set branching cell at a.
 EXECUTE     a --            Execute wordref at addr a
-IF          n --            Branch to ELSE or THEN if n is zero
+IF          -- I:a          *I* Compiles a (fbr?) and pushes its cell's addr
 INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
 QUIT        R:drop --       Return to interpreter promp immediately
 RECURSE     R:I -- R:I-2    Run the current word again.
-THEN        --              Does nothing. Serves as a branching merker for IF
-                            and ELSE.
+THEN        I:a --          *I* Set branching cell at a.
 
 *** Stack ***
 DUP         a -- a a

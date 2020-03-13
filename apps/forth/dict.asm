@@ -11,7 +11,7 @@
 ; "jp exit".
 ;
 ; That's for "regular" words (words that are part of the dict chain). There are
-; also "special words", for example NUMBER, LIT, BRANCH, that have a slightly
+; also "special words", for example NUMBER, LIT, FBR, that have a slightly
 ; different structure. They're also a pointer to an executable, but as for the
 ; other fields, the only one they have is the "flags" field.
 
@@ -55,42 +55,6 @@ doesWord:
 	ld	h, (iy+3)
 	push	hl \ pop iy
 	jr	compiledWord
-
-; This word is followed by 1b *relative* offset (to the cell's addr) to where to
-; branch to. For example, The branching cell of "IF THEN" would contain 3. Add
-; this value to RS.
-branchWord:
-	push	de
-	ld	l, (ix)
-	ld	h, (ix+1)
-	ld	a, (hl)
-	call	addHL
-	ld	(ix), l
-	ld	(ix+1), h
-	pop	de
-	jp	exit
-
-	.db	0b10		; Flags
-BRANCH:
-	.dw	branchWord
-
-; Conditional branch, only branch if TOS is zero
-cbranchWord:
-	pop	hl
-	ld	a, h
-	or	l
-	jr	z, branchWord
-	; skip next byte in RS
-	ld	l, (ix)
-	ld	h, (ix+1)
-	inc	hl
-	ld	(ix), l
-	ld	(ix+1), h
-	jp	exit
-
-	.db	0b10		; Flags
-CBRANCH:
-	.dw	cbranchWord
 
 ; This is not a word, but a number literal. This works a bit differently than
 ; others: PF means nothing and the actual number is placed next to the
@@ -338,10 +302,53 @@ LITERAL:
 	ld	(HERE), hl
 	jp	exit
 
+
+	.db	"'"
+	.fill	6
+	.dw	LITERAL
+	.db	0
+APOS:
+	.dw	nativeWord
+	call	readLITBOS
+	call	find
+	jr	nz, .notfound
+	push	de
+	jp	exit
+.notfound:
+	ld	hl, .msg
+	call	printstr
+	jp	abort
+.msg:
+	.db	"word not found", 0
+
+	.db	"[']"
+	.fill	4
+	.dw	APOS
+	.db	0b01		; IMMEDIATE
+APOSI:
+	.dw	nativeWord
+	call	readword
+	call	find
+	jr	nz, .notfound
+	ld	hl, (HERE)
+	push	de		; --> lvl 1
+	ld	de, NUMBER
+	call	DEinHL
+	pop	de		; <-- lvl 1
+	call	DEinHL
+	ld	(HERE), hl
+	jp	exit
+.notfound:
+	ld	hl, .msg
+	call	printstr
+	jp	abort
+.msg:
+	.db	"word not found", 0
+
 ; ( -- c )
 	.db "KEY"
 	.fill 4
-	.dw LITERAL
+	.dw APOSI
 	.db 0
 KEY:
 	.dw nativeWord
@@ -630,9 +637,49 @@ CMP:
 	push	bc
 	jp	exit
 
+; This word's atom is followed by 1b *relative* offset (to the cell's addr) to
+; where to branch to. For example, The branching cell of "IF THEN" would
+; contain 3. Add this value to RS.
+	.db	"(fbr)"
+	.fill	2
+	.dw	CMP
+	.db	0
+FBR:
+	.dw	nativeWord
+	push	de
+	ld	l, (ix)
+	ld	h, (ix+1)
+	ld	a, (hl)
+	call	addHL
+	ld	(ix), l
+	ld	(ix+1), h
+	pop	de
+	jp	exit
+
+; Conditional branch, only branch if TOS is zero
+	.db	"(fbr?)"
+	.fill	1
+	.dw	FBR
+	.db	0
+FBRC:
+	.dw	nativeWord
+	pop	hl
+	ld	a, h
+	or	l
+	jr	z, FBR+2
+	; skip next byte in RS
+	ld	l, (ix)
+	ld	h, (ix+1)
+	inc	hl
+	ld	(ix), l
+	ld	(ix+1), h
+	jp	exit
+
+
+; : IF ' (fbr?) , HERE @ 0 C, ; IMMEDIATE
 	.db "IF"
 	.fill 5
-	.dw CMP
+	.dw FBRC
 	.db 1		; IMMEDIATE
 IF:
 	.dw nativeWord
@@ -640,7 +687,7 @@ IF:
 	; push the address of that cell on the PS. ELSE or THEN will pick
 	; them up and set the offset.
 	ld	hl, (HERE)
-	ld	de, CBRANCH
+	ld	de, FBRC
 	call	DEinHL
 	push	hl		; address of cell to fill
 	inc	hl		; empty 1b cell
@@ -666,7 +713,7 @@ ELSE:
 	; uncondition branching cell, which will then be picked up by THEN.
 	; First, let's spit our 4 bytes
 	ld	hl, (HERE)
-	ld	de, BRANCH
+	ld	de, FBR
 	call	DEinHL
 	push	hl		; address of cell to fill
 	inc	hl		; empty 1b cell
