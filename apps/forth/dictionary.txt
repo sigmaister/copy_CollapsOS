@@ -77,11 +77,13 @@ C@          a -- c          Set c to byte at address a
 C!          c a --          Store byte c in address a
 CURRENT     -- n            Set n to wordref of last added entry.
 HERE        -- a            Push HERE's address
+H           -- a            HERE @
 
 *** Arithmetic ***
 
 +           a b -- c        a + b -> c
 -           a b -- c        a - b -> c
+-^          a b -- c        b - a -> c
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
 

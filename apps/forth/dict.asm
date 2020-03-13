@@ -676,53 +676,8 @@ FBRC:
 	jp	exit
 
 
-; : IF ' (fbr?) , HERE @ 0 C, ; IMMEDIATE
-	.db "IF"
-	.fill 5
-	.dw FBRC
-	.db 1		; IMMEDIATE
-IF:
-	.dw nativeWord
-	; Spit a conditional branching atom, followed by an empty 1b cell. Then,
-	; push the address of that cell on the PS. ELSE or THEN will pick
-	; them up and set the offset.
-	ld	hl, (HERE)
-	ld	de, FBRC
-	call	DEinHL
-	push	hl		; address of cell to fill
-	inc	hl		; empty 1b cell
-	ld	(HERE), hl
-	jp	exit
-
-	.db "ELSE"
-	.fill 3
-	.dw IF
-	.db 1		; IMMEDIATE
-ELSE:
-	.dw nativeWord
-	; First, let's set IF's branching cell.
-	pop	de		; cell's address
-	ld	hl, (HERE)
-	; also skip ELSE word.
-	inc	hl \ inc hl \ inc hl
-	or	a		; clear carry
-	sbc	hl, de		; HL now has relative offset
-	ld	a, l
-	ld	(de), a
-	; Set IF's branching cell to current atom address and spit our own
-	; uncondition branching cell, which will then be picked up by THEN.
-	; First, let's spit our 4 bytes
-	ld	hl, (HERE)
-	ld	de, FBR
-	call	DEinHL
-	push	hl		; address of cell to fill
-	inc	hl		; empty 1b cell
-	ld	(HERE), hl
-	jp	exit
-
-
 	.db "RECURSE"
-	.dw ELSE
+	.dw FBRC
 	.db 0
 RECURSE:
 	.dw nativeWord
