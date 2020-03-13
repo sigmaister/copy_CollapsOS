@@ -36,7 +36,9 @@ directly, but as part of another word.
 ;           R:I --          Exit a colon definition
 ,           n --            Write n in HERE and advance it.
 ' x         -- a            Push addr of word x to a.
-['] x       --              *I* Like "'", but spits the addr as a number literal.
+['] x       --              *I* Like "'", but spits the addr as a number
+                            literal.
+(           --              *I* Comment. Ignore rest of line until ")" is read.
 ALLOT       n --            Move HERE by n bytes
 C,          b --            Write byte b in HERE and advance it.
 CREATE x    --              Create cell named x. Doesn't allocate a PF.

@@ -155,16 +155,25 @@ forthInterpret:
 	ld	(HERE), de
 	jr	forthInterpret
 .immed:
-	push	hl		; --> For EXECUTE
-	ld	hl, .retRef
-	ld	(IP), hl
-	jp	EXECUTE+2
+	; For this IMMEDIATE word to be compatible with regular execution model,
+	; it needs to be compiled as an atom list. We need a temporary space for
+	; this, let's use (OLDHERE) while it isn't used.
+	ex	de, hl		; atom to write in DE
+	ld	hl, (OLDHERE)
+	call	DEinHL
+	; Now, let's write the .retRef
+	ld	de, .retRef
+	call	DEinHL
+	ld	iy, (OLDHERE)
+	jr	.execIY
 .execute:
 	ld	de, QUIT
 	call	.writeDE
 	; Compilation done, let's restore (HERE) and execute!
 	ld	hl, (OLDHERE)
 	ld	(HERE), hl
+	ld	iy, COMPBUF
+.execIY:
 	; before we execute, let's play with our RS a bit: compiledWord is
 	; going to push (IP) on the RS, but we don't expect our compiled words
 	; to ever return: it ends with QUIT. Let's set (IP) to ABORTREF and
@@ -172,21 +181,16 @@ forthInterpret:
 	ld	hl, ABORTREF
 	ld	(IP), hl
 	ld	ix, RS_ADDR-2
-	ld	iy, COMPBUF
 	jp	compiledWord
 .writeDE:
 	push	hl
 	ld	hl, (HERE)
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
+	call	DEinHL
 	ld	(HERE), hl
 	pop	hl
 	ret
 
 .retRef:
-	.dw	$+2
 	.dw	forthInterpret
 
 msgOk:
