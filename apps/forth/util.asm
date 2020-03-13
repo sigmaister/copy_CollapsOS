@@ -80,13 +80,6 @@ HLPointsBR:
 	pop	de
 	ret
 
-HLPointsEXIT:
-	push	de
-	ld	de, EXIT
-	call	HLPointsDE
-	pop	de
-	ret
-
 ; Skip the compword where HL is currently pointing. If it's a regular word,
 ; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
 ; to after null-termination.

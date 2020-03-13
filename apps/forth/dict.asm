@@ -18,7 +18,7 @@
 ; IP, but we also take care of increasing it my 2 before jumping
 next:
 	; Before we continue: are stacks within bounds?
-	call	chkPS
+	call	chkPSRS
 	ld	de, (IP)
 	ld	h, d
 	ld	l, e
@@ -115,9 +115,10 @@ LIT:
 
 ; Pop previous IP from Return stack and execute it.
 ; ( R:I -- )
-	.db ";"
-	.fill 7
-	.dw 0
+	.db	"EXIT"
+	.fill	3
+	.dw	0
+	.db	0
 EXIT:
 	.dw nativeWord
 	call	popRS
@@ -214,9 +215,18 @@ executeCodeLink:
 	; IY points to PFA
 	jp	(hl)	; go!
 
+
+	.db	";"
+	.fill	6
+	.dw	EXECUTE
+	.db	0
+ENDDEF:
+	.dw	nativeWord
+	jp	EXIT+2
+
 	.db ":"
 	.fill 6
-	.dw EXECUTE
+	.dw ENDDEF
 	.db 0
 DEFINE:
 	.dw nativeWord
@@ -232,7 +242,10 @@ DEFINE:
 	ld	(HERE), de	; update HERE
 	ld	hl, (IP)
 .loop:
-	call	HLPointsEXIT
+	push	de		; --> lvl 1
+	ld	de, ENDDEF
+	call	HLPointsDE
+	pop	de		; <-- lvl 1
 	jr	z, .loopend
 	call	compSkip
 	jr	.loop
@@ -358,9 +371,20 @@ KEY:
 	push	hl
 	jp	next
 
+	.db "WORD"
+	.fill 3
+	.dw KEY
+	.db 0
+WORD:
+	.dw nativeWord
+	call	readword
+	jp	nz, abort
+	push	hl
+	jp	next
+
 	.db "CREATE"
 	.fill 1
-	.dw KEY
+	.dw WORD
 	.db 0
 CREATE:
 	.dw nativeWord
@@ -398,7 +422,7 @@ DOT:
 	pop	de
 	; We check PS explicitly because it doesn't look nice to spew gibberish
 	; before aborting the stack underflow.
-	call	chkPS
+	call	chkPSRS
 	call	pad
 	call	fmtDecimalS
 	call	printstr
@@ -454,7 +478,6 @@ CFETCH:
 	push	hl
 	jp	next
 
-; ( -- a )
 	.db "LIT@"
 	.fill 3
 	.dw CFETCH
@@ -554,10 +577,63 @@ OVER2:
 	push	bc	; B
 	jp	next
 
+	.db	">R"
+	.fill	5
+	.dw	OVER2
+	.db	0
+P2R:
+	.dw	nativeWord
+	pop	hl
+	call	pushRS
+	jp	next
+
+	.db	"R>"
+	.fill	5
+	.dw	P2R
+	.db	0
+R2P:
+	.dw	nativeWord
+	call	popRS
+	push	hl
+	jp	next
+
+	.db	"I"
+	.fill	6
+	.dw	R2P
+	.db	0
+I:
+	.dw	nativeWord
+	ld	l, (ix)
+	ld	h, (ix+1)
+	push	hl
+	jp	next
+
+	.db	"I'"
+	.fill	5
+	.dw	I
+	.db	0
+IPRIME:
+	.dw	nativeWord
+	ld	l, (ix-2)
+	ld	h, (ix-1)
+	push	hl
+	jp	next
+
+	.db	"J"
+	.fill	6
+	.dw	IPRIME
+	.db	0
+J:
+	.dw	nativeWord
+	ld	l, (ix-4)
+	ld	h, (ix-3)
+	push	hl
+	jp	next
+
 ; ( a b -- c ) A + B
 	.db "+"
 	.fill 6
-	.dw OVER2
+	.dw J
 	.db 0
 PLUS:
 	.dw nativeWord
@@ -670,17 +746,6 @@ FBRC:
 	ld	(IP), hl
 	jp	next
 
-
-	.db "RECURSE"
-	.dw FBRC
-	.db 0
-RECURSE:
-	.dw nativeWord
-	call	popRS
-	dec	hl \ dec hl
-	ld	(IP), hl
-	push	hl \ pop iy
-	jp	compiledWord
-
 LATEST:
-	.dw RECURSE
+	.dw FBRC
+

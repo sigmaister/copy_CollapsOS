@@ -14,3 +14,4 @@
 : = CMP NOT ;
 : < CMP 0 1 - = ;
 : > CMP 1 = ;
+: RECURSE R> R> 2 - >R >R EXIT ;

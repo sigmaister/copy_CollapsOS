@@ -60,13 +60,20 @@ QUIT        R:drop --       Return to interpreter promp immediately
 RECURSE     R:I -- R:I-2    Run the current word again.
 THEN        I:a --          *I* Set branching cell at a.
 
-*** Stack ***
+*** Parameter Stack ***
 DUP         a -- a a
 OVER        a b -- a b a
 SWAP        a b -- b a
 2DUP        a b -- a b a b
 2OVER       a b c d -- a b c d a b
 2SWAP       a b c d -- c d a b
+
+*** Return Stack ***
+>R          n -- R:n        Pops PS and push to RS
+R>          R:n -- n        Pops RS and push to PS
+I           -- n            Copy RS TOS to PS
+I'          -- n            Copy RS second item to PS
+J           -- n            Copy RS third item to PS
 
 *** Memory ***
 @           a -- n          Set n to value at address a
@@ -75,7 +82,7 @@ SWAP        a b -- b a
 +!          n a --          Increase value of addr a by n
 C@          a -- c          Set c to byte at address a
 C!          c a --          Store byte c in address a
-CURRENT     -- n            Set n to wordref of last added entry.
+CURRENT     -- a            Set a to wordref of last added entry.
 HERE        -- a            Push HERE's address
 H           -- a            HERE @
 
@@ -96,8 +103,8 @@ CMP         n1 n2 -- n      Compare n1 and n2 and set n to -1, 0, or 1.
 NOT         f -- f          Push the logical opposite of f
 
 *** Strings ***
-LIT@ x      -- a            Read folloing LIT and push its addr to a
-S=          a1 a2 -- n      Compare strings a1 and a2. See CMP
+LIT@ x      -- a            Read following LIT and push its addr to a
+SCMP        a1 a2 -- n      Compare strings a1 and a2. See CMP
 
 *** I/O ***
 .           n --            Print n in its decimal form
@@ -105,4 +112,5 @@ EMIT        c --            Spit char c to stdout
 KEY         -- c            Get char c from stdin
 PC!         c a --          Spit c to port a
 PC@         a -- c          Fetch c from port a
+WORD        -- a            Read one word from stdin and push its addr
 

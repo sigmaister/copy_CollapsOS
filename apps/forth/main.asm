@@ -17,8 +17,12 @@
 
 ; *** Variables ***
 .equ	INITIAL_SP	FORTH_RAMSTART
+; wordref of the last entry of the dict.
 .equ	CURRENT		@+2
+; Pointer to the next free byte in dict. During compilation of input text, this
+; temporarily points to the next free byte in COMPBUF.
 .equ	HERE		@+2
+; Used to hold HERE while we temporarily point it to COMPBUF
 .equ	OLDHERE		@+2
 ; Interpreter pointer. See Execution model comment below.
 .equ	IP		@+2
