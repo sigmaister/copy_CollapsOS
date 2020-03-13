@@ -20,6 +20,8 @@
 .equ	CURRENT		@+2
 .equ	HERE		@+2
 .equ	OLDHERE		@+2
+; Interpreter pointer. See Execution model comment below.
+.equ	IP		@+2
 ; Pointer to where we currently are in the interpretation of the current line.
 .equ	INPUTPOS	@+2
 ; Buffer where we compile the current input line. Same size as STDIO_BUFSIZE.
@@ -59,6 +61,23 @@
 ;
 ; During IMMEDIATE mode, (HERE) is temporarily set to COMPBUF, and when we're
 ; done, we restore (HERE) for runtime. This way, everyone is happy.
+;
+; EXECUTING A WORD
+;
+; At it's core, executing a word is having the wordref in IY and call
+; executeCodeLink. Then, we let the word do its things. Some words are special,
+; but most of them are of the compiledWord type, and that's their execution that
+; we describe here.
+;
+; First of all, at all time during execution, the Interpreter Pointer (IP)
+; points to the wordref we're executing next.
+;
+; When we execute a compiledWord, the first thing we do is push IP to the Return
+; Stack (RS). Therefore, RS' top of stack will contain a wordref to execute
+; next, after we EXIT.
+;
+; At the end of every compiledWord is an EXIT. This pops RS, sets IP to it, and
+; continues.
 
 ; *** Code ***
 forthMain:
@@ -82,10 +101,14 @@ forthMain:
 forthRdLine:
 	ld	hl, msgOk
 	call	printstr
+forthRdLineNoOk:
 	call	printcrlf
 	call	stdioReadLine
-	ld	ix, RS_ADDR-2		; -2 because we inc-before-push
 	ld	(INPUTPOS), hl
+	; Setup return stack. As a safety net, we set its bottom to ABORTREF.
+	ld	hl, ABORTREF
+	ld	(RS_ADDR), hl
+	ld	ix, RS_ADDR
 	; We're about to compile the line and possibly execute IMMEDIATE words.
 	; Let's save current (HERE) and temporarily set it to COMPBUF.
 	ld	hl, (HERE)
@@ -128,17 +151,23 @@ forthInterpret:
 	ld	(HERE), de
 	jr	forthInterpret
 .immed:
-	push	hl		; --> lvl 1
+	push	hl		; --> For EXECUTE
 	ld	hl, .retRef
-	call	pushRS
-	pop	iy		; <-- lvl 1
-	jp	executeCodeLink
+	ld	(IP), hl
+	jp	EXECUTE+2
 .execute:
 	ld	de, QUIT
 	call	.writeDE
 	; Compilation done, let's restore (HERE) and execute!
 	ld	hl, (OLDHERE)
 	ld	(HERE), hl
+	; before we execute, let's play with our RS a bit: compiledWord is
+	; going to push (IP) on the RS, but we don't expect our compiled words
+	; to ever return: it ends with QUIT. Let's set (IP) to ABORTREF and
+	; IX to RS_ADDR-2 so that compiledWord re-pushes our safety net.
+	ld	hl, ABORTREF
+	ld	(IP), hl
+	ld	ix, RS_ADDR-2
 	ld	iy, COMPBUF
 	jp	compiledWord
 .writeDE:
@@ -153,10 +182,8 @@ forthInterpret:
 	ret
 
 .retRef:
-	.dw $+2
-	.dw $+2
-	call	popRS
-	jr	forthInterpret
+	.dw	$+2
+	.dw	forthInterpret
 
 msgOk:
 	.db	" ok", 0

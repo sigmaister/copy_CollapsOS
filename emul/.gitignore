@@ -1,5 +1,6 @@
 /shell/shell
 /forth/stage1
+/forth/stage1dbg
 /forth/forth
 /zasm/zasm
 /zasm/avra

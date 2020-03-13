@@ -20,6 +20,11 @@ directly follow executable's last byte so that we don't waste spce and also
 that wordref offsets correspond.
 */
 
+// When DEBUG is set, stage1 is a core-less forth that works interactively.
+// Useful for... debugging!
+// By the way: there's a double-echo in stagedbg. It's normal. Don't panic.
+
+//#define DEBUG
 // in sync with glue.asm
 #define RAMSTART 0x900
 #define STDIO_PORT 0x00
@@ -44,11 +49,17 @@ static uint8_t iord_stdio()
 static void iowr_stdio(uint8_t val)
 {
     // we don't output stdout in stage0
+#ifdef DEBUG
+    // ... unless we're in DEBUG mode!
+    putchar(val);
+#endif
 }
 
 int main(int argc, char *argv[])
 {
-    bool tty = false;
+#ifdef DEBUG
+    fp = stdin;
+#else
     if (argc == 2) {
         fp = fopen(argv[1], "r");
         if (fp == NULL) {
@@ -59,6 +70,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Usage: ./stage0 filename\n");
         return 1;
     }
+#endif
     Machine *m = emul_init();
     m->ramstart = RAMSTART;
     m->iord[STDIO_PORT] = iord_stdio;
@@ -74,6 +86,7 @@ int main(int argc, char *argv[])
 
     fclose(fp);
 
+#ifndef DEBUG
     // We're done, now let's spit dict data
     // let's start with LATEST spitting.
     putchar(m->mem[CURRENT]);
@@ -82,6 +95,7 @@ int main(int argc, char *argv[])
     for (int i=sizeof(KERNEL); i<here; i++) {
         putchar(m->mem[i]);
     }
+#endif
     return 0;
 }
 

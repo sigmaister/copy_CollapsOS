@@ -202,20 +202,31 @@ readLIT:
 	.db "word expected", 0
 
 readLITBOS:
+	; Before we start: is our RS empty? If IX == RS_ADDR, it is (it only has
+	; its safety net). When that happens, we actually want to run readLITTOS
+	push	hl
 	push	de
-	ld	hl, (RS_ADDR)
+	push	ix \ pop hl
+	ld	de, RS_ADDR
+	or	a		; clear carry
+	sbc	hl, de
+	pop	de
+	pop	hl
+	jr	z, readLITTOS
+	push	de
+	; Our bottom-of-stack is RS_ADDR+2 because RS_ADDR is occupied by our
+	; ABORTREF safety net.
+	ld	hl, (RS_ADDR+2)
 	call	readLIT
-	ld	(RS_ADDR), de
+	ld	(RS_ADDR+2), de
 	pop	de
 	ret
 
 readLITTOS:
 	push	de
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	hl, (IP)
 	call	readLIT
-	ld	(ix), e
-	ld	(ix+1), d
+	ld	(IP), de
 	pop	de
 	ret
 
@@ -284,7 +295,6 @@ entryhead:
 	inc	hl
 	ld	(CURRENT), hl
 	ld	(HERE), hl
-	xor	a		; set Z
 	ret
 
 ; Sets Z if wordref at HL is of the IMMEDIATE type

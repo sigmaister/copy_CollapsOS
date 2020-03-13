@@ -33,6 +33,9 @@ forth/forth0-bin.h: forth/forth0.bin
 forth/stage1: forth/stage1.c $(OBJS) forth/forth0-bin.h 
 	$(CC) forth/stage1.c $(OBJS) -o $@
 
+forth/stage1dbg: forth/stage1.c $(OBJS) forth/forth0-bin.h 
+	$(CC) -DDEBUG forth/stage1.c $(OBJS) -o $@
+
 forth/core.bin: $(APPS)/forth/core.fth forth/stage1
 	./forth/stage1 $(APPS)/forth/core.fth | tee $@ > /dev/null
 

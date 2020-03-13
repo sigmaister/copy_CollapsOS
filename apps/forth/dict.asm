@@ -7,43 +7,64 @@
 ;
 ; The code pointer point to "word routines". These routines expect to be called
 ; with IY pointing to the PF. They themselves are expected to end by jumping
-; to the address at the top of the Return Stack. They will usually do so with
-; "jp exit".
+; to the address at (IP). They will usually do so with "jp next".
 ;
 ; That's for "regular" words (words that are part of the dict chain). There are
 ; also "special words", for example NUMBER, LIT, FBR, that have a slightly
 ; different structure. They're also a pointer to an executable, but as for the
 ; other fields, the only one they have is the "flags" field.
 
+; This routine is jumped to at the end of every word. In it, we jump to current
+; IP, but we also take care of increasing it my 2 before jumping
+next:
+	; Before we continue: are stacks within bounds?
+	call	chkPS
+	ld	de, (IP)
+	ld	h, d
+	ld	l, e
+	inc	de \ inc de
+	ld	(IP), de
+	; HL is an atom list pointer. We need to go into it to have a wordref
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	push	de
+	jp	EXECUTE+2
+
+
 ; Execute a word containing native code at its PF address (PFA)
 nativeWord:
 	jp	(iy)
 
-; Execute a list of atoms, which usually ends with EXIT.
-; IY points to that list.
+; Execute a list of atoms, which always end with EXIT.
+; IY points to that list. What do we do:
+; 1. Push current IP to RS
+; 2. Set new IP to the second atom of the list
+; 3. Execute the first atom of the list.
 compiledWord:
+	ld	hl, (IP)
+	call	pushRS
 	push	iy \ pop hl
 	inc	hl
 	inc	hl
-	; HL points to next Interpreter pointer.
-	call	pushRS
+	ld	(IP), hl
+	; IY still is our atom reference...
 	ld	l, (iy)
 	ld	h, (iy+1)
-	push	hl \ pop iy
-	; IY points to code link
-	jp	executeCodeLink
+	push	hl	; argument for EXECUTE
+	jp	EXECUTE+2
 
 ; Pushes the PFA directly
 cellWord:
 	push	iy
-	jp	exit
+	jp	next
 
 ; Pushes the address in the first word of the PF
 sysvarWord:
 	ld	l, (iy)
 	ld	h, (iy+1)
 	push	hl
-	jp	exit
+	jp	next
 
 ; The word was spawned from a definition word that has a DOES>. PFA+2 (right
 ; after the actual cell) is a link to the slot right after that DOES>.
@@ -59,20 +80,16 @@ doesWord:
 ; This is not a word, but a number literal. This works a bit differently than
 ; others: PF means nothing and the actual number is placed next to the
 ; numberWord reference in the compiled word list. What we need to do to fetch
-; that number is to play with the Return stack: We pop it, read the number, push
-; it to the Parameter stack and then push an increase Interpreter Pointer back
-; to RS.
+; that number is to play with the IP.
 numberWord:
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	hl, (IP)	; (HL) is out number
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
 	inc	hl
-	ld	(ix), l
-	ld	(ix+1), h
+	ld	(IP), hl	; advance IP by 2
 	push	de
-	jp	exit
+	jp	next
 
 	.db	0b10		; Flags
 NUMBER:
@@ -84,8 +101,7 @@ NUMBER:
 ; context. Only words expecting those literals will look for them. This is why
 ; the litWord triggers abort.
 litWord:
-	call	popRS
-	call	intoHL
+	ld	hl, (IP)
 	call	printstr	; let's print the word before abort.
 	ld	hl, .msg
 	call	printstr
@@ -97,24 +113,16 @@ litWord:
 LIT:
 	.dw	litWord
 
+; Pop previous IP from Return stack and execute it.
 ; ( R:I -- )
 	.db ";"
 	.fill 7
 	.dw 0
 EXIT:
 	.dw nativeWord
-; When we call the EXIT word, we have to do a "double exit" because our current
-; Interpreter pointer is pointing to the word *next* to our EXIT reference when,
-; in fact, we want to continue processing the one above it.
 	call	popRS
-exit:
-	; Before we continue: is SP within bounds?
-	call	chkPS
-	; we're good
-	call	popRS
-	; We have a pointer to a word
-	push	hl \ pop iy
-	jp	compiledWord
+	ld	(IP), hl
+	jp	next
 
 ; ( R:I -- )
 	.db "QUIT"
@@ -133,9 +141,9 @@ quit:
 ABORT:
 	.dw nativeWord
 abort:
-	; Reinitialize PS (RS is reinitialized in forthInterpret
+	; Reinitialize PS (RS is reinitialized in forthInterpret)
 	ld	sp, (INITIAL_SP)
-	jp	forthRdLine
+	jp	forthRdLineNoOk
 ABORTREF:
 	.dw ABORT
 
@@ -163,7 +171,7 @@ EMIT:
 	pop	hl
 	ld	a, l
 	call	stdioPutC
-	jp	exit
+	jp	next
 
 ; ( c port -- )
 	.db "PC!"
@@ -175,7 +183,7 @@ PSTORE:
 	pop	bc
 	pop	hl
 	out	(c), l
-	jp	exit
+	jp	next
 
 ; ( port -- c )
 	.db "PC@"
@@ -188,7 +196,7 @@ PFETCH:
 	ld	h, 0
 	in	l, (c)
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( addr -- )
 	.db "EXECUTE"
@@ -214,10 +222,7 @@ DEFINE:
 	.dw nativeWord
 	call	entryhead
 	ld	de, compiledWord
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
+	call	DEinHL
 	; At this point, we've processed the name literal following the ':'.
 	; What's next? We have, in IP, a pointer to words that *have already
 	; been compiled by INTERPRET*. All those bytes will be copied as-is.
@@ -225,8 +230,7 @@ DEFINE:
 	; skip compwords until EXIT is reached.
 	ex	de, hl		; DE is our dest
 	ld	(HERE), de	; update HERE
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	hl, (IP)
 .loop:
 	call	HLPointsEXIT
 	jr	z, .loopend
@@ -236,22 +240,19 @@ DEFINE:
 	; skip EXIT
 	inc	hl \ inc hl
 	; We have out end offset. Let's get our offset
-	ld	e, (ix)
-	ld	d, (ix+1)
+	ld	de, (IP)
 	or	a		; clear carry
 	sbc	hl, de
 	; HL is our copy count.
 	ld	b, h
 	ld	c, l
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	hl, (IP)
 	ld	de, (HERE)	; recall dest
 	; copy!
 	ldir
-	ld	(ix), l
-	ld	(ix+1), h
+	ld	(IP), hl
 	ld	(HERE), de
-	jp	exit
+	jp	next
 
 
 	.db "DOES>"
@@ -264,18 +265,17 @@ DOES:
 	; need to do.
 	; 1. Change the code link to doesWord
 	; 2. Leave 2 bytes for regular cell variable.
-	; 3. Get the Interpreter pointer from the stack and write this down to
-	;    entry PFA+2.
-	; 3. exit. Because we've already popped RS, a regular exit will abort
-	;    colon definition, so we're good.
+	; 3. Write down IP+2 to entry.
+	; 3. exit. we're done here.
 	ld	iy, (CURRENT)
 	ld	hl, doesWord
 	call	wrCompHL
 	inc	iy \ inc iy		; cell variable space
-	call	popRS
+	ld	hl, (IP)
+	inc	hl \ inc hl
 	call	wrCompHL
 	ld	(HERE), iy
-	jp	exit
+	jp	EXIT+2
 
 
 	.db "IMMEDIA"
@@ -286,7 +286,7 @@ IMMEDIATE:
 	ld	hl, (CURRENT)
 	dec	hl
 	set	FLAG_IMMED, (hl)
-	jp	exit
+	jp	next
 
 ; ( n -- )
 	.db "LITERAL"
@@ -300,7 +300,7 @@ LITERAL:
 	pop	de		; number from stack
 	call	DEinHL
 	ld	(HERE), hl
-	jp	exit
+	jp	next
 
 
 	.db	"'"
@@ -313,7 +313,7 @@ APOS:
 	call	find
 	jr	nz, .notfound
 	push	de
-	jp	exit
+	jp	next
 .notfound:
 	ld	hl, .msg
 	call	printstr
@@ -337,7 +337,7 @@ APOSI:
 	pop	de		; <-- lvl 1
 	call	DEinHL
 	ld	(HERE), hl
-	jp	exit
+	jp	next
 .notfound:
 	ld	hl, .msg
 	call	printstr
@@ -356,7 +356,7 @@ KEY:
 	ld	h, 0
 	ld	l, a
 	push	hl
-	jp	exit
+	jp	next
 
 	.db "CREATE"
 	.fill 1
@@ -365,14 +365,13 @@ KEY:
 CREATE:
 	.dw nativeWord
 	call	entryhead
-	jp	nz, quit
 	ld	de, cellWord
 	ld	(hl), e
 	inc	hl
 	ld	(hl), d
 	inc	hl
 	ld	(HERE), hl
-	jp	exit
+	jp	next
 
 	.db "HERE"
 	.fill 3
@@ -403,7 +402,7 @@ DOT:
 	call	pad
 	call	fmtDecimalS
 	call	printstr
-	jp	exit
+	jp	next
 
 ; ( n a -- )
 	.db "!"
@@ -416,7 +415,7 @@ STORE:
 	pop	hl
 	ld	(iy), l
 	ld	(iy+1), h
-	jp	exit
+	jp	next
 
 ; ( n a -- )
 	.db "C!"
@@ -428,7 +427,7 @@ CSTORE:
 	pop	hl
 	pop	de
 	ld	(hl), e
-	jp	exit
+	jp	next
 
 ; ( a -- n )
 	.db "@"
@@ -440,7 +439,7 @@ FETCH:
 	pop	hl
 	call	intoHL
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a -- c )
 	.db "C@"
@@ -453,7 +452,7 @@ CFETCH:
 	ld	l, (hl)
 	ld	h, 0
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( -- a )
 	.db "LIT@"
@@ -464,7 +463,7 @@ LITFETCH:
 	.dw nativeWord
 	call	readLITTOS
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b -- b a )
 	.db "SWAP"
@@ -476,7 +475,7 @@ SWAP:
 	pop	hl
 	ex	(sp), hl
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b c d -- c d a b )
 	.db "2SWAP"
@@ -493,7 +492,7 @@ SWAP2:
 	push	de		; D
 	push	hl		; A
 	push	bc		; B
-	jp	exit
+	jp	next
 
 ; ( a -- a a )
 	.db "DUP"
@@ -505,7 +504,7 @@ DUP:
 	pop	hl
 	push	hl
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b -- a b a b )
 	.db "2DUP"
@@ -520,7 +519,7 @@ DUP2:
 	push	hl
 	push	de
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b -- a b a )
 	.db "OVER"
@@ -534,7 +533,7 @@ OVER:
 	push	de
 	push	hl
 	push	de
-	jp	exit
+	jp	next
 
 ; ( a b c d -- a b c d a b )
 	.db "2OVER"
@@ -553,7 +552,7 @@ OVER2:
 	push	hl	; D
 	push	iy	; A
 	push	bc	; B
-	jp	exit
+	jp	next
 
 ; ( a b -- c ) A + B
 	.db "+"
@@ -566,7 +565,7 @@ PLUS:
 	pop	de
 	add	hl, de
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b -- c ) A - B
 	.db "-"
@@ -580,7 +579,7 @@ MINUS:
 	or	a		; reset carry
 	sbc	hl, de
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b -- c ) A * B
 	.db "*"
@@ -593,7 +592,7 @@ MULT:
 	pop	bc
 	call	multDEBC
 	push	hl
-	jp	exit
+	jp	next
 
 ; ( a b -- c ) A / B
 	.db "/"
@@ -606,7 +605,7 @@ DIV:
 	pop	hl
 	call	divide
 	push	bc
-	jp	exit
+	jp	next
 
 ; ( a1 a2 -- b )
 	.db "SCMP"
@@ -620,7 +619,7 @@ SCMP:
 	call	strcmp
 	call	flagsToBC
 	push	bc
-	jp	exit
+	jp	next
 
 ; ( n1 n2 -- f )
 	.db "CMP"
@@ -635,7 +634,7 @@ CMP:
 	sbc	hl, de
 	call	flagsToBC
 	push	bc
-	jp	exit
+	jp	next
 
 ; This word's atom is followed by 1b *relative* offset (to the cell's addr) to
 ; where to branch to. For example, The branching cell of "IF THEN" would
@@ -647,14 +646,12 @@ CMP:
 FBR:
 	.dw	nativeWord
 	push	de
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	hl, (IP)
 	ld	a, (hl)
 	call	addHL
-	ld	(ix), l
-	ld	(ix+1), h
+	ld	(IP), hl
 	pop	de
-	jp	exit
+	jp	next
 
 ; Conditional branch, only branch if TOS is zero
 	.db	"(fbr?)"
@@ -668,12 +665,10 @@ FBRC:
 	or	l
 	jr	z, FBR+2
 	; skip next byte in RS
-	ld	l, (ix)
-	ld	h, (ix+1)
+	ld	hl, (IP)
 	inc	hl
-	ld	(ix), l
-	ld	(ix+1), h
-	jp	exit
+	ld	(IP), hl
+	jp	next
 
 
 	.db "RECURSE"
@@ -682,9 +677,8 @@ FBRC:
 RECURSE:
 	.dw nativeWord
 	call	popRS
-	ld	l, (ix)
-	ld	h, (ix+1)
 	dec	hl \ dec hl
+	ld	(IP), hl
 	push	hl \ pop iy
 	jp	compiledWord
 
