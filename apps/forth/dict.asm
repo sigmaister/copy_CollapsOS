@@ -711,12 +711,27 @@ CMP:
 	push	bc
 	jp	next
 
+	.db	"SKIP?"
+	.fill	2
+	.dw	CMP
+	.db	0
+CSKIP:
+	.dw	nativeWord
+	pop	hl
+	ld	a, h
+	or	l
+	jp	z, next		; False, do nothing.
+	ld	hl, (IP)
+	call	compSkip
+	ld	(IP), hl
+	jp	next
+
 ; This word's atom is followed by 1b *relative* offset (to the cell's addr) to
 ; where to branch to. For example, The branching cell of "IF THEN" would
 ; contain 3. Add this value to RS.
 	.db	"(fbr)"
 	.fill	2
-	.dw	CMP
+	.dw	CSKIP
 	.db	0
 FBR:
 	.dw	nativeWord
@@ -728,23 +743,6 @@ FBR:
 	pop	de
 	jp	next
 
-; Conditional branch, only branch if TOS is zero
-	.db	"(fbr?)"
-	.fill	1
-	.dw	FBR
-	.db	0
-FBRC:
-	.dw	nativeWord
-	pop	hl
-	ld	a, h
-	or	l
-	jr	z, FBR+2
-	; skip next byte in RS
-	ld	hl, (IP)
-	inc	hl
-	ld	(IP), hl
-	jp	next
-
 LATEST:
-	.dw FBRC
+	.dw FBR
 

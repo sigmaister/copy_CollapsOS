@@ -73,10 +73,6 @@ HLPointsBR:
 	push	de
 	ld	de, FBR
 	call	HLPointsDE
-	jr	z, .end
-	ld	de, FBRC
-	call	HLPointsDE
-.end:
 	pop	de
 	ret
 

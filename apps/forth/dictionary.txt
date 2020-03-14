@@ -49,8 +49,6 @@ LITERAL     n --            *I* Inserts number from TOS as a literal
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
 
 *** Flow ***
-(fbr?)      f --            Conditionally branches forward by the number
-                            specified in its atom's cell.
 (fbr)       --              Branches forward by the number specified in its
                             atom's cell.
 ELSE        I:a --          *I* Compiles a (fbr) and set branching cell at a.
@@ -60,6 +58,9 @@ INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
 QUIT        R:drop --       Return to interpreter promp immediately
 RECURSE     R:I -- R:I-2    Run the current word again.
+SKIP?       f --            If f is true, skip the execution of the next atom.
+                            Use this right before ";" and you're gonna have a
+                            bad time.
 THEN        I:a --          *I* Set branching cell at a.
 
 *** Parameter Stack ***
