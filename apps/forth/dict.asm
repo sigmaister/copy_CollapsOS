@@ -285,7 +285,6 @@ DOES:
 	call	wrCompHL
 	inc	iy \ inc iy		; cell variable space
 	ld	hl, (IP)
-	inc	hl \ inc hl
 	call	wrCompHL
 	ld	(HERE), iy
 	jp	EXIT+2
