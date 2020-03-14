@@ -69,7 +69,7 @@
 ; EXECUTING A WORD
 ;
 ; At it's core, executing a word is having the wordref in IY and call
-; executeCodeLink. Then, we let the word do its things. Some words are special,
+; EXECUTE. Then, we let the word do its things. Some words are special,
 ; but most of them are of the compiledWord type, and that's their execution that
 ; we describe here.
 ;
@@ -109,9 +109,7 @@ forthRdLineNoOk:
 	call	printcrlf
 	call	stdioReadLine
 	ld	(INPUTPOS), hl
-	; Setup return stack. As a safety net, we set its bottom to ABORTREF.
-	ld	hl, ABORTREF
-	ld	(RS_ADDR), hl
+	; Setup return stack. After INTERPRET, we run forthExecLine
 	ld	ix, RS_ADDR
 	; We're about to compile the line and possibly execute IMMEDIATE words.
 	; Let's save current (HERE) and temporarily set it to COMPBUF.
@@ -119,61 +117,24 @@ forthRdLineNoOk:
 	ld	(OLDHERE), hl
 	ld	hl, COMPBUF
 	ld	(HERE), hl
-forthInterpret:
-	call	readword
-	jr	nz, .execute
-	call	find
-	jr	nz, .maybeNum
-	ex	de, hl
-	call	HLisIMMED
-	jr	z, .immed
-	ex	de, hl
-	call	.writeDE
-	jr	forthInterpret
-.maybeNum:
-	push	hl		; --> lvl 1. save string addr
-	call	parseLiteral
-	pop	hl		; <-- lvl 1
-	jr	nz, .undef
-	; a valid number in DE!
-	ex	de, hl
-	ld	de, NUMBER
-	call	.writeDE
-	ex	de, hl		; number in DE
-	call	.writeDE
-	jr	forthInterpret
-.undef:
-	; When encountering an undefined word during compilation, we spit a
-	; reference to litWord, followed by the null-terminated word.
-	; This way, if a preceding word expect a string literal, it will read it
-	; by calling readLIT, and if it doesn't, the routine will be
-	; called, triggering an abort.
-	ld	de, LIT
-	call	.writeDE
-	ld	de, (HERE)
-	call	strcpyM
-	ld	(HERE), de
-	jr	forthInterpret
-.immed:
-	; For this IMMEDIATE word to be compatible with regular execution model,
-	; it needs to be compiled as an atom list. We need a temporary space for
-	; this, let's use (OLDHERE) while it isn't used.
-	ex	de, hl		; atom to write in DE
-	ld	hl, (OLDHERE)
-	call	DEinHL
-	; Now, let's write the .retRef
-	ld	de, .retRef
-	call	DEinHL
-	ld	iy, (OLDHERE)
-	jr	.execIY
-.execute:
+	ld	hl, .retRef
+	ld	(IP), hl
+	ld	hl, INTERPRET
+	push	hl
+	jp	EXECUTE+2
+.retRef:
+	.dw	$+2
+	.dw	forthExecLine
+
+forthExecLine:
 	ld	de, QUIT
-	call	.writeDE
+	ld	hl, (HERE)
+	call	DEinHL
+	ld	(HERE), hl
 	; Compilation done, let's restore (HERE) and execute!
 	ld	hl, (OLDHERE)
 	ld	(HERE), hl
 	ld	iy, COMPBUF
-.execIY:
 	; before we execute, let's play with our RS a bit: compiledWord is
 	; going to push (IP) on the RS, but we don't expect our compiled words
 	; to ever return: it ends with QUIT. Let's set (IP) to ABORTREF and
@@ -182,16 +143,28 @@ forthInterpret:
 	ld	(IP), hl
 	ld	ix, RS_ADDR-2
 	jp	compiledWord
-.writeDE:
-	push	hl
-	ld	hl, (HERE)
-	call	DEinHL
-	ld	(HERE), hl
-	pop	hl
-	ret
 
-.retRef:
-	.dw	forthInterpret
+; (we don't have RECURSE here. Calling interpret makes us needlessly use our
+; RS stack, but it can take it, can't it? )
+; WORD DUP C@ (to check if null) SKIP? (skip if not null) EXIT COMPILE INTERPRET
+	.db	0b10		; UNWORD
+INTERPRET:
+	.dw	compiledWord
+	.dw	WORD
+	.dw	DUP
+	.dw	CFETCH
+	.dw	CSKIP
+	.dw	.stop
+	.dw	COMPILE
+	.dw	INTERPRET
+	.dw	EXIT
+
+.stop:
+	.dw	compiledWord
+	.dw	DROP
+	.dw	R2P
+	.dw	DROP
+	.dw	EXIT
 
 msgOk:
 	.db	" ok", 0

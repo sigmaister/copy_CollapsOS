@@ -206,7 +206,6 @@ PFETCH:
 EXECUTE:
 	.dw nativeWord
 	pop	iy	; is a wordref
-executeCodeLink:
 	ld	l, (iy)
 	ld	h, (iy+1)
 	; HL points to code pointer
@@ -216,9 +215,68 @@ executeCodeLink:
 	jp	(hl)	; go!
 
 
+	.db	"COMPILE"
+	.dw	EXECUTE
+	.db	1		; IMMEDIATE
+COMPILE:
+	.dw	nativeWord
+	pop	hl		; word addr
+	call	find
+	jr	nz, .maybeNum
+	ex	de, hl
+	call	HLisIMMED
+	jr	z, .immed
+	ex	de, hl
+	call	.writeDE
+	jp	next
+.maybeNum:
+	push	hl		; --> lvl 1. save string addr
+	call	parseLiteral
+	pop	hl		; <-- lvl 1
+	jr	nz, .undef
+	; a valid number in DE!
+	ex	de, hl
+	ld	de, NUMBER
+	call	.writeDE
+	ex	de, hl		; number in DE
+	call	.writeDE
+	jp	next
+.undef:
+	; When encountering an undefined word during compilation, we spit a
+	; reference to litWord, followed by the null-terminated word.
+	; This way, if a preceding word expect a string literal, it will read it
+	; by calling readLIT, and if it doesn't, the routine will be
+	; called, triggering an abort.
+	ld	de, LIT
+	call	.writeDE
+	ld	de, (HERE)
+	call	strcpyM
+	ld	(HERE), de
+	jp	next
+.immed:
+	; For this IMMEDIATE word to be compatible with regular execution model,
+	; it needs to be compiled as an atom somewhere in memory.
+	; For example, RECURSE backtracks in RS and steps back 2 bytes. This
+	; can only work with our compiled atom being next to an EXIT atom.
+	ex	de, hl		; atom to write in DE
+	ld	hl, (OLDHERE)
+	push	hl \ pop iy
+	call	DEinHL
+	ld	de, EXIT
+	call	DEinHL
+	jp	compiledWord
+.writeDE:
+	push	hl
+	ld	hl, (HERE)
+	call	DEinHL
+	ld	(HERE), hl
+	pop	hl
+	ret
+
+
 	.db	";"
 	.fill	6
-	.dw	EXECUTE
+	.dw	COMPILE
 	.db	0
 ENDDEF:
 	.dw	nativeWord
@@ -377,7 +435,6 @@ KEY:
 WORD:
 	.dw nativeWord
 	call	readword
-	jp	nz, abort
 	push	hl
 	jp	next
 
@@ -487,10 +544,20 @@ LITFETCH:
 	push	hl
 	jp	next
 
+; ( a -- )
+	.db "DROP"
+	.fill 3
+	.dw LITFETCH
+	.db 0
+DROP:
+	.dw nativeWord
+	pop	hl
+	jp	next
+
 ; ( a b -- b a )
 	.db "SWAP"
 	.fill 3
-	.dw LITFETCH
+	.dw DROP
 	.db 0
 SWAP:
 	.dw nativeWord
