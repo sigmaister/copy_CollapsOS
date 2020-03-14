@@ -112,10 +112,21 @@ LIT@ x      -- a            Read following LIT and push its addr to a
 SCMP        a1 a2 -- n      Compare strings a1 and a2. See CMP
 
 *** I/O ***
+
+A little word about inputs. There are two kind of inputs: direct and buffered.
+As a general rule, we read line in a buffer, then feed words in it to the
+interpreter. That's what "WORD" does. If it's at the End Of Line, it blocks and
+wait until another line is entered.
+
+KEY input, however, is direct. Regardless of the input buffer's state, KEY will
+return the next typed key.
+
 .           n --            Print n in its decimal form
-EMIT        c --            Spit char c to stdout
-KEY         -- c            Get char c from stdin
+EMIT        c --            Spit char c to output stream
+IN>         -- a            Address of variable containing current pos in input
+                            buffer.
+KEY         -- c            Get char c from direct input
 PC!         c a --          Spit c to port a
 PC@         a -- c          Fetch c from port a
-WORD        -- a            Read one word from stdin and push its addr
+WORD        -- a            Read one word from buffered input and push its addr
 

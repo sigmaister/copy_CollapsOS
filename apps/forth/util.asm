@@ -7,7 +7,8 @@ pad:
 ; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
 ; Advance (INPUTPOS) to the character following the whitespace ending the
 ; word.
-; Z set of word was read, unset if end of line.
+; When we're at EOL, we call fetchline directly, so this call always returns
+; a word.
 readword:
 	ld	hl, (INPUTPOS)
 	; skip leading whitespace
@@ -16,6 +17,7 @@ readword:
 	inc	hl
 	ld	a, (hl)
 	or	a
+	; When at EOL, fetch a new line directly
 	jr	z, .empty
 	cp	' '+1
 	jr	c, .loop1
@@ -39,9 +41,8 @@ readword:
 	pop	hl		; <-- lvl 1. our result
 	ret	; Z set from XOR A
 .empty:
-	ld	(hl), a
-	inc	a	; unset Z
-	ret
+	call	fetchline
+	jr	readword
 
 ; Sets Z if (HL) == E and (HL+1) == D
 HLPointsDE:
@@ -336,3 +337,10 @@ DEinHL:
 	ld	(hl), d
 	inc	hl
 	ret
+
+fetchline:
+	call	printcrlf
+	call	stdioReadLine
+	ld	(INPUTPOS), hl
+	ret
+

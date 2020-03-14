@@ -468,10 +468,18 @@ CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
+	.db	"IN>"
+	.fill	4
+	.dw	CURRENT_
+	.db	0
+INP:
+	.dw	sysvarWord
+	.dw	INPUTPOS
+
 ; ( n -- )
 	.db "."
 	.fill 6
-	.dw CURRENT_
+	.dw INP
 	.db 0
 DOT:
 	.dw nativeWord

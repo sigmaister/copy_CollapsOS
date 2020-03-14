@@ -102,13 +102,15 @@ forthMain:
 	ld	(CURRENT), hl
 	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
+	; Set (INPUTPOS) to somewhere where there's a NULL so we consider
+	; ourselves EOL.
+	ld	(INPUTPOS), hl
+	xor	a
+	ld	(hl), a
 forthRdLine:
 	ld	hl, msgOk
 	call	printstr
 forthRdLineNoOk:
-	call	printcrlf
-	call	stdioReadLine
-	ld	(INPUTPOS), hl
 	; Setup return stack. After INTERPRET, we run forthExecLine
 	ld	ix, RS_ADDR
 	; We're about to compile the line and possibly execute IMMEDIATE words.
@@ -146,24 +148,18 @@ forthExecLine:
 
 ; (we don't have RECURSE here. Calling interpret makes us needlessly use our
 ; RS stack, but it can take it, can't it? )
-; WORD DUP C@ (to check if null) SKIP? (skip if not null) EXIT COMPILE INTERPRET
+; WORD COMPILE IN> @ C@ (to check if null) SKIP? (skip if not null) EXIT INTERPRET
 	.db	0b10		; UNWORD
 INTERPRET:
 	.dw	compiledWord
 	.dw	WORD
-	.dw	DUP
+	.dw	COMPILE
+	.dw	INP
+	.dw	FETCH
 	.dw	CFETCH
 	.dw	CSKIP
-	.dw	.stop
-	.dw	COMPILE
-	.dw	INTERPRET
 	.dw	EXIT
-
-.stop:
-	.dw	compiledWord
-	.dw	DROP
-	.dw	R2P
-	.dw	DROP
+	.dw	INTERPRET
 	.dw	EXIT
 
 msgOk:
