@@ -36,8 +36,8 @@ forth/stage1: forth/stage1.c $(OBJS) forth/forth0-bin.h
 forth/stage1dbg: forth/stage1.c $(OBJS) forth/forth0-bin.h 
 	$(CC) -DDEBUG forth/stage1.c $(OBJS) -o $@
 
-forth/core.bin: $(APPS)/forth/core.fth forth/stage1
-	./forth/stage1 $(APPS)/forth/core.fth | tee $@ > /dev/null
+forth/core.bin: $(APPS)/forth/core.fs forth/stage1
+	./forth/stage1 $(APPS)/forth/core.fs | tee $@ > /dev/null
 
 forth/forth1.bin: forth/glue1.asm forth/core.bin $(ZASMBIN)
 	$(ZASMBIN) $(KERNEL) $(APPS) forth/core.bin < forth/glue1.asm | tee $@ > /dev/null
