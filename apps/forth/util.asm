@@ -74,6 +74,10 @@ HLPointsBR:
 	push	de
 	ld	de, FBR
 	call	HLPointsDE
+	jr	z, .end
+	ld	de, BBR
+	call	HLPointsDE
+.end:
 	pop	de
 	ret
 
@@ -103,121 +107,6 @@ compSkip:
 .isWord:
 	; skip by 2
 	inc	hl \ inc hl
-	ret
-
-; ***readLIT***
-; The goal of this routine is to read a string literal following the currently
-; executed words. For example, CREATE and DEFINE need this. Things are a little
-; twisted, so bear with me while I explain how it works.
-;
-; When we call this routine, everything has been compiled. We're on an atom and
-; we're executing it. Now, we're looking for a string literal or a word-with-a
-; name that follows our readLIT caller. We could think that this word is
-; right there on RS' TOS, but not always! You have to account for words wrapping
-; the caller. For example, "VARIABLE" calls "CREATE". If you call
-; "VARIABLE foo", if CREATE looks at what follows in RS' TOS, it will only find
-; the "2" in "CREATE 2 ALLOT".
-;
-; In this case, we actually need to check in RS' *bottom of stack* for our
-; answer. If that atom is a LIT, we're good. We make HL point to it and advance
-; IP to byte following null-termination.
-;
-; If it isn't, things get interesting: If it's a word reference, then it's
-; not an invalid literal. For example, one could want to redefine an existing
-; word. So in that case, we'll copy the word's name on the pad (it might not be
-; null-terminated) and set HL to point to it.
-; How do we know that our reference is a word reference (it could be, for
-; example, a NUMBER reference)? We check that its address is more than QUIT, the
-; second word in our dict. We don't accept EXIT because it's the termination
-; word. Yeah, it means that ";" can't be overridden...
-; If name can't be read, we abort
-;
-; BOS vs TOS: What we cover so far is the "CREATE" and friends cases, where we
-; want to read BOS. There are, however, cases where we want to read TOS, that is
-; that we want to read the LIT right next to our atom. Example: "(". When
-; processing comments, we are at compile time and want to read words from BOS,
-; yes), however, in "("'s definition, there's "LIT@ )", which means "fetch LIT
-; next to me and push this to stack". This LIT we want to fetch is *not* from
-; BOS, it's from TOS.
-;
-; This is why we have readLITBOS and readLITTOS. readLIT uses HL and DE and is
-; not used directly.
-
-; Given a RS stack pointer HL, read LIT next to it (or abort) and set HL to
-; point to its associated string. Set DE to there the RS stack pointer should
-; point next.
-readLIT:
-	call	HLPointsLIT
-	jr	nz, .notLIT
-	; RS BOS is a LIT, make HL point to string, then skip this RS compword.
-	inc	hl \ inc hl	; HL now points to string itself
-	; HL has our its final value
-	ld	d, h
-	ld	e, l
-	call	strskip
-	inc	hl		; byte after word termination
-	ex	de, hl
-	ret
-.notLIT:
-	; Alright, not a literal, but is it a word?
-	call	HLPointsUNWORD
-	jr	z, .notWord
-	; Not a number, then it's a word. Copy word to pad and point to it.
-	push	hl		; --> lvl 1. we need it to set DE later
-	call	intoHL
-	or	a		; clear carry
-	ld	de, CODELINK_OFFSET
-	sbc	hl, de
-	; That's our return value
-	push	hl		; --> lvl 2
-	; HL now points to word offset, let'd copy it to pad
-	ex	de, hl
-	call	pad
-	ex	de, hl
-	ld	bc, NAMELEN
-	ldir
-	; null-terminate
-	xor	a
-	ld	(de), a
-	pop	hl		; <-- lvl 2
-	pop	de		; <-- lvl 1
-	; Advance IP by 2
-	inc	de \ inc de
-	ret
-.notWord:
-	ld	hl, .msg
-	call	printstr
-	jp	abort
-.msg:
-	.db "word expected", 0
-
-readLITBOS:
-	; Before we start: is our RS empty? If IX == RS_ADDR, it is (it only has
-	; its safety net). When that happens, we actually want to run readLITTOS
-	push	hl
-	push	de
-	push	ix \ pop hl
-	ld	de, RS_ADDR
-	or	a		; clear carry
-	sbc	hl, de
-	pop	de
-	pop	hl
-	jr	z, readLITTOS
-	push	de
-	; Our bottom-of-stack is RS_ADDR+2 because RS_ADDR is occupied by our
-	; ABORTREF safety net.
-	ld	hl, (RS_ADDR+2)
-	call	readLIT
-	ld	(RS_ADDR+2), de
-	pop	de
-	ret
-
-readLITTOS:
-	push	de
-	ld	hl, (IP)
-	call	readLIT
-	ld	(IP), de
-	pop	de
 	ret
 
 ; Find the entry corresponding to word where (HL) points to and sets DE to
@@ -271,7 +160,7 @@ wrCompHL:
 ; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
 entryhead:
-	call	readLITBOS
+	call	readword
 	ld	de, (HERE)
 	call	strcpy
 	ex	de, hl		; (HERE) now in HL
@@ -343,4 +232,3 @@ fetchline:
 	call	stdioReadLine
 	ld	(INPUTPOS), hl
 	ret
-

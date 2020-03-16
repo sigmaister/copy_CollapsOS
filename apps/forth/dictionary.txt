@@ -42,22 +42,30 @@ directly, but as part of another word.
 ALLOT       n --            Move HERE by n bytes
 C,          b --            Write byte b in HERE and advance it.
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
+COMPILE x   --              Compile word x and write it to HERE
 CONSTANT x  n --            Creates cell x that when called pushes its value
 DOES>       --              See description at top of file
 IMMEDIATE   --              Flag the latest defined word as immediate.
-LITERAL     n --            *I* Inserts number from TOS as a literal
+LITN        n --            *I* Inserts number from TOS as a literal
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
 
 *** Flow ***
+Note about flow words: flow words can only be used in definitions. In the
+INTERPRET loop, they don't have the desired effect because each word from the
+input stream is executed immediately. In this context, branching doesn't work.
+
 (fbr)       --              Branches forward by the number specified in its
                             atom's cell.
-COMPILE     a --            Compile string word at addr a and spit it to HERE.
+(bbr)       --              Branches backward by the number specified in its
+                            atom's cell.
+AGAIN       I:a --          *I* Jump backwards to preceeding BEGIN.
+BEGIN       -- I:a          *I* Marker for backward branching with AGAIN.
 ELSE        I:a --          *I* Compiles a (fbr) and set branching cell at a.
 EXECUTE     a --            Execute wordref at addr a
 IF          -- I:a          *I* Compiles a (fbr?) and pushes its cell's addr
 INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
-QUIT        R:drop --       Return to interpreter promp immediately
+QUIT        R:drop --       Return to interpreter prompt immediately
 RECURSE     R:I -- R:I-2    Run the current word again.
 SKIP?       f --            If f is true, skip the execution of the next atom.
                             Use this right before ";" and you're gonna have a
@@ -108,7 +116,7 @@ CMP         n1 n2 -- n      Compare n1 and n2 and set n to -1, 0, or 1.
 NOT         f -- f          Push the logical opposite of f
 
 *** Strings ***
-LIT@ x      -- a            Read following LIT and push its addr to a
+LITS x      -- a            Read following LIT and push its addr to a
 SCMP        a1 a2 -- n      Compare strings a1 and a2. See CMP
 
 *** I/O ***

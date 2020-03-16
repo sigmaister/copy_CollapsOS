@@ -97,17 +97,14 @@ NUMBER:
 
 ; Similarly to numberWord, this is not a real word, but a string literal.
 ; Instead of being followed by a 2 bytes number, it's followed by a
-; null-terminated string. This is not expected to be called in a regular
-; context. Only words expecting those literals will look for them. This is why
-; the litWord triggers abort.
+; null-terminated string. When called, puts the string's address on PS
 litWord:
 	ld	hl, (IP)
-	call	printstr	; let's print the word before abort.
-	ld	hl, .msg
-	call	printstr
-	jp	abort
-.msg:
-	.db "undefined word", 0
+	push	hl
+	call	strskip
+	inc	hl		; after null termination
+	ld	(IP), hl
+	jp	next
 
 	.db	0b10		; Flags
 LIT:
@@ -142,11 +139,24 @@ quit:
 ABORT:
 	.dw nativeWord
 abort:
+	; flush rest of input
+	ld	hl, (INPUTPOS)
+	xor	a
+	ld	(hl), a
 	; Reinitialize PS (RS is reinitialized in forthInterpret)
 	ld	sp, (INITIAL_SP)
 	jp	forthRdLineNoOk
-ABORTREF:
-	.dw ABORT
+
+; prints msg in (HL) then aborts
+abortMsg:
+	call	printstr
+	jr	abort
+
+abortUnknownWord:
+	ld	hl, .msg
+	jr	abortMsg
+.msg:
+	.db	"unknown word", 0
 
 	.db "BYE"
 	.fill 4
@@ -220,7 +230,7 @@ EXECUTE:
 	.db	1		; IMMEDIATE
 COMPILE:
 	.dw	nativeWord
-	pop	hl		; word addr
+	call	readword
 	call	find
 	jr	nz, .maybeNum
 	ex	de, hl
@@ -242,29 +252,11 @@ COMPILE:
 	call	.writeDE
 	jp	next
 .undef:
-	; When encountering an undefined word during compilation, we spit a
-	; reference to litWord, followed by the null-terminated word.
-	; This way, if a preceding word expect a string literal, it will read it
-	; by calling readLIT, and if it doesn't, the routine will be
-	; called, triggering an abort.
-	ld	de, LIT
-	call	.writeDE
-	ld	de, (HERE)
-	call	strcpyM
-	ld	(HERE), de
-	jp	next
+	call	printstr
+	jp	abortUnknownWord
 .immed:
-	; For this IMMEDIATE word to be compatible with regular execution model,
-	; it needs to be compiled as an atom somewhere in memory.
-	; For example, RECURSE backtracks in RS and steps back 2 bytes. This
-	; can only work with our compiled atom being next to an EXIT atom.
-	ex	de, hl		; atom to write in DE
-	ld	hl, (OLDHERE)
-	push	hl \ pop iy
-	call	DEinHL
-	ld	de, EXIT
-	call	DEinHL
-	jp	compiledWord
+	push	hl
+	jp	EXECUTE+2
 .writeDE:
 	push	hl
 	ld	hl, (HERE)
@@ -274,56 +266,49 @@ COMPILE:
 	ret
 
 
-	.db	";"
+	.db	":"
 	.fill	6
 	.dw	COMPILE
-	.db	0
-ENDDEF:
-	.dw	nativeWord
-	jp	EXIT+2
-
-	.db ":"
-	.fill 6
-	.dw ENDDEF
-	.db 0
+	.db	1		; IMMEDIATE
 DEFINE:
 	.dw nativeWord
 	call	entryhead
 	ld	de, compiledWord
 	call	DEinHL
-	; At this point, we've processed the name literal following the ':'.
-	; What's next? We have, in IP, a pointer to words that *have already
-	; been compiled by INTERPRET*. All those bytes will be copied as-is.
-	; All we need to do is to know how many bytes to copy. To do so, we
-	; skip compwords until EXIT is reached.
-	ex	de, hl		; DE is our dest
-	ld	(HERE), de	; update HERE
-	ld	hl, (IP)
+	ld	(HERE), hl
 .loop:
-	push	de		; --> lvl 1
-	ld	de, ENDDEF
-	call	HLPointsDE
-	pop	de		; <-- lvl 1
-	jr	z, .loopend
-	call	compSkip
-	jr	.loop
-.loopend:
-	; skip EXIT
-	inc	hl \ inc hl
-	; We have out end offset. Let's get our offset
-	ld	de, (IP)
-	or	a		; clear carry
-	sbc	hl, de
-	; HL is our copy count.
-	ld	b, h
-	ld	c, l
+	; did we reach ";"?
+	ld	hl, (INPUTPOS)
+	ld	a, (hl)
+	cp	';'
+	jr	nz, .compile
+	inc	hl
+	ld	a, (hl)
+	cp	' '+1
+	jr	c, .loopend	; whitespace, we have semicol. end
+.compile:
 	ld	hl, (IP)
-	ld	de, (HERE)	; recall dest
-	; copy!
-	ldir
+	call	pushRS
+	ld	hl, .retRef
 	ld	(IP), hl
-	ld	(HERE), de
+	ld	hl, COMPILE
+	push	hl
+	jp	EXECUTE+2
+.loopend:
+	; Advance (INPUTPOS) to after semicol. HL is already there.
+	ld	(INPUTPOS), hl
+	; write EXIT and return
+	ld	hl, (HERE)
+	ld	de, EXIT
+	call	DEinHL
+	ld	(HERE), hl
 	jp	next
+.retRef:
+	.dw	$+2
+	.dw	$+2
+	call	popRS
+	ld	(IP), hl
+	jr	.loop
 
 
 	.db "DOES>"
@@ -359,10 +344,11 @@ IMMEDIATE:
 	jp	next
 
 ; ( n -- )
-	.db "LITERAL"
-	.dw IMMEDIATE
-	.db 1		; IMMEDIATE
-LITERAL:
+	.db	"LITN"
+	.fill	3
+	.dw	IMMEDIATE
+	.db	1		; IMMEDIATE
+LITN:
 	.dw nativeWord
 	ld	hl, (HERE)
 	ld	de, NUMBER
@@ -372,14 +358,28 @@ LITERAL:
 	ld	(HERE), hl
 	jp	next
 
+	.db	"LITS"
+	.fill	3
+	.dw	LITN
+	.db	1		; IMMEDIATE
+LITS:
+	.dw nativeWord
+	ld	hl, (HERE)
+	ld	de, LIT
+	call	DEinHL
+	ex	de, hl		; (HERE) in DE
+	call	readword
+	call	strcpyM
+	ld	(HERE), de
+	jp	next
 
 	.db	"'"
 	.fill	6
-	.dw	LITERAL
+	.dw	LITS
 	.db	0
 APOS:
 	.dw	nativeWord
-	call	readLITBOS
+	call	readword
 	call	find
 	jr	nz, .notfound
 	push	de
@@ -542,20 +542,10 @@ CFETCH:
 	push	hl
 	jp	next
 
-	.db "LIT@"
-	.fill 3
-	.dw CFETCH
-	.db 0
-LITFETCH:
-	.dw nativeWord
-	call	readLITTOS
-	push	hl
-	jp	next
-
 ; ( a -- )
 	.db "DROP"
 	.fill 3
-	.dw LITFETCH
+	.dw CFETCH
 	.db 0
 DROP:
 	.dw nativeWord
@@ -818,6 +808,19 @@ FBR:
 	pop	de
 	jp	next
 
-LATEST:
-	.dw FBR
+	.db	"(bbr)"
+	.fill	2
+	.dw	FBR
+	.db	0
+BBR:
+	.dw	nativeWord
+	ld	hl, (IP)
+	ld	d, 0
+	ld	e, (hl)
+	or	a		; clear carry
+	sbc	hl, de
+	ld	(IP), hl
+	jp	next
 
+LATEST:
+	.dw BBR

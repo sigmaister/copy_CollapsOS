@@ -4,16 +4,15 @@
 : ALLOT HERE +! ;
 : , H ! 2 ALLOT ;
 : C, H C! 1 ALLOT ;
+: BEGIN H ; IMMEDIATE
+: AGAIN ['] (bbr) , H -^ C, ; IMMEDIATE
 : NOT 1 SWAP SKIP? EXIT 0 * ;
-: RECURSE R> R> 2 - >R >R EXIT ;
-: ( LIT@ ) WORD SCMP NOT SKIP? RECURSE ; IMMEDIATE
+: ( BEGIN LITS ) WORD SCMP NOT SKIP? AGAIN ; IMMEDIATE
 ( Hello, hello, krkrkrkr... do you hear me?
   Ah, voice at last! Some lines above need comments
   BTW: Forth lines limited to 64 cols because of default
   input buffer size in Collapse OS
   NOT: a bit convulted because we don't have IF yet
-  RECURSE: RS TOS is for RECURSE itself, then we have to dig
-  one more level to get to RECURSE's parent's caller.
   IF true, skip following (fbr). Also, push br cell ref H,
   to PS )
 : IF ['] SKIP? , ['] (fbr) , H 1 ALLOT ; IMMEDIATE
