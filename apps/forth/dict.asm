@@ -734,23 +734,24 @@ MULT:
 	push	hl
 	jp	next
 
-; ( a b -- c ) A / B
-	.db "/"
-	.fill 6
+
+	.db	"/MOD"
+	.fill	3
 	.dw MULT
 	.db 0
-DIV:
+DIVMOD:
 	.dw nativeWord
 	pop	de
 	pop	hl
 	call	divide
+	push	hl
 	push	bc
 	jp	next
 
 ; ( a1 a2 -- b )
 	.db "SCMP"
 	.fill 3
-	.dw DIV
+	.dw DIVMOD
 	.db 0
 SCMP:
 	.dw nativeWord

@@ -121,6 +121,8 @@ H           -- a            HERE @
 -^          a b -- c        b - a -> c
 *           a b -- c        a * b -> c
 /           a b -- c        a / b -> c
+MOD         a b -- c        a % b -> c
+/MOD        a b -- r q      r:remainder q:quotient
 
 *** Logic ***
 =           n1 n2 -- f      Push true if n1 == n2

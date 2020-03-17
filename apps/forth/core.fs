@@ -47,3 +47,5 @@
 : = CMP NOT ;
 : < CMP 0 1 - = ;
 : > CMP 1 = ;
+: / /MOD SWAP DROP ;
+: MOD /MOD DROP ;
