@@ -35,9 +35,9 @@ directly, but as part of another word.
 : x ...     --              Define a new word
 ;           R:I --          Exit a colon definition
 ,           n --            Write n in HERE and advance it.
-' x         -- a            Push addr of word x to a.
+' x         -- a            Push addr of word x to a. If not found, push 0
 ['] x       --              *I* Like "'", but spits the addr as a number
-                            literal.
+                            literal. If not found, aborts.
 (           --              *I* Comment. Ignore rest of line until ")" is read.
 ALLOT       n --            Move HERE by n bytes
 C,          b --            Write byte b in HERE and advance it.

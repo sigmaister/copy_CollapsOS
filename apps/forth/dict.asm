@@ -453,25 +453,22 @@ LITS:
 	.fill	6
 	.dw	LITS
 	.db	0
-APOS:
+FIND:
 	.dw	nativeWord
 	call	readword
 	call	find
-	jr	nz, .notfound
+	jr	z, .found
+	; not found
+	ld	de, 0
+.found:
 	push	de
 	jp	next
-.notfound:
-	ld	hl, .msg
-	call	printstr
-	jp	abort
-.msg:
-	.db	"word not found", 0
 
 	.db	"[']"
 	.fill	4
-	.dw	APOS
+	.dw	FIND
 	.db	0b01		; IMMEDIATE
-APOSI:
+FINDI:
 	.dw	nativeWord
 	call	readword
 	call	find
@@ -494,7 +491,7 @@ APOSI:
 ; ( -- c )
 	.db "KEY"
 	.fill 4
-	.dw APOSI
+	.dw FINDI
 	.db 0
 KEY:
 	.dw nativeWord
