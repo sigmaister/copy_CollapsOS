@@ -519,14 +519,6 @@ HLisIMMED:
 	; We need an invert flag. We want to Z to be set when flag is non-zero.
 	jp	toggleZ
 
-; Sets Z if wordref at (HL) is of the IMMEDIATE type
-HLPointsIMMED:
-	push	hl
-	call	intoHL
-	call	HLisIMMED
-	pop	hl
-	ret
-
 ; Sets Z if wordref at HL is of the UNWORD type
 HLisUNWORD:
 	dec	hl

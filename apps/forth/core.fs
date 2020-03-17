@@ -2,7 +2,6 @@
 : -^ SWAP - ;
 : +! SWAP OVER @ + SWAP ! ;
 : ALLOT HERE +! ;
-: , H ! 2 ALLOT ;
 : C, H C! 1 ALLOT ;
 : BEGIN H ; IMMEDIATE
 : COMPILE ' ['] LITN EXECUTE ['] , , ; IMMEDIATE

@@ -25,6 +25,11 @@ popRS:
 	dec ix
 	ret
 
+popRSIP:
+	call	popRS
+	ld	(IP), hl
+	ret
+
 ; Skip the next two bytes in RS' TOS
 skipRS:
 	push	hl

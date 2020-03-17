@@ -119,8 +119,7 @@ LIT:
 	.db	0
 EXIT:
 	.dw nativeWord
-	call	popRS
-	ld	(IP), hl
+	call	popRSIP
 	jp	next
 
 ; ( R:I -- )
@@ -130,7 +129,6 @@ EXIT:
 	.db 0
 QUIT:
 	.dw nativeWord
-quit:
 	jp	forthRdLine
 
 	.db "ABORT"
@@ -283,9 +281,23 @@ PFETCH:
 	push	hl
 	jp	next
 
+	.db	","
+	.fill	6
+	.dw	PFETCH
+	.db	0
+WR:
+	.dw	nativeWord
+	pop	de
+	call	chkPS
+	ld	hl, (HERE)
+	call	DEinHL
+	ld	(HERE), hl
+	jp	next
+
+
 ; ( addr -- )
 	.db "EXECUTE"
-	.dw PFETCH
+	.dw WR
 	.db 0
 EXECUTE:
 	.dw nativeWord
@@ -304,41 +316,50 @@ EXECUTE:
 	.dw	EXECUTE
 	.db	1		; IMMEDIATE
 COMPILE:
-	.dw	nativeWord
-	call	readword
-	call	find
-	jr	nz, .maybeNum
-	ex	de, hl
-	call	HLisIMMED
-	jr	z, .immed
-	ex	de, hl
-	call	.writeDE
-	jp	next
+	.dw	compiledWord
+	.dw	FIND_
+	.dw	CSKIP
+	.dw	.maybeNum
+	.dw	DUP
+	.dw	ISIMMED
+	.dw	CSKIP
+	.dw	.word
+	; is immediate. just execute.
+	.dw	EXECUTE
+	.dw	EXIT
+
+	.db	0b10		; UNWORD
+.word:
+	.dw	compiledWord
+	.dw	WR
+	.dw	R2P		; exit COMPILE
+	.dw	DROP
+	.dw	EXIT
+
+	.db	0b10		; UNWORD
 .maybeNum:
+	.dw	compiledWord
+	.dw	.parseNum
+	.dw	LITN
+	.dw	R2P		; exit COMPILE
+	.dw	DROP
+	.dw	EXIT
+
+
+	.db	0b10		; UNWORD
+.parseNum:
+	.dw	nativeWord
+	pop	hl		; string addr
 	push	hl		; --> lvl 1. save string addr
 	call	parseLiteral
 	pop	hl		; <-- lvl 1
 	jr	nz, .undef
 	; a valid number in DE!
-	ex	de, hl
-	ld	de, NUMBER
-	call	.writeDE
-	ex	de, hl		; number in DE
-	call	.writeDE
+	push	de
 	jp	next
 .undef:
 	call	printstr
 	jp	abortUnknownWord
-.immed:
-	push	hl
-	jp	EXECUTE+2
-.writeDE:
-	push	hl
-	ld	hl, (HERE)
-	call	DEinHL
-	ld	(HERE), hl
-	pop	hl
-	ret
 
 
 	.db	":"
@@ -381,8 +402,7 @@ DEFINE:
 .retRef:
 	.dw	$+2
 	.dw	$+2
-	call	popRS
-	ld	(IP), hl
+	call	popRSIP
 	jr	.loop
 
 
@@ -418,10 +438,28 @@ IMMEDIATE:
 	set	FLAG_IMMED, (hl)
 	jp	next
 
+
+	.db	"IMMED?"
+	.fill	1
+	.dw	IMMEDIATE
+	.db	0
+ISIMMED:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	dec	hl
+	ld	de, 0
+	bit	FLAG_IMMED, (hl)
+	jr	z, .notset
+	inc	de
+.notset:
+	push	de
+	jp	next
+
 ; ( n -- )
 	.db	"LITN"
 	.fill	3
-	.dw	IMMEDIATE
+	.dw	ISIMMED
 	.db	1		; IMMEDIATE
 LITN:
 	.dw nativeWord
