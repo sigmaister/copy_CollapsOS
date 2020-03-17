@@ -192,10 +192,55 @@ EMIT:
 	call	stdioPutC
 	jp	next
 
+	.db	"(print)"
+	.dw	EMIT
+	.db	0
+PRINT:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	call	printstr
+	jp	next
+
+
+	.db	'.', '"'
+	.fill	5
+	.dw	PRINT
+	.db	1		; IMMEDIATE
+PRINTI:
+	.dw	nativeWord
+	ld	hl, (HERE)
+	ld	de, LIT
+	call	DEinHL
+	ex	de, hl		; (HERE) now in DE
+	ld	hl, (INPUTPOS)
+.loop:
+	ld	a, (hl)
+	or	a		; null? not cool
+	jp	z, abort
+	cp	'"'
+	jr	z, .loopend
+	ld	(de), a
+	inc	hl
+	inc	de
+	jr	.loop
+.loopend:
+	inc	hl		; inputpos to char afterwards
+	ld	(INPUTPOS), hl
+	; null-terminate LIT
+	inc	de
+	xor	a
+	ld	(de), a
+	ex	de, hl		; (HERE) in HL
+	ld	de, PRINT
+	call	DEinHL
+	ld	(HERE), hl
+	jp	next
+
 ; ( c port -- )
 	.db "PC!"
 	.fill 4
-	.dw EMIT
+	.dw PRINTI
 	.db 0
 PSTORE:
 	.dw nativeWord

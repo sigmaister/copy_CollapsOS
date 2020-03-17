@@ -146,8 +146,11 @@ wait until another line is entered.
 KEY input, however, is direct. Regardless of the input buffer's state, KEY will
 return the next typed key.
 
+(print)     a --            Print string at addr a.
 .           n --            Print n in its decimal form
 .X          n --            Print n in its hexadecimal form. In hex, numbers
+." xxx"     --              *I* Compiles string literal xxx followed by a call
+                            to (print)
                             are never considered negative. "-1 .X -> ffff"
 EMIT        c --            Spit char c to output stream
 IN>         -- a            Address of variable containing current pos in input
