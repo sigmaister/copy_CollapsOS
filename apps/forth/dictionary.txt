@@ -42,12 +42,27 @@ directly, but as part of another word.
 ALLOT       n --            Move HERE by n bytes
 C,          b --            Write byte b in HERE and advance it.
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
-COMPILE x   --              Compile word x and write it to HERE
+[COMPILE] x --              Compile word x and write it to HERE
+COMPILE x   --              Meta compiles. Kind of blows the mind. See below.
 CONSTANT x  n --            Creates cell x that when called pushes its value
 DOES>       --              See description at top of file
 IMMEDIATE   --              Flag the latest defined word as immediate.
 LITN        n --            *I* Inserts number from TOS as a literal
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
+
+Compilation vs meta-compilation. When you compile a word with "[COMPILE] foo",
+its straightforward: It writes down to HERE wither the address of the word or
+a number literal.
+
+When you *meta* compile, it's a bit more mind blowing. It fetches the address
+of the word specified by the caller, then writes that number as a literal,
+followed by a reference to ",".
+
+Example: ": foo [COMPILE] bar;" is the equivalent of ": foo bar ;" if bar is
+not an immediate. However, ": foo COMPILE bar ;" is the equivalent of
+": foo ['] bar , ;". Got it?
+
+Meta-compile only works with real words, not number literals.
 
 *** Flow ***
 Note about flow words: flow words can only be used in definitions. In the

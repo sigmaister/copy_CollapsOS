@@ -225,7 +225,7 @@ EXECUTE:
 	jp	(hl)	; go!
 
 
-	.db	"COMPILE"
+	.db	"[COMPIL"
 	.dw	EXECUTE
 	.db	1		; IMMEDIATE
 COMPILE:
