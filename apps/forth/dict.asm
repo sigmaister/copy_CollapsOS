@@ -476,26 +476,10 @@ INP:
 	.dw	sysvarWord
 	.dw	INPUTPOS
 
-; ( n -- )
-	.db "."
-	.fill 6
-	.dw INP
-	.db 0
-DOT:
-	.dw nativeWord
-	pop	de
-	; We check PS explicitly because it doesn't look nice to spew gibberish
-	; before aborting the stack underflow.
-	call	chkPSRS
-	call	pad
-	call	fmtDecimalS
-	call	printstr
-	jp	next
-
 ; ( n a -- )
 	.db "!"
 	.fill 6
-	.dw DOT
+	.dw INP
 	.db 0
 STORE:
 	.dw nativeWord

@@ -49,3 +49,27 @@
 : > CMP 1 = ;
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
+
+( Format decimals )
+( TODO FORGET this word )
+: PUSHDGTS
+    999 SWAP        ( stop indicator )
+    DUP 0 = IF '0' EXIT THEN    ( 0 is a special case )
+    BEGIN
+    DUP 0 = IF DROP EXIT THEN
+    10 /MOD         ( r q )
+    SWAP '0' + SWAP ( d q )
+    AGAIN
+;
+
+: .               ( n -- )
+    ( handle negative )
+    ( that "0 1 -" thing is because we don't parse negative
+      number correctly yet. )
+    DUP 0 < IF '-' EMIT 0 1 - * THEN
+    PUSHDGTS
+    BEGIN
+    DUP '9' > IF DROP EXIT THEN ( stop indicator, we're done )
+    EMIT
+    AGAIN
+;

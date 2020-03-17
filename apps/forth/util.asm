@@ -215,12 +215,12 @@ HLPointsUNWORD:
 	pop	hl
 	ret
 
-; Checks flags Z and C and sets BC to 0 if Z, 1 if C and -1 otherwise
+; Checks flags Z and S and sets BC to 0 if Z, 1 if C and -1 otherwise
 flagsToBC:
 	ld	bc, 0
 	ret	z	; equal
 	inc	bc
-	ret	c	; >
+	ret	m	; >
 	; <
 	dec	bc
 	dec	bc
