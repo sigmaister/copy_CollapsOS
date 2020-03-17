@@ -4,25 +4,35 @@ pad:
 	ld	a, PADDING
 	jp	addHL
 
-; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
-; Advance (INPUTPOS) to the character following the whitespace ending the
-; word.
-; When we're at EOL, we call fetchline directly, so this call always returns
-; a word.
-readword:
+; Advance (INPUTPOS) until a non-whitespace is met. If needed,
+; call fetchline.
+; Set HL to newly set (INPUTPOS)
+toword:
 	ld	hl, (INPUTPOS)
 	; skip leading whitespace
 	dec	hl	; offset leading "inc hl"
-.loop1:
+.loop:
 	inc	hl
 	ld	a, (hl)
 	or	a
 	; When at EOL, fetch a new line directly
 	jr	z, .empty
 	cp	' '+1
-	jr	c, .loop1
+	jr	c, .loop
+	ret
+.empty:
+	call	fetchline
+	jr	toword
+
+; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
+; Advance (INPUTPOS) to the character following the whitespace ending the
+; word.
+; When we're at EOL, we call fetchline directly, so this call always returns
+; a word.
+readword:
+	call	toword
 	push	hl		; --> lvl 1. that's our result
-.loop2:
+.loop:
 	inc	hl
 	ld	a, (hl)
 	; special case: is A null? If yes, we will *not* inc A so that we don't
@@ -30,7 +40,7 @@ readword:
 	or	a
 	jr	z, .noinc
 	cp	' '+1
-	jr	nc, .loop2
+	jr	nc, .loop
 	; we've just read a whitespace, HL is pointing to it. Let's transform
 	; it into a null-termination, inc HL, then set (INPUTPOS).
 	xor	a
@@ -40,9 +50,6 @@ readword:
 	ld	(INPUTPOS), hl
 	pop	hl		; <-- lvl 1. our result
 	ret	; Z set from XOR A
-.empty:
-	call	fetchline
-	jr	readword
 
 ; Sets Z if (HL) == E and (HL+1) == D
 HLPointsDE:

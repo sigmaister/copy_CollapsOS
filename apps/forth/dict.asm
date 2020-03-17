@@ -278,7 +278,7 @@ DEFINE:
 	ld	(HERE), hl
 .loop:
 	; did we reach ";"?
-	ld	hl, (INPUTPOS)
+	call	toword
 	ld	a, (hl)
 	cp	';'
 	jr	nz, .compile
