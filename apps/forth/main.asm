@@ -96,32 +96,24 @@ forthRdLineNoOk:
 
 	.db	0b10		; UNWORD
 INTERPRET:
-	.dw	nativeWord
-	pop	hl		; from WORD
-	ld	a, (hl)		; special case: empty
-	or	a
-	jp	z, next
-	call	find
-	jr	nz, .maybeNum
-	; regular word
-	push	de
-	jp	EXECUTE+2
+	.dw	compiledWord
+	.dw	FIND_
+	.dw	CSKIP
+	.dw	.maybeNum
+	; It's a word, execute it
+	.dw	EXECUTE
+	.dw	EXIT
+
 .maybeNum:
-	push	hl		; --> lvl 1. save string addr
-	call	parseLiteral
-	pop	hl		; <-- lvl 1
-	jr	nz, .undef
-	; a valid number in DE!
-	push	de
-	jp	next
-.undef:
-	call	printstr
-	jp	abortUnknownWord
+	.dw	compiledWord
+	.dw	PARSE
+	.dw	R2P		; exit INTERPRET
+	.dw	DROP
+	.dw	EXIT
 
 	.db	0b10		; UNWORD
 MAINLOOP:
 	.dw	compiledWord
-	.dw	WORD
 	.dw	INTERPRET
 	.dw	INP
 	.dw	FETCH

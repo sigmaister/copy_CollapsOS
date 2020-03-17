@@ -339,27 +339,11 @@ COMPILE:
 	.db	0b10		; UNWORD
 .maybeNum:
 	.dw	compiledWord
-	.dw	.parseNum
+	.dw	PARSE
 	.dw	LITN
 	.dw	R2P		; exit COMPILE
 	.dw	DROP
 	.dw	EXIT
-
-
-	.db	0b10		; UNWORD
-.parseNum:
-	.dw	nativeWord
-	pop	hl		; string addr
-	push	hl		; --> lvl 1. save string addr
-	call	parseLiteral
-	pop	hl		; <-- lvl 1
-	jr	nz, .undef
-	; a valid number in DE!
-	push	de
-	jp	next
-.undef:
-	call	printstr
-	jp	abortUnknownWord
 
 
 	.db	":"
@@ -562,9 +546,55 @@ WORD:
 	push	hl
 	jp	next
 
+
+	.db	"(parsed"
+	.dw	WORD
+	.db	0
+PARSED:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	; temporary: run parseCharLit in here until it's implemented in Forth
+	; core.fs needs char literal parsing.
+	call	parseCharLit
+	jr	z, .success
+	call	parseDecimal
+	jr	z, .success
+	; error
+	ld	de, 0
+	push	de	; dummy
+	push	de	; flag
+	jp	next
+.success:
+	push	de
+	ld	de, 1		; flag
+	push	de
+	jp	next
+
+
+	.db	"(parse)"
+	.dw	WORD
+	.db	0
+PARSE:
+	.dw	compiledWord
+	.dw	PARSED
+	.dw	CSKIP
+	.dw	.error
+	; success, stack is already good, we can exit
+	.dw	EXIT
+
+	.db	0b10		; UNWORD
+.error:
+	.dw	compiledWord
+	.dw	LIT
+	.db	"unknown word", 0
+	.dw	PRINT
+	.dw	ABORT
+
+
 	.db "CREATE"
 	.fill 1
-	.dw WORD
+	.dw PARSE
 	.db 0
 CREATE:
 	.dw nativeWord

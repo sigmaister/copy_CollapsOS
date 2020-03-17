@@ -151,6 +151,31 @@ wait until another line is entered.
 KEY input, however, is direct. Regardless of the input buffer's state, KEY will
 return the next typed key.
 
+PARSING AND BOOTSTRAP: Parsing number literal is a very "core" activity of
+Forth, and therefore generally seen as having to be implemented in native code.
+However, Collapse OS' Forth supports many kinds of literals: decimal, hex, char,
+binary. This incurs a significant complexity penalty.
+
+What if we could implement those parsing routines in Forth? "But it's a core
+routine!" you say. Yes, but here's the deal: at its native core, only decimal
+parsing is supported. It lives in the "(parsed)" word. The interpreter's main
+loop is initially set to simply call that word.
+
+However, in core.fs, "(parsex)", "(parsec)" and "(parseb)" are implemented, in
+Forth, then "(parse)", which goes through them all is defined. Then, "(parsef)",
+which is the variable in which the interpreter's word pointer is set, is
+updated to that new "(parse)" word.
+
+This way, we have a full-featured (and extensible) parsing with a tiny native
+core.
+
+(parse)     a -- n          Parses string at a as a number and push the result
+                            in n as well as whether parsing was a success in f
+                            (false = failure, true = success)
+(parse.)    a -- n f        Sub-parsing words. They all have the same signature.
+                            Parses string at a as a number and push the result
+                            in n as well as whether parsing was a success in f
+                            (0 = failure, 1 = success)
 (print)     a --            Print string at addr a.
 .           n --            Print n in its decimal form
 .X          n --            Print n in its hexadecimal form. In hex, numbers
