@@ -73,6 +73,8 @@ input stream is executed immediately. In this context, branching doesn't work.
                             atom's cell.
 (bbr)       --              Branches backward by the number specified in its
                             atom's cell.
+ABORT       --              Resets PS and RS and returns to interpreter
+ABORT" x"   --              *I* Compiles a ." followed by a ABORT.
 AGAIN       I:a --          *I* Jump backwards to preceeding BEGIN.
 BEGIN       -- I:a          *I* Marker for backward branching with AGAIN.
 ELSE        I:a --          *I* Compiles a (fbr) and set branching cell at a.

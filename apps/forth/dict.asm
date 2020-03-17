@@ -165,9 +165,28 @@ abortUnderflow:
 .msg:
 	.db	"stack underflow", 0
 
+	.db	"ABORT", '"'
+	.fill	1
+	.dw	ABORT
+	.db	1		; IMMEDIATE
+ABORTI:
+	.dw	compiledWord
+	.dw	PRINTI
+	.dw	.private
+	.dw	EXIT
+
+	.db	0b10		; UNWORD
+.private:
+	.dw	nativeWord
+	ld	hl, (HERE)
+	ld	de, ABORT
+	call	DEinHL
+	ld	(HERE), hl
+	jp	next
+
 	.db "BYE"
 	.fill 4
-	.dw ABORT
+	.dw ABORTI
 	.db 0
 BYE:
 	.dw nativeWord
