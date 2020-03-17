@@ -50,7 +50,7 @@
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
 
-( Format decimals )
+( Format numbers )
 ( TODO FORGET this word )
 : PUSHDGTS
     999 SWAP        ( stop indicator )
@@ -70,6 +70,28 @@
     PUSHDGTS
     BEGIN
     DUP '9' > IF DROP EXIT THEN ( stop indicator, we're done )
+    EMIT
+    AGAIN
+;
+
+: PUSHDGTS
+    999 SWAP        ( stop indicator )
+    DUP 0 = IF '0' EXIT THEN    ( 0 is a special case )
+    BEGIN
+    DUP 0 = IF DROP EXIT THEN
+    16 /MOD         ( r q )
+    SWAP            ( r q )
+    DUP 9 > IF 10 - 'a' +
+    ELSE '0' + THEN ( q d )
+    SWAP ( d q )
+    AGAIN
+;
+
+: .X              ( n -- )
+    ( For hex display, there are no negatives )
+    PUSHDGTS
+    BEGIN
+    DUP 'f' > IF DROP EXIT THEN ( stop indicator, we're done )
     EMIT
     AGAIN
 ;
