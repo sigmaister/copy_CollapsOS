@@ -32,10 +32,12 @@ directly, but as part of another word.
 "*I*" in description indicates an IMMEDIATE word.
 
 *** Defining words ***
+(find) x    -- a f          Read word x and find it in dict. If found, f=1 and
+                            a = wordref. If not found, f=0 and a = string addr.
 : x ...     --              Define a new word
 ;           R:I --          Exit a colon definition
 ,           n --            Write n in HERE and advance it.
-' x         -- a            Push addr of word x to a. If not found, push 0
+' x         -- a            Push addr of word x to a. If not found, aborts
 ['] x       --              *I* Like "'", but spits the addr as a number
                             literal. If not found, aborts.
 (           --              *I* Comment. Ignore rest of line until ")" is read.

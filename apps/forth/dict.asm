@@ -449,44 +449,57 @@ LITS:
 	ld	(HERE), de
 	jp	next
 
-	.db	"'"
-	.fill	6
+	.db	"(find)"
+	.fill	1
 	.dw	LITS
 	.db	0
-FIND:
+FIND_:
 	.dw	nativeWord
 	call	readword
 	call	find
 	jr	z, .found
 	; not found
+	push	hl
 	ld	de, 0
-.found:
 	push	de
 	jp	next
+.found:
+	push	de
+	ld	de, 1
+	push	de
+	jp	next
+
+	.db	"'"
+	.fill	6
+	.dw	FIND_
+	.db	0
+FIND:
+	.dw	compiledWord
+	.dw	FIND_
+	.dw	CSKIP
+	.dw	FINDERR
+	.dw	EXIT
 
 	.db	"[']"
 	.fill	4
 	.dw	FIND
 	.db	0b01		; IMMEDIATE
 FINDI:
-	.dw	nativeWord
-	call	readword
-	call	find
-	jr	nz, .notfound
-	ld	hl, (HERE)
-	push	de		; --> lvl 1
-	ld	de, NUMBER
-	call	DEinHL
-	pop	de		; <-- lvl 1
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
-.notfound:
-	ld	hl, .msg
-	call	printstr
-	jp	abort
-.msg:
+	.dw	compiledWord
+	.dw	FIND_
+	.dw	CSKIP
+	.dw	FINDERR
+	.dw	LITN
+	.dw	EXIT
+
+	.db	0b10		; UNWORD
+FINDERR:
+	.dw	compiledWord
+	.dw	DROP		; Drop str addr, we don't use it
+	.dw	LIT
 	.db	"word not found", 0
+	.dw	PRINT
+	.dw	ABORT
 
 ; ( -- c )
 	.db "KEY"
