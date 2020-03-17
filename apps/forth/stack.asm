@@ -37,25 +37,25 @@ skipRS:
 	ret
 
 ; Verifies that SP and RS are within bounds. If it's not, call ABORT
-chkPSRS:
+chkRS:
 	push	ix \ pop hl
 	push	de		; --> lvl 1
 	ld	de, RS_ADDR
 	or	a		; clear carry
 	sbc	hl, de
 	pop	de		; <-- lvl 1
-	jr	c, .underflow
+	jp	c, abortUnderflow
+	ret
+
+chkPS:
+	push	hl
 	ld	hl, (INITIAL_SP)
-	; We have the return address for this very call on the stack. Let's
-	; compensate
+	; We have the return address for this very call on the stack and
+	; protected registers. Let's compensate
+	dec	hl \ dec hl
 	dec	hl \ dec hl
 	or	a		; clear carry
 	sbc	hl, sp
+	pop	hl
 	ret	nc		; (INITIAL_SP) >= SP? good
-.underflow:
-	; underflow
-	ld	hl, .msg
-	call	printstr
-	jp	abort
-.msg:
-	.db "stack underflow", 0
+	jp	abortUnderflow

@@ -18,7 +18,8 @@
 ; IP, but we also take care of increasing it my 2 before jumping
 next:
 	; Before we continue: are stacks within bounds?
-	call	chkPSRS
+	call	chkPS
+	call	chkRS
 	ld	de, (IP)
 	ld	h, d
 	ld	l, e
@@ -158,6 +159,12 @@ abortUnknownWord:
 .msg:
 	.db	"unknown word", 0
 
+abortUnderflow:
+	ld	hl, .msg
+	jr	abortMsg
+.msg:
+	.db	"stack underflow", 0
+
 	.db "BYE"
 	.fill 4
 	.dw ABORT
@@ -180,6 +187,7 @@ BYE:
 EMIT:
 	.dw nativeWord
 	pop	hl
+	call	chkPS
 	ld	a, l
 	call	stdioPutC
 	jp	next
@@ -193,6 +201,7 @@ PSTORE:
 	.dw nativeWord
 	pop	bc
 	pop	hl
+	call	chkPS
 	out	(c), l
 	jp	next
 
@@ -204,6 +213,7 @@ PSTORE:
 PFETCH:
 	.dw nativeWord
 	pop	bc
+	call	chkPS
 	ld	h, 0
 	in	l, (c)
 	push	hl
@@ -216,6 +226,7 @@ PFETCH:
 EXECUTE:
 	.dw nativeWord
 	pop	iy	; is a wordref
+	call	chkPS
 	ld	l, (iy)
 	ld	h, (iy+1)
 	; HL points to code pointer
@@ -354,6 +365,7 @@ LITN:
 	ld	de, NUMBER
 	call	DEinHL
 	pop	de		; number from stack
+	call	chkPS
 	call	DEinHL
 	ld	(HERE), hl
 	jp	next
@@ -485,6 +497,7 @@ STORE:
 	.dw nativeWord
 	pop	iy
 	pop	hl
+	call	chkPS
 	ld	(iy), l
 	ld	(iy+1), h
 	jp	next
@@ -498,6 +511,7 @@ CSTORE:
 	.dw nativeWord
 	pop	hl
 	pop	de
+	call	chkPS
 	ld	(hl), e
 	jp	next
 
@@ -509,6 +523,7 @@ CSTORE:
 FETCH:
 	.dw nativeWord
 	pop	hl
+	call	chkPS
 	call	intoHL
 	push	hl
 	jp	next
@@ -521,6 +536,7 @@ FETCH:
 CFETCH:
 	.dw nativeWord
 	pop	hl
+	call	chkPS
 	ld	l, (hl)
 	ld	h, 0
 	push	hl
@@ -544,6 +560,7 @@ DROP:
 SWAP:
 	.dw nativeWord
 	pop	hl
+	call	chkPS
 	ex	(sp), hl
 	push	hl
 	jp	next
@@ -558,6 +575,7 @@ SWAP2:
 	pop	de		; D
 	pop	hl		; C
 	pop	bc		; B
+	call	chkPS
 
 	ex	(sp), hl	; A in HL
 	push	de		; D
@@ -573,6 +591,7 @@ SWAP2:
 DUP:
 	.dw nativeWord
 	pop	hl
+	call	chkPS
 	push	hl
 	push	hl
 	jp	next
@@ -586,6 +605,7 @@ DUP2:
 	.dw nativeWord
 	pop	hl	; B
 	pop	de	; A
+	call	chkPS
 	push	de
 	push	hl
 	push	de
@@ -601,6 +621,7 @@ OVER:
 	.dw nativeWord
 	pop	hl	; B
 	pop	de	; A
+	call	chkPS
 	push	de
 	push	hl
 	push	de
@@ -617,6 +638,7 @@ OVER2:
 	pop	de	; C
 	pop	bc	; B
 	pop	iy	; A
+	call	chkPS
 	push	iy	; A
 	push	bc	; B
 	push	de	; C
@@ -632,6 +654,7 @@ OVER2:
 P2R:
 	.dw	nativeWord
 	pop	hl
+	call	chkPS
 	call	pushRS
 	jp	next
 
@@ -687,6 +710,7 @@ PLUS:
 	.dw nativeWord
 	pop	hl
 	pop	de
+	call	chkPS
 	add	hl, de
 	push	hl
 	jp	next
@@ -700,6 +724,7 @@ MINUS:
 	.dw nativeWord
 	pop	de		; B
 	pop	hl		; A
+	call	chkPS
 	or	a		; reset carry
 	sbc	hl, de
 	push	hl
@@ -714,6 +739,7 @@ MULT:
 	.dw nativeWord
 	pop	de
 	pop	bc
+	call	chkPS
 	call	multDEBC
 	push	hl
 	jp	next
@@ -727,6 +753,7 @@ DIVMOD:
 	.dw nativeWord
 	pop	de
 	pop	hl
+	call	chkPS
 	call	divide
 	push	hl
 	push	bc
@@ -741,6 +768,7 @@ SCMP:
 	.dw nativeWord
 	pop	de
 	pop	hl
+	call	chkPS
 	call	strcmp
 	call	flagsToBC
 	push	bc
@@ -755,6 +783,7 @@ CMP:
 	.dw nativeWord
 	pop	hl
 	pop	de
+	call	chkPS
 	or	a	; clear carry
 	sbc	hl, de
 	call	flagsToBC
@@ -768,6 +797,7 @@ CMP:
 CSKIP:
 	.dw	nativeWord
 	pop	hl
+	call	chkPS
 	ld	a, h
 	or	l
 	jp	z, next		; False, do nothing.
