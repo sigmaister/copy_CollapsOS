@@ -91,6 +91,7 @@ SKIP?       f --            If f is true, skip the execution of the next atom.
                             Use this right before ";" and you're gonna have a
                             bad time.
 THEN        I:a --          *I* Set branching cell at a.
+UNTIL       f --            *I* Jump backwards to BEGIN if f is *false*.
 
 *** Parameter Stack ***
 DROP        a --
