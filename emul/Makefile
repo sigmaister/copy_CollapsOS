@@ -6,6 +6,9 @@ ZASMBIN = zasm/zasm
 AVRABIN = zasm/avra
 SHELLAPPS = zasm ed
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
+# Those Forth source files are in a particular order
+FORTHSRCS = core.fs parse.fs fmt.fs
+FORTHSRC_PATHS = ${FORTHSRCS:%=$(APPS)/forth/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
 SHELLOBJS = $(OBJS) $(CFSPACK_OBJ)
@@ -36,8 +39,8 @@ forth/stage1: forth/stage1.c $(OBJS) forth/forth0-bin.h
 forth/stage1dbg: forth/stage1.c $(OBJS) forth/forth0-bin.h 
 	$(CC) -DDEBUG forth/stage1.c $(OBJS) -o $@
 
-forth/core.bin: $(APPS)/forth/core.fs forth/stage1
-	./forth/stage1 $(APPS)/forth/core.fs | tee $@ > /dev/null
+forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
+	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null
 
 forth/forth1.bin: forth/glue1.asm forth/core.bin $(ZASMBIN)
 	$(ZASMBIN) $(KERNEL) $(APPS) forth/core.bin < forth/glue1.asm | tee $@ > /dev/null

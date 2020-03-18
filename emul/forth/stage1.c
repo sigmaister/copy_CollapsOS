@@ -35,11 +35,10 @@ that wordref offsets correspond.
 #define CURRENT 0xe702
 
 static int running;
-static FILE *fp;
 
 static uint8_t iord_stdio()
 {
-    int c = getc(fp);
+    int c = getc(stdin);
     if (c == EOF) {
         running = 0;
     }
@@ -57,20 +56,6 @@ static void iowr_stdio(uint8_t val)
 
 int main(int argc, char *argv[])
 {
-#ifdef DEBUG
-    fp = stdin;
-#else
-    if (argc == 2) {
-        fp = fopen(argv[1], "r");
-        if (fp == NULL) {
-            fprintf(stderr, "Can't open %s\n", argv[1]);
-            return 1;
-        }
-    } else {
-        fprintf(stderr, "Usage: ./stage0 filename\n");
-        return 1;
-    }
-#endif
     Machine *m = emul_init();
     m->ramstart = RAMSTART;
     m->iord[STDIO_PORT] = iord_stdio;
@@ -83,8 +68,6 @@ int main(int argc, char *argv[])
     running = 1;
 
     while (running && emul_step());
-
-    fclose(fp);
 
 #ifndef DEBUG
     // We're done, now let's spit dict data
