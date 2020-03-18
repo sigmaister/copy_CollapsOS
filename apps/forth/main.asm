@@ -25,7 +25,11 @@
 .equ	IP		@+2
 ; Pointer to where we currently are in the interpretation of the current line.
 .equ	INPUTPOS	@+2
-; Buffer where we compile the current input line. Same size as STDIO_BUFSIZE.
+; Pointer to the system's number parsing function. It points to then entry that
+; had the "(parse)" name at startup. During stage0, it's out builtin PARSE,
+; but at stage1, it becomes "(parse)" from core.fs. It can also be changed at
+; runtime.
+.equ	PARSEPTR	@+2
 .equ	FORTH_RAMEND	@+2
 
 ; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
@@ -84,6 +88,10 @@ forthMain:
 	ld	(INPUTPOS), hl
 	xor	a
 	ld	(hl), a
+	; Set up PARSEPTR
+	ld	hl, PARSE-CODELINK_OFFSET
+	call	find
+	ld	(PARSEPTR), de
 forthRdLine:
 	ld	hl, msgOk
 	call	printstr
@@ -106,7 +114,7 @@ INTERPRET:
 
 .maybeNum:
 	.dw	compiledWord
-	.dw	PARSE
+	.dw	PARSEI
 	.dw	R2P		; exit INTERPRET
 	.dw	DROP
 	.dw	EXIT

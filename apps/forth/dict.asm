@@ -339,7 +339,7 @@ COMPILE:
 	.db	0b10		; UNWORD
 .maybeNum:
 	.dw	compiledWord
-	.dw	PARSE
+	.dw	PARSEI
 	.dw	LITN
 	.dw	R2P		; exit COMPILE
 	.dw	DROP
@@ -554,10 +554,6 @@ PARSED:
 	.dw	nativeWord
 	pop	hl
 	call	chkPS
-	; temporary: run parseCharLit in here until it's implemented in Forth
-	; core.fs needs char literal parsing.
-	call	parseCharLit
-	jr	z, .success
 	call	parseDecimal
 	jr	z, .success
 	; error
@@ -573,7 +569,7 @@ PARSED:
 
 
 	.db	"(parse)"
-	.dw	WORD
+	.dw	PARSED
 	.db	0
 PARSE:
 	.dw	compiledWord
@@ -590,6 +586,16 @@ PARSE:
 	.db	"unknown word", 0
 	.dw	PRINT
 	.dw	ABORT
+
+
+; Indirect parse caller. Reads PARSEPTR and calls
+	.db	0b10		; UNWORD
+PARSEI:
+	.dw	compiledWord
+	.dw	PARSEPTR_
+	.dw	FETCH
+	.dw	EXECUTE
+	.dw	EXIT
 
 
 	.db "CREATE"
@@ -622,9 +628,16 @@ CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
+	.db "(parse*"
+	.dw CURRENT_
+	.db 0
+PARSEPTR_:
+	.dw sysvarWord
+	.dw PARSEPTR
+
 	.db	"IN>"
 	.fill	4
-	.dw	CURRENT_
+	.dw	PARSEPTR_
 	.db	0
 INP:
 	.dw	sysvarWord

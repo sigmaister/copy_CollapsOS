@@ -181,24 +181,6 @@ parseDecimal:
 	cp	a	; ensure Z
 	ret
 
-parseCharLit:
-	ld	a, (hl)
-	cp	0x27		; apostrophe
-	ret	nz
-
-	ld	d, 0		; preset
-	inc	hl
-	ld	e, (hl)		; our result
-	inc	hl
-	cp	(hl)
-	ret	z
-
-	; Z unset and there's an error
-	; In all error conditions, HL is advanced by 2. Rewind.
-	dec	hl \ dec hl
-	; NZ already set
-	ret
-
 ; *** Forth-specific part ***
 ; Return address of scratchpad in HL
 pad:
