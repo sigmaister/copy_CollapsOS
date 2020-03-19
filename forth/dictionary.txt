@@ -194,3 +194,7 @@ PC!         c a --          Spit c to port a
 PC@         a -- c          Fetch c from port a
 WORD        -- a            Read one word from buffered input and push its addr
 
+There are also ascii const emitters:
+LF
+SPC
+

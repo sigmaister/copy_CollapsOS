@@ -5,3 +5,6 @@
     1 +
     AGAIN
 ;
+
+: LF 10 EMIT ;
+: SPC 32 EMIT ;

@@ -8,9 +8,13 @@
 // in sync with glue.asm
 #define RAMSTART 0x900
 #define STDIO_PORT 0x00
+// This binary is also used for automated tests and those tests, when
+// failing, send a non-zero value to RET_PORT to indicate failure
+#define RET_PORT 0x01
 
 static int running;
 static FILE *fp;
+static int retcode = 0;
 
 static uint8_t iord_stdio()
 {
@@ -29,6 +33,12 @@ static void iowr_stdio(uint8_t val)
         putchar(val);
     }
 }
+
+static void iowr_ret(uint8_t val)
+{
+    retcode = val;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -61,6 +71,7 @@ int main(int argc, char *argv[])
     m->ramstart = RAMSTART;
     m->iord[STDIO_PORT] = iord_stdio;
     m->iowr[STDIO_PORT] = iowr_stdio;
+    m->iowr[RET_PORT] = iowr_ret;
     // initialize memory
     for (int i=0; i<sizeof(KERNEL); i++) {
         m->mem[i] = KERNEL[i];
@@ -78,5 +89,5 @@ int main(int argc, char *argv[])
         emul_printdebug();
     }
     fclose(fp);
-    return 0;
+    return retcode;
 }
