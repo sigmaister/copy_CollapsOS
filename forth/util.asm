@@ -251,12 +251,6 @@ parseDecimal:
 	ret
 
 ; *** Forth-specific part ***
-; Return address of scratchpad in HL
-pad:
-	ld	hl, (HERE)
-	ld	a, PADDING
-	jp	addHL
-
 ; Advance (INPUTPOS) until a non-whitespace is met. If needed,
 ; call fetchline.
 ; Set HL to newly set (INPUTPOS)
@@ -315,41 +309,21 @@ HLPointsDE:
 	cp	d		; Z has our answer
 	ret
 
-
-HLPointsNUMBER:
-	push	de
-	ld	de, NUMBER
-	call	HLPointsDE
-	pop	de
-	ret
-
-HLPointsLIT:
-	push	de
-	ld	de, LIT
-	call	HLPointsDE
-	pop	de
-	ret
-
-HLPointsBR:
-	push	de
-	ld	de, FBR
-	call	HLPointsDE
-	jr	z, .end
-	ld	de, BBR
-	call	HLPointsDE
-.end:
-	pop	de
-	ret
-
 ; Skip the compword where HL is currently pointing. If it's a regular word,
 ; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
 ; to after null-termination.
 compSkip:
-	call	HLPointsNUMBER
+	ld	de, NUMBER
+	call	HLPointsDE
 	jr	z, .isNum
-	call	HLPointsBR
+	ld	de, FBR
+	call	HLPointsDE
 	jr	z, .isBranch
-	call	HLPointsLIT
+	ld	de, BBR
+	call	HLPointsDE
+	jr	z, .isBranch
+	ld	de, LIT
+	call	HLPointsDE
 	jr	nz, .isWord
 	; We have a literal
 	inc	hl \ inc hl
@@ -407,14 +381,6 @@ find:
 	or	d
 	or	e
 	; Z will be set if DE is zero
-	ret
-
-; Write compiled data from HL into IY, advancing IY at the same time.
-wrCompHL:
-	ld	(iy), l
-	inc	iy
-	ld	(iy), h
-	inc	iy
 	ret
 
 ; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)

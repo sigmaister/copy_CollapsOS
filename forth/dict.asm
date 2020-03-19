@@ -402,13 +402,13 @@ DOES:
 	; 2. Leave 2 bytes for regular cell variable.
 	; 3. Write down IP+2 to entry.
 	; 3. exit. we're done here.
-	ld	iy, (CURRENT)
-	ld	hl, doesWord
-	call	wrCompHL
-	inc	iy \ inc iy		; cell variable space
-	ld	hl, (IP)
-	call	wrCompHL
-	ld	(HERE), iy
+	ld	hl, (CURRENT)
+	ld	de, doesWord
+	call	DEinHL
+	inc	hl \ inc hl		; cell variable space
+	ld	de, (IP)
+	call	DEinHL
+	ld	(HERE), hl
 	jp	EXIT+2
 
 
