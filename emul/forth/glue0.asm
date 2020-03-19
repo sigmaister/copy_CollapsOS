@@ -22,10 +22,10 @@
 .inc "stdio.asm"
 
 .equ FORTH_RAMSTART STDIO_RAMEND
-.inc "forth/main.asm"
-.inc "forth/util.asm"
-.inc "forth/stack.asm"
-.inc "forth/dict.asm"
+.inc "main.asm"
+.inc "util.asm"
+.inc "stack.asm"
+.inc "dict.asm"
 
 
 init:

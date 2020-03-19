@@ -39,6 +39,8 @@ path to giving Collapse OS a try.
            through a serial port.
 * `emul`: Emulated applications, such as zasm and the shell.
 * `tests`: Automated test suite for the whole project.
+* `forth`: Forth is slowly taking over this project (see issue #4). It comes
+           from this folder.
 
 ## Status
 
