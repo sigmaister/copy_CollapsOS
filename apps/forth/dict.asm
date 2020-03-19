@@ -444,7 +444,7 @@ ISIMMED:
 	.db	"LITN"
 	.fill	3
 	.dw	ISIMMED
-	.db	1		; IMMEDIATE
+	.db	0
 LITN:
 	.dw nativeWord
 	ld	hl, (HERE)

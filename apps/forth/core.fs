@@ -3,7 +3,7 @@
 : +! SWAP OVER @ + SWAP ! ;
 : ALLOT HERE +! ;
 : C, H C! 1 ALLOT ;
-: COMPILE ' ['] LITN EXECUTE ['] , , ; IMMEDIATE
+: COMPILE ' LITN ['] , , ; IMMEDIATE
 : BEGIN H ; IMMEDIATE
 : AGAIN COMPILE (bbr) H -^ C, ; IMMEDIATE
 : UNTIL COMPILE SKIP? COMPILE (bbr) H -^ C, ; IMMEDIATE
@@ -15,9 +15,7 @@
   input buffer size in Collapse OS
 
   COMPILE; Tough one. Get addr of caller word (example above
-  (bbr)) and then call LITN on it. However, LITN is an
-  immediate and has to be indirectly executed. Then, write
-  a reference to "," so that this word is written to HERE.
+  (bbr)) and then call LITN on it.
 
   NOT: a bit convulted because we don't have IF yet )
 
@@ -49,3 +47,20 @@
 : > CMP 1 = ;
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
+
+( In addition to pushing H this compiles 2 >R so that loop variables are sent
+  to PS at runtime )
+: DO
+    COMPILE SWAP COMPILE >R COMPILE >R
+    H
+; IMMEDIATE
+
+( One could think that we should have a sub word to avoid all these COMPILE,
+  but we can't because otherwise it messes with the RS )
+: LOOP
+    COMPILE R> 1 LITN COMPILE + COMPILE DUP COMPILE >R
+    COMPILE I' COMPILE = COMPILE SKIP? COMPILE (bbr)
+    H -^ C,
+    COMPILE R> COMPILE DROP COMPILE R> COMPILE DROP
+; IMMEDIATE
+
