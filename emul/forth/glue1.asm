@@ -6,9 +6,6 @@
 
 	jp	init
 
-.inc "core.asm"
-.inc "str.asm"
-
 .equ	STDIO_RAMSTART	RAMSTART
 .equ	STDIO_GETC	emulGetC
 .equ	STDIO_PUTC	emulPutC

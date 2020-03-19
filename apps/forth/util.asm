@@ -6,6 +6,43 @@
 ; give us an idea of Forth's compactness.
 ; These routines below are copy/paste from apps/lib.
 
+; Ensures that Z is unset (more complicated than it sounds...)
+; There are often better inline alternatives, either replacing rets with
+; appropriate jmps, or if an 8 bit register is known to not be 0, an inc
+; then a dec. If a is nonzero, 'or a' is optimal.
+unsetZ:
+	or 	a	;if a nonzero, Z reset
+	ret	nz
+	cp 	1	;if a is zero, Z reset
+	ret
+
+; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions.
+; ld must be done little endian, so least significant byte first.
+intoHL:
+	push 	de
+	ld 	e, (hl)
+	inc 	hl
+	ld 	d, (hl)
+	ex 	de, hl
+	pop 	de
+	ret
+
+intoDE:
+	ex 	de, hl
+	call 	intoHL
+	ex 	de, hl		; de preserved by intoHL, so no push/pop needed
+	ret
+
+; add the value of A into HL
+; affects carry flag according to the 16-bit addition, Z, S and P untouched.
+addHL:
+	push	de
+	ld 	d, 0
+	ld	e, a
+	add	hl, de
+	pop	de
+	ret
+
 ; make Z the opposite of what it is now
 toggleZ:
 	jp	z, unsetZ
@@ -52,6 +89,38 @@ strcmp:
 .end:
 	pop	de
 	pop	hl
+	; Because we don't call anything else than CP that modify the Z flag,
+	; our Z value will be that of the last cp (reset if we broke the loop
+	; early, set otherwise)
+	ret
+
+; Compares strings pointed to by HL and DE up to A count of characters. If
+; equal, Z is set. If not equal, Z is reset.
+strncmp:
+	push	bc
+	push	hl
+	push	de
+
+	ld	b, a
+.loop:
+	ld	a, (de)
+	cp	(hl)
+	jr	nz, .end	; not equal? break early. NZ is carried out
+				; to the called
+	cp	0		; If our chars are null, stop the cmp
+	jr	z, .end		; The positive result will be carried to the
+	                        ; caller
+	inc	hl
+	inc	de
+	djnz	.loop
+	; We went through all chars with success, but our current Z flag is
+	; unset because of the cp 0. Let's do a dummy CP to set the Z flag.
+	cp	a
+
+.end:
+	pop	de
+	pop	hl
+	pop	bc
 	; Because we don't call anything else than CP that modify the Z flag,
 	; our Z value will be that of the last cp (reset if we broke the loop
 	; early, set otherwise)
