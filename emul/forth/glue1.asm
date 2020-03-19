@@ -12,11 +12,7 @@
 .inc "stdio.asm"
 
 .equ FORTH_RAMSTART STDIO_RAMEND
-.inc "main.asm"
-.inc "util.asm"
-.inc "stack.asm"
-.inc "dict.asm"
-
+.inc "forth.asm"
 
 init:
 	di
