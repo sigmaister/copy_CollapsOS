@@ -1,17 +1,12 @@
 ; Warning: The offsets of native dict entries must be exactly the same between
 ;          glue0.asm and glue1.asm
 .equ	LATEST		CODE_END	; override
-.inc "ascii.h"
 .equ	STDIO_PORT	0x00
 
 	jp	init
 
-.equ	STDIO_RAMSTART	RAMSTART
-.equ	STDIO_GETC	emulGetC
-.equ	STDIO_PUTC	emulPutC
-.inc "stdio.asm"
-
-.equ FORTH_RAMSTART STDIO_RAMEND
+.equ	GETC	emulGetC
+.equ	PUTC	emulPutC
 .inc "forth.asm"
 
 init:

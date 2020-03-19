@@ -10,6 +10,22 @@
 ; self-hosts in a more compact manner. File include is a big part of the
 ; complexity in zasm. If we can get rid of it, we'll be more compact.
 
+; *** Defines ***
+; GETC: address of a GetC routine
+; PUTC: address of a PutC routine
+;
+; Those GetC/PutC routines are hooked through defines and have this API:
+;
+; GetC: Blocks until a character is read from the device and return that
+;       character in A.
+;
+; PutC: Write character specified in A onto the device.
+;
+; *** ASCII ***
+.equ	BS	0x08
+.equ	CR	0x0d
+.equ	LF	0x0a
+.equ	DEL	0x7f
 ; *** Const ***
 ; Base of the Return Stack
 .equ	RS_ADDR		0xf000
@@ -19,6 +35,9 @@
 .equ	NAMELEN		7
 ; Offset of the code link relative to the beginning of the word
 .equ	CODELINK_OFFSET	NAMELEN+3
+; Size of the readline buffer. If a typed line reaches this size, the line is
+; flushed immediately (same as pressing return).
+.equ	INPT_BUFSIZE		0x40
 
 ; Flags for the "flag field" of the word structure
 ; IMMEDIATE word
@@ -28,7 +47,7 @@
 .equ	FLAG_UNWORD	1
 
 ; *** Variables ***
-.equ	INITIAL_SP	FORTH_RAMSTART
+.equ	INITIAL_SP	RAMSTART
 ; wordref of the last entry of the dict.
 .equ	CURRENT		@+2
 ; Pointer to the next free byte in dict.
@@ -42,14 +61,15 @@
 ; but at stage1, it becomes "(parse)" from core.fs. It can also be changed at
 ; runtime.
 .equ	PARSEPTR	@+2
-.equ	FORTH_RAMEND	@+2
+.equ	INPTBUF		@+2
+.equ	RAMEND		@+INPT_BUFSIZE
 
 ; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
 ; (HERE) will begin at a strategic place.
-.equ	HERE_INITIAL	FORTH_RAMEND
+.equ	HERE_INITIAL	RAMEND
 
 ; EXECUTION MODEL
-; After having read a line through stdioReadLine, we want to interpret it. As
+; After having read a line through readline, we want to interpret it. As
 ; a general rule, we go like this:
 ;
 ; 1. read single word from line
@@ -151,7 +171,96 @@ msgOk:
 ; transition, I make, right now, a copy of the routines actually used by Forth's
 ; native core. This also has the effect of reducing binary size right now and
 ; give us an idea of Forth's compactness.
-; These routines below are copy/paste from apps/lib.
+; These routines below are copy/paste from apps/lib and stdio.
+
+; print null-terminated string pointed to by HL
+printstr:
+	push	af
+	push	hl
+
+.loop:
+	ld	a, (hl)		; load character to send
+	or	a		; is it zero?
+	jr	z, .end		; if yes, we're finished
+	call	PUTC
+	inc	hl
+	jr	.loop
+
+.end:
+	pop	hl
+	pop	af
+	ret
+
+; Prints a line terminator. This routine is a bit of a misnomer because it's
+; designed to be overridable to, for example, printlf, but we'll live with it
+; for now...
+printcrlf:
+	push	af
+	ld	a, CR
+	call	PUTC
+	ld	a, LF
+	call	PUTC
+	pop	af
+	ret
+
+; Repeatedly calls stdioGetC until a whole line was read, that is, when CR or
+; LF is read or if the buffer is full. Sets HL to the beginning of the read
+; line, which is null-terminated.
+;
+; This routine also takes care of echoing received characters back to the TTY.
+; It also manages backspaces properly.
+readline:
+	push	bc
+	ld	hl, INPTBUF
+	ld	b, INPT_BUFSIZE-1
+.loop:
+	; Let's wait until something is typed.
+	call	GETC
+	; got it. Now, is it a CR or LF?
+	cp	CR
+	jr	z, .complete	; char is CR? buffer complete!
+	cp	LF
+	jr	z, .complete
+	cp	DEL
+	jr	z, .delchr
+	cp	BS
+	jr	z, .delchr
+
+	; Echo the received character right away so that we see what we type
+	call	PUTC
+
+	; Ok, gotta add it do the buffer
+	ld	(hl), a
+	inc	hl
+	djnz	.loop
+	; buffer overflow, complete line
+.complete:
+	; The line in our buffer is complete.
+	; Let's null-terminate it and return.
+	xor	a
+	ld	(hl), a
+	ld	hl, INPTBUF
+	pop	bc
+	ret
+
+.delchr:
+	; Deleting is a tricky business. We have to decrease HL and increase B
+	; so that everything stays consistent. We also have to make sure that
+	; We don't do buffer underflows.
+	ld	a, b
+	cp	INPT_BUFSIZE-1
+	jr	z, .loop		; beginning of line, nothing to delete
+	dec	hl
+	inc	b
+	; Char deleted in buffer, now send BS + space + BS for the terminal
+	; to clear its previous char
+	ld	a, BS
+	call	PUTC
+	ld	a, ' '
+	call	PUTC
+	ld	a, BS
+	call	PUTC
+	jr	.loop
 
 ; Ensures that Z is unset (more complicated than it sounds...)
 ; There are often better inline alternatives, either replacing rets with
@@ -578,7 +687,7 @@ DEinHL:
 
 fetchline:
 	call	printcrlf
-	call	stdioReadLine
+	call	readline
 	ld	(INPUTPOS), hl
 	ret
 
@@ -854,7 +963,7 @@ EMIT:
 	pop	hl
 	call	chkPS
 	ld	a, l
-	call	stdioPutC
+	call	PUTC
 	jp	next
 
 	.db	"(print)"
@@ -1178,7 +1287,7 @@ FINDERR:
 	.db 0
 KEY:
 	.dw nativeWord
-	call	stdioGetC
+	call	GETC
 	ld	h, 0
 	ld	l, a
 	push	hl

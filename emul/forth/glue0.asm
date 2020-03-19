@@ -9,19 +9,12 @@
 .equ	HERE		0xe700		; override, in sync with stage1.c
 .equ	CURRENT		0xe702		; override, in sync with stage1.c
 .equ	HERE_INITIAL	CODE_END	; override
-
-.inc "ascii.h"
 .equ	STDIO_PORT	0x00
 
 	jp	init
 
-
-.equ	STDIO_RAMSTART	RAMSTART
-.equ	STDIO_GETC	emulGetC
-.equ	STDIO_PUTC	emulPutC
-.inc "stdio.asm"
-
-.equ FORTH_RAMSTART STDIO_RAMEND
+.equ	GETC	emulGetC
+.equ	PUTC	emulPutC
 .inc "forth.asm"
 
 init:
