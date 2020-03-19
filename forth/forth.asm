@@ -210,7 +210,7 @@ printcrlf:
 ; This routine also takes care of echoing received characters back to the TTY.
 ; It also manages backspaces properly.
 readline:
-	push	bc
+	call	printcrlf
 	ld	hl, INPTBUF
 	ld	b, INPT_BUFSIZE-1
 .loop:
@@ -240,7 +240,7 @@ readline:
 	xor	a
 	ld	(hl), a
 	ld	hl, INPTBUF
-	pop	bc
+	ld	(INPUTPOS), hl
 	ret
 
 .delchr:
@@ -423,22 +423,6 @@ divide:
 	ld h, a
 	ret
 
-; DE * BC -> DE (high) and HL (low)
-multDEBC:
-	ld	hl, 0
-	ld	a, 0x10
-.loop:
-	add	hl, hl
-	rl	e
-	rl	d
-	jr	nc, .noinc
-	add	hl, bc
-	jr	nc, .noinc
-	inc	de
-.noinc:
-	dec a
-	jr	nz, .loop
-	ret
 
 ; Parse string at (HL) as a decimal value and return value in DE.
 ; Reads as many digits as it can and stop when:
@@ -508,7 +492,7 @@ parseDecimal:
 
 ; *** Support routines ***
 ; Advance (INPUTPOS) until a non-whitespace is met. If needed,
-; call fetchline.
+; call readline.
 ; Set HL to newly set (INPUTPOS)
 toword:
 	ld	hl, (INPUTPOS)
@@ -524,13 +508,13 @@ toword:
 	jr	c, .loop
 	ret
 .empty:
-	call	fetchline
+	call	readline
 	jr	toword
 
 ; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
 ; Advance (INPUTPOS) to the character following the whitespace ending the
 ; word.
-; When we're at EOL, we call fetchline directly, so this call always returns
+; When we're at EOL, we call readline directly, so this call always returns
 ; a word.
 readword:
 	call	toword
@@ -563,40 +547,6 @@ HLPointsDE:
 	ld	a, (hl)
 	dec	hl
 	cp	d		; Z has our answer
-	ret
-
-; Skip the compword where HL is currently pointing. If it's a regular word,
-; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
-; to after null-termination.
-compSkip:
-	ld	de, NUMBER
-	call	HLPointsDE
-	jr	z, .isNum
-	ld	de, FBR
-	call	HLPointsDE
-	jr	z, .isBranch
-	ld	de, BBR
-	call	HLPointsDE
-	jr	z, .isBranch
-	ld	de, LIT
-	call	HLPointsDE
-	jr	nz, .isWord
-	; We have a literal
-	inc	hl \ inc hl
-	call	strskip
-	inc	hl		; byte after word termination
-	ret
-.isNum:
-	; skip by 4
-	inc	hl
-	; continue to isBranch
-.isBranch:
-	; skip by 3
-	inc	hl
-	; continue to isWord
-.isWord:
-	; skip by 2
-	inc	hl \ inc hl
 	ret
 
 ; Find the entry corresponding to word where (HL) points to and sets DE to
@@ -685,12 +635,6 @@ DEinHL:
 	inc	hl
 	ret
 
-fetchline:
-	call	printcrlf
-	call	readline
-	ld	(INPUTPOS), hl
-	ret
-
 ; *** Stack management ***
 ; The Parameter stack (PS) is maintained by SP and the Return stack (RS) is
 ; maintained by IX. This allows us to generally use push and pop freely because
@@ -722,17 +666,6 @@ popRS:
 popRSIP:
 	call	popRS
 	ld	(IP), hl
-	ret
-
-; Skip the next two bytes in RS' TOS
-skipRS:
-	push	hl
-	ld	l, (ix)
-	ld	h, (ix+1)
-	inc	hl \ inc hl
-	ld	(ix), l
-	ld	(ix+1), h
-	pop	hl
 	ret
 
 ; Verifies that SP and RS are within bounds. If it's not, call ABORT
@@ -1652,7 +1585,20 @@ MULT:
 	pop	de
 	pop	bc
 	call	chkPS
-	call	multDEBC
+	; DE * BC -> DE (high) and HL (low)
+	ld	hl, 0
+	ld	a, 0x10
+.loop:
+	add	hl, hl
+	rl	e
+	rl	d
+	jr	nc, .noinc
+	add	hl, bc
+	jr	nc, .noinc
+	inc	de
+.noinc:
+	dec a
+	jr	nz, .loop
 	push	hl
 	jp	next
 
@@ -1702,6 +1648,9 @@ CMP:
 	push	bc
 	jp	next
 
+; Skip the compword where HL is currently pointing. If it's a regular word,
+; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
+; to after null-termination.
 	.db	"SKIP?"
 	.fill	2
 	.dw	CMP
@@ -1714,7 +1663,35 @@ CSKIP:
 	or	l
 	jp	z, next		; False, do nothing.
 	ld	hl, (IP)
-	call	compSkip
+	ld	de, NUMBER
+	call	HLPointsDE
+	jr	z, .isNum
+	ld	de, FBR
+	call	HLPointsDE
+	jr	z, .isBranch
+	ld	de, BBR
+	call	HLPointsDE
+	jr	z, .isBranch
+	ld	de, LIT
+	call	HLPointsDE
+	jr	nz, .isWord
+	; We have a literal
+	inc	hl \ inc hl
+	call	strskip
+	inc	hl		; byte after word termination
+	jr	.end
+.isNum:
+	; skip by 4
+	inc	hl
+	; continue to isBranch
+.isBranch:
+	; skip by 3
+	inc	hl
+	; continue to isWord
+.isWord:
+	; skip by 2
+	inc	hl \ inc hl
+.end:
 	ld	(IP), hl
 	jp	next
 
