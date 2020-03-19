@@ -7,7 +7,7 @@ AVRABIN = zasm/avra
 SHELLAPPS = zasm ed
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
 # Those Forth source files are in a particular order
-FORTHSRCS = core.fs parse.fs fmt.fs
+FORTHSRCS = core.fs str.fs parse.fs fmt.fs
 FORTHSRC_PATHS = ${FORTHSRCS:%=$(APPS)/forth/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
