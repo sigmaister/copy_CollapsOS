@@ -42,9 +42,6 @@
 ; Flags for the "flag field" of the word structure
 ; IMMEDIATE word
 .equ	FLAG_IMMED	0
-; This wordref is not a regular word (it's not preceeded by a name). It's one
-; of the NUMBER, LIT, BRANCH etc. entities.
-.equ	FLAG_UNWORD	1
 
 ; *** Variables ***
 .equ	INITIAL_SP	RAMSTART
@@ -511,33 +508,6 @@ toword:
 	call	readline
 	jr	toword
 
-; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
-; Advance (INPUTPOS) to the character following the whitespace ending the
-; word.
-; When we're at EOL, we call readline directly, so this call always returns
-; a word.
-readword:
-	call	toword
-	push	hl		; --> lvl 1. that's our result
-.loop:
-	inc	hl
-	ld	a, (hl)
-	; special case: is A null? If yes, we will *not* inc A so that we don't
-	; go over the bounds of our input string.
-	or	a
-	jr	z, .noinc
-	cp	' '+1
-	jr	nc, .loop
-	; we've just read a whitespace, HL is pointing to it. Let's transform
-	; it into a null-termination, inc HL, then set (INPUTPOS).
-	xor	a
-	ld	(hl), a
-	inc	hl
-.noinc:
-	ld	(INPUTPOS), hl
-	pop	hl		; <-- lvl 1. our result
-	ret	; Z set from XOR A
-
 ; Sets Z if (HL) == E and (HL+1) == D
 HLPointsDE:
 	ld	a, (hl)
@@ -589,10 +559,9 @@ find:
 	; Z will be set if DE is zero
 	ret
 
-; Spit name + prev in (HERE) and adjust (HERE) and (CURRENT)
+; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
 entryhead:
-	call	readword
 	ld	de, (HERE)
 	call	strcpy
 	ex	de, hl		; (HERE) now in HL
@@ -1041,7 +1010,14 @@ COMPILE:
 	.dw	COMPILE
 	.db	1		; IMMEDIATE
 DEFINE:
-	.dw nativeWord
+	.dw	compiledWord
+	.dw	WORD
+	.dw	.define
+	.dw	EXIT
+
+.define:
+	.dw	nativeWord
+	pop	hl
 	call	entryhead
 	ld	de, compiledWord
 	call	DEinHL
@@ -1151,23 +1127,42 @@ LITN:
 	.dw	LITN
 	.db	1		; IMMEDIATE
 LITS:
-	.dw nativeWord
+	.dw	compiledWord
+	.dw	.wrLIT
+	.dw	WORD
+	.dw	.scpy
+	.dw	EXIT
+
+.wrLIT:
+	.dw	nativeWord
 	ld	hl, (HERE)
 	ld	de, LIT
 	call	DEinHL
-	ex	de, hl		; (HERE) in DE
-	call	readword
+	ld	(HERE), hl
+	jp	next
+
+.scpy:
+	.dw	nativeWord
+	pop	hl
+	ld	de, (HERE)
 	call	strcpyM
 	ld	(HERE), de
 	jp	next
+
 
 	.db	"(find)"
 	.fill	1
 	.dw	LITS
 	.db	0
 FIND_:
+	.dw	compiledWord
+	.dw	WORD
+	.dw	.find
+	.dw	EXIT
+
+.find:
 	.dw	nativeWord
-	call	readword
+	pop	hl
 	call	find
 	jr	z, .found
 	; not found
@@ -1226,14 +1221,35 @@ KEY:
 	push	hl
 	jp	next
 
+; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
+; Advance (INPUTPOS) to the character following the whitespace ending the
+; word.
+; When we're at EOL, we call readline directly, so this call always returns
+; a word.
 	.db "WORD"
 	.fill 3
 	.dw KEY
 	.db 0
 WORD:
 	.dw nativeWord
-	call	readword
-	push	hl
+	call	toword
+	push	hl	; we already have our result
+.loop:
+	inc	hl
+	ld	a, (hl)
+	; special case: is A null? If yes, we will *not* inc A so that we don't
+	; go over the bounds of our input string.
+	or	a
+	jr	z, .noinc
+	cp	' '+1
+	jr	nc, .loop
+	; we've just read a whitespace, HL is pointing to it. Let's transform
+	; it into a null-termination, inc HL, then set (INPUTPOS).
+	xor	a
+	ld	(hl), a
+	inc	hl
+.noinc:
+	ld	(INPUTPOS), hl
 	jp	next
 
 
@@ -1293,13 +1309,17 @@ PARSEI:
 	.dw PARSE
 	.db 0
 CREATE:
-	.dw nativeWord
+	.dw	compiledWord
+	.dw	WORD
+	.dw	.create
+	.dw	EXIT
+
+.create:
+	.dw	nativeWord
+	pop	hl
 	call	entryhead
 	ld	de, cellWord
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
+	call	DEinHL
 	ld	(HERE), hl
 	jp	next
 
