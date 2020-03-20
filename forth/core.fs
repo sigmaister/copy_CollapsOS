@@ -1,23 +1,20 @@
 : H HERE @ ;
 : -^ SWAP - ;
-: +! SWAP OVER @ + SWAP ! ;
-: ALLOT HERE +! ;
-: C, H C! 1 ALLOT ;
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : BEGIN H ; IMMEDIATE
 : AGAIN COMPILE (bbr) H -^ C, ; IMMEDIATE
 : UNTIL COMPILE SKIP? COMPILE (bbr) H -^ C, ; IMMEDIATE
-: NOT 1 SWAP SKIP? EXIT 0 * ;
 : ( BEGIN LITS ) WORD SCMP NOT UNTIL ; IMMEDIATE
 ( Hello, hello, krkrkrkr... do you hear me?
   Ah, voice at last! Some lines above need comments
   BTW: Forth lines limited to 64 cols because of default
   input buffer size in Collapse OS
 
-  COMPILE; Tough one. Get addr of caller word (example above
-  (bbr)) and then call LITN on it.
+  COMPILE: Tough one. Get addr of caller word (example above
+  (bbr)) and then call LITN on it. )
 
-  NOT: a bit convulted because we don't have IF yet )
+: +! SWAP OVER @ + SWAP ! ;
+: ALLOT HERE +! ;
 
 : IF                ( -- a | a: br cell addr )
     COMPILE SKIP?   ( if true, don't branch )

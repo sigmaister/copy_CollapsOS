@@ -35,12 +35,11 @@
 .equ	NAMELEN		7
 ; Offset of the code link relative to the beginning of the word
 .equ	CODELINK_OFFSET	NAMELEN+3
-; Size of the readline buffer. If a typed line reaches this size, the line is
-; flushed immediately (same as pressing return).
-.equ	INPT_BUFSIZE		0x40
 ; Buffer where WORD copies its read word to. It's significantly larger than
 ; NAMELEN, but who knows, in a comment, we might have a very long word...
 .equ	WORD_BUFSIZE		0x20
+; Allocated space for sysvars (see comment above SYSVCNT)
+.equ	SYSV_BUFSIZE		0x10
 
 ; Flags for the "flag field" of the word structure
 ; IMMEDIATE word
@@ -54,16 +53,25 @@
 .equ	HERE		@+2
 ; Interpreter pointer. See Execution model comment below.
 .equ	IP		@+2
-; Pointer to where we currently are in the interpretation of the current line.
-.equ	INPUTPOS	@+2
 ; Pointer to the system's number parsing function. It points to then entry that
 ; had the "(parse)" name at startup. During stage0, it's out builtin PARSE,
 ; but at stage1, it becomes "(parse)" from core.fs. It can also be changed at
 ; runtime.
 .equ	PARSEPTR	@+2
-.equ	INPTBUF		@+2
-.equ	WORDBUF		@+INPT_BUFSIZE
-.equ	RAMEND		@+WORD_BUFSIZE
+; Pointer to the word executed by "C<". During stage0, this points to KEY.
+; However, KEY ain't very interactive. This is why we implement a readline
+; interface in Forth, which we plug in during init. If "(c<)" exists in the
+; dict, CINPTR is set to it. Otherwise, we set KEY
+.equ	CINPTR		@+2
+.equ	WORDBUF		@+2
+; Sys Vars are variables with their value living in the system RAM segment. We
+; need this mechanisms for core Forth source needing variables. Because core
+; Forth source is pre-compiled, it needs to be able to live in ROM, which means
+; that we can't compile a regular variable in it. SYSVNXT points to the next
+; free space in SYSVBUF. Then, at the word level, it's a regular sysvarWord.
+.equ	SYSVNXT		@+WORD_BUFSIZE
+.equ	SYSVBUF		@+2
+.equ	RAMEND		@+SYSV_BUFSIZE
 
 ; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
 ; (HERE) will begin at a strategic place.
@@ -107,6 +115,7 @@ forthMain:
 	; we check for stack underflow.
 	push	af \ push af \ push af
 	ld	(INITIAL_SP), sp
+	ld	ix, RS_ADDR
 	; LATEST is a *indirect* label to the latest entry of the dict. See
 	; default at the bottom of dict.asm. This indirection allows us to
 	; override latest to a value set in a binary dict compiled separately,
@@ -116,53 +125,61 @@ forthMain:
 	ld	(CURRENT), hl
 	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
-	; Set (INPUTPOS) to somewhere where there's a NULL so we consider
-	; ourselves EOL.
-	ld	(INPUTPOS), hl
-	xor	a
-	ld	(hl), a
 	; Set up PARSEPTR
 	ld	hl, PARSE-CODELINK_OFFSET
 	call	find
 	ld	(PARSEPTR), de
-forthRdLine:
-	ld	hl, msgOk
-	call	printstr
-forthRdLineNoOk:
-	; Setup return stack. After INTERPRET, we run forthExecLine
-	ld	ix, RS_ADDR
-	ld	hl, MAINLOOP
+	; Set up CINPTR
+	; do we have a C< impl?
+	ld	hl, .cinName
+	call	find
+	jr	z, .skip
+	; no? then use KEY
+	ld	de, KEY
+.skip:
+	ld	(CINPTR), de
+	; Set up SYSVNXT
+	ld	hl, SYSVBUF
+	ld	(SYSVNXT), hl
+	ld	hl, BEGIN
 	push	hl
 	jp	EXECUTE+2
 
+.cinName:
+	.db	"C<", 0
+
+forthLoop:
+	ld	hl, INTERPRET
+	push	hl
+	jp	EXECUTE+2
+
+BEGIN:
+	.dw	compiledWord
+	.dw	LIT
+	.db	"(c<$)", 0
+	.dw	FIND_
+	.dw	NOT
+	.dw	CSKIP
+	.dw	EXECUTE
+	.dw	INTERPRET
+
 INTERPRET:
 	.dw	compiledWord
+	; BBR mark
+	.dw	WORD
 	.dw	FIND_
 	.dw	CSKIP
-	.dw	.maybeNum
+	.dw	FBR
+	.db	6
 	; It's a word, execute it
 	.dw	EXECUTE
-	.dw	EXIT
-
-.maybeNum:
-	.dw	compiledWord
+	.dw	BBR
+	.db	13
+	; FBR mark, try number
 	.dw	PARSEI
-	.dw	R2P		; exit INTERPRET
-	.dw	DROP
-	.dw	EXIT
-
-MAINLOOP:
-	.dw	compiledWord
-	.dw	INTERPRET
-	.dw	INP
-	.dw	FETCH
-	.dw	CFETCH
-	.dw	CSKIP
-	.dw	QUIT
-	.dw	MAINLOOP
-
-msgOk:
-	.db	" ok", 0
+	.dw	BBR
+	.db	18
+	; infinite loop
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -171,105 +188,6 @@ msgOk:
 ; native core. This also has the effect of reducing binary size right now and
 ; give us an idea of Forth's compactness.
 ; These routines below are copy/paste from apps/lib and stdio.
-
-; print null-terminated string pointed to by HL
-printstr:
-	push	af
-	push	hl
-
-.loop:
-	ld	a, (hl)		; load character to send
-	or	a		; is it zero?
-	jr	z, .end		; if yes, we're finished
-	call	PUTC
-	inc	hl
-	jr	.loop
-
-.end:
-	pop	hl
-	pop	af
-	ret
-
-; Prints a line terminator. This routine is a bit of a misnomer because it's
-; designed to be overridable to, for example, printlf, but we'll live with it
-; for now...
-printcrlf:
-	push	af
-	ld	a, CR
-	call	PUTC
-	ld	a, LF
-	call	PUTC
-	pop	af
-	ret
-
-; Repeatedly calls stdioGetC until a whole line was read, that is, when CR or
-; LF is read or if the buffer is full. Sets HL to the beginning of the read
-; line, which is null-terminated.
-;
-; This routine also takes care of echoing received characters back to the TTY.
-; It also manages backspaces properly.
-readline:
-	call	printcrlf
-	ld	hl, INPTBUF
-	ld	b, INPT_BUFSIZE-1
-.loop:
-	; Let's wait until something is typed.
-	call	GETC
-	; got it. Now, is it a CR or LF?
-	cp	CR
-	jr	z, .complete	; char is CR? buffer complete!
-	cp	LF
-	jr	z, .complete
-	cp	DEL
-	jr	z, .delchr
-	cp	BS
-	jr	z, .delchr
-
-	; Echo the received character right away so that we see what we type
-	call	PUTC
-
-	; Ok, gotta add it do the buffer
-	ld	(hl), a
-	inc	hl
-	djnz	.loop
-	; buffer overflow, complete line
-.complete:
-	; The line in our buffer is complete.
-	; Let's null-terminate it and return.
-	xor	a
-	ld	(hl), a
-	ld	hl, INPTBUF
-	ld	(INPUTPOS), hl
-	ret
-
-.delchr:
-	; Deleting is a tricky business. We have to decrease HL and increase B
-	; so that everything stays consistent. We also have to make sure that
-	; We don't do buffer underflows.
-	ld	a, b
-	cp	INPT_BUFSIZE-1
-	jr	z, .loop		; beginning of line, nothing to delete
-	dec	hl
-	inc	b
-	; Char deleted in buffer, now send BS + space + BS for the terminal
-	; to clear its previous char
-	ld	a, BS
-	call	PUTC
-	ld	a, ' '
-	call	PUTC
-	ld	a, BS
-	call	PUTC
-	jr	.loop
-
-; Ensures that Z is unset (more complicated than it sounds...)
-; There are often better inline alternatives, either replacing rets with
-; appropriate jmps, or if an 8 bit register is known to not be 0, an inc
-; then a dec. If a is nonzero, 'or a' is optimal.
-unsetZ:
-	or 	a	;if a nonzero, Z reset
-	ret	nz
-	cp 	1	;if a is zero, Z reset
-	ret
 
 ; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions.
 ; ld must be done little endian, so least significant byte first.
@@ -484,26 +402,6 @@ parseDecimal:
 	ret
 
 ; *** Support routines ***
-; Advance (INPUTPOS) until a non-whitespace is met. If needed,
-; call readline.
-; Set HL to newly set (INPUTPOS)
-toword:
-	ld	hl, (INPUTPOS)
-	; skip leading whitespace
-	dec	hl	; offset leading "inc hl"
-.loop:
-	inc	hl
-	ld	a, (hl)
-	or	a
-	; When at EOL, fetch a new line directly
-	jr	z, .empty
-	cp	' '+1
-	jr	c, .loop
-	ret
-.empty:
-	call	readline
-	jr	toword
-
 ; Sets Z if (HL) == E and (HL+1) == D
 HLPointsDE:
 	ld	a, (hl)
@@ -553,24 +451,6 @@ find:
 	or	d
 	or	e
 	; Z will be set if DE is zero
-	ret
-
-; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
-; HL points to new (HERE)
-entryhead:
-	ld	de, (HERE)
-	call	strcpy
-	ex	de, hl		; (HERE) now in HL
-	ld	de, (CURRENT)
-	ld	a, NAMELEN
-	call	addHL
-	call	DEinHL
-	; Set word flags: not IMMED, so it's 0
-	xor	a
-	ld	(hl), a
-	inc	hl
-	ld	(CURRENT), hl
-	ld	(HERE), hl
 	ret
 
 ; Checks flags Z and S and sets BC to 0 if Z, 1 if C and -1 otherwise
@@ -782,7 +662,8 @@ EXIT:
 	.db 0
 QUIT:
 	.dw nativeWord
-	jp	forthRdLine
+	ld	ix, RS_ADDR
+	jp	forthLoop
 
 	.db "ABORT"
 	.fill 2
@@ -790,25 +671,20 @@ QUIT:
 	.db 0
 ABORT:
 	.dw nativeWord
-abort:
-	; flush rest of input
-	ld	hl, (INPUTPOS)
-	xor	a
-	ld	(hl), a
-	; Reinitialize PS (RS is reinitialized in forthInterpret)
+	; Reinitialize PS
 	ld	sp, (INITIAL_SP)
-	jp	forthRdLineNoOk
-
-; prints msg in (HL) then aborts
-abortMsg:
-	call	printstr
-	jr	abort
+	jp	QUIT+2
 
 abortUnderflow:
-	ld	hl, .msg
-	jr	abortMsg
-.msg:
+	ld	hl, .word
+	push	hl
+	jp	EXECUTE+2
+.word:
+	.dw	compiledWord
+	.dw	LIT
 	.db	"stack underflow", 0
+	.dw	PRINT
+	.dw	ABORT
 
 	.db	"ABORT", '"'
 	.fill	1
@@ -817,16 +693,10 @@ abortUnderflow:
 ABORTI:
 	.dw	compiledWord
 	.dw	PRINTI
-	.dw	.private
+	.dw	NUMBER
+	.dw	ABORT
+	.dw	WR
 	.dw	EXIT
-
-.private:
-	.dw	nativeWord
-	ld	hl, (HERE)
-	ld	de, ABORT
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
 
 	.db "BYE"
 	.fill 4
@@ -862,8 +732,13 @@ PRINT:
 	.dw	nativeWord
 	pop	hl
 	call	chkPS
-	call	printstr
-	jp	next
+.loop:
+	ld	a, (hl)		; load character to send
+	or	a		; is it zero?
+	jp	z, next		; if yes, we're finished
+	call	PUTC
+	inc	hl
+	jr	.loop
 
 
 	.db	'.', '"'
@@ -871,34 +746,31 @@ PRINT:
 	.dw	PRINT
 	.db	1		; IMMEDIATE
 PRINTI:
-	.dw	nativeWord
-	ld	hl, (HERE)
-	ld	de, LIT
-	call	DEinHL
-	ex	de, hl		; (HERE) now in DE
-	ld	hl, (INPUTPOS)
-.loop:
-	ld	a, (hl)
-	or	a		; null? not cool
-	jp	z, abort
-	cp	'"'
-	jr	z, .loopend
-	ld	(de), a
-	inc	hl
-	inc	de
-	jr	.loop
-.loopend:
-	inc	hl		; inputpos to char afterwards
-	ld	(INPUTPOS), hl
-	; null-terminate LIT
-	inc	de
-	xor	a
-	ld	(de), a
-	ex	de, hl		; (HERE) in HL
-	ld	de, PRINT
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
+	.dw	compiledWord
+	.dw	NUMBER
+	.dw	LIT
+	.dw	WR
+	; BBR mark
+	.dw	CIN
+	.dw	DUP
+	.dw	NUMBER
+	.dw	'"'
+	.dw	CMP
+	.dw	CSKIP
+	.dw	FBR
+	.db	6
+	.dw	CWR
+	.dw	BBR
+	.db	19
+	; FBR mark
+	; null terminate string
+	.dw	NUMBER
+	.dw	0
+	.dw	CWR
+	.dw	NUMBER
+	.dw	PRINT
+	.dw	WR
+	.dw	EXIT
 
 ; ( c port -- )
 	.db "PC!"
@@ -927,9 +799,24 @@ PFETCH:
 	push	hl
 	jp	next
 
+	.db	"C,"
+	.fill	5
+	.dw	PFETCH
+	.db	0
+CWR:
+	.dw	nativeWord
+	pop	de
+	call	chkPS
+	ld	hl, (HERE)
+	ld	(hl), e
+	inc	hl
+	ld	(HERE), hl
+	jp	next
+
+
 	.db	","
 	.fill	6
-	.dw	PFETCH
+	.dw	CWR
 	.db	0
 WR:
 	.dw	nativeWord
@@ -963,6 +850,7 @@ EXECUTE:
 	.db	1		; IMMEDIATE
 COMPILE:
 	.dw	compiledWord
+	.dw	WORD
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	.maybeNum
@@ -990,55 +878,37 @@ COMPILE:
 	.dw	EXIT
 
 
-	.db	":"
+	.db	";"
 	.fill	6
 	.dw	COMPILE
+	.db	1		; IMMEDIATE
+ENDDEF:
+	.dw	compiledWord
+	.dw	NUMBER
+	.dw	EXIT
+	.dw	WR
+	.dw	R2P		; exit COMPILE
+	.dw	DROP
+	.dw	R2P		; exit DEFINE
+	.dw	DROP
+	.dw	EXIT
+
+	.db	":"
+	.fill	6
+	.dw	ENDDEF
 	.db	1		; IMMEDIATE
 DEFINE:
 	.dw	compiledWord
 	.dw	WORD
-	.dw	.define
-	.dw	EXIT
-
-.define:
-	.dw	nativeWord
-	pop	hl
-	call	entryhead
-	ld	de, compiledWord
-	call	DEinHL
-	ld	(HERE), hl
-.loop:
-	; did we reach ";"?
-	call	toword
-	ld	a, (hl)
-	cp	';'
-	jr	nz, .compile
-	inc	hl
-	ld	a, (hl)
-	cp	' '+1
-	jr	c, .loopend	; whitespace, we have semicol. end
-.compile:
-	ld	hl, (IP)
-	call	pushRS
-	ld	hl, .retRef
-	ld	(IP), hl
-	ld	hl, COMPILE
-	push	hl
-	jp	EXECUTE+2
-.loopend:
-	; Advance (INPUTPOS) to after semicol. HL is already there.
-	ld	(INPUTPOS), hl
-	; write EXIT and return
-	ld	hl, (HERE)
-	ld	de, EXIT
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
-.retRef:
-	.dw	$+2
-	.dw	$+2
-	call	popRSIP
-	jr	.loop
+	.dw	ENTRYHEAD
+	.dw	NUMBER
+	.dw	compiledWord
+	.dw	WR
+	; BBR branch mark
+	.dw	COMPILE
+	.dw	BBR
+	.db	4
+	; no need for EXIT, ENDDEF takes care of taking us out
 
 
 	.db "DOES>"
@@ -1140,12 +1010,6 @@ LITS:
 	.dw	LITS
 	.db	0
 FIND_:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	.find
-	.dw	EXIT
-
-.find:
 	.dw	nativeWord
 	pop	hl
 	call	find
@@ -1167,6 +1031,7 @@ FIND_:
 	.db	0
 FIND:
 	.dw	compiledWord
+	.dw	WORD
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	FINDERR
@@ -1178,6 +1043,7 @@ FIND:
 	.db	0b01		; IMMEDIATE
 FINDI:
 	.dw	compiledWord
+	.dw	WORD
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	FINDERR
@@ -1205,18 +1071,106 @@ KEY:
 	push	hl
 	jp	next
 
-; Read word from (INPUTPOS), copy to WORDBUF, null-terminate, and return, make
+; This is an indirect word that can be redirected through "CINPTR"
+; This is not a real word because it's not meant to be referred to in Forth
+; code: it is replaced in readln.fs.
+CIN:
+	.dw	compiledWord
+	.dw	NUMBER
+	.dw	CINPTR
+	.dw	FETCH
+	.dw	EXECUTE
+	.dw	EXIT
+
+
+; ( c -- f )
+; 33 CMP 1 + NOT
+; The NOT is to normalize the negative/positive numbers to 1 or 0.
+; Hadn't we wanted to normalize, we'd have written:
+; 32 CMP 1 -
+	.db	"WS?"
+	.fill	4
+	.dw	KEY
+	.db	0
+ISWS:
+	.dw	compiledWord
+	.dw	NUMBER
+	.dw	33
+	.dw	CMP
+	.dw	NUMBER
+	.dw	1
+	.dw	PLUS
+	.dw	NOT
+	.dw	EXIT
+
+	.db	"NOT"
+	.fill	4
+	.dw	ISWS
+	.db	0
+NOT:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	ld	a, l
+	or	h
+	ld	hl, 0
+	jr	nz, .skip	; true, keep at 0
+	; false, make 1
+	inc	hl
+.skip:
+	push	hl
+	jp	next
+
+; ( -- c )
+; C< DUP 32 CMP 1 - SKIP? EXIT DROP TOWORD
+	.db	"TOWORD"
+	.fill	1
+	.dw	NOT
+	.db	0
+TOWORD:
+	.dw	compiledWord
+	.dw	CIN
+	.dw	DUP
+	.dw	ISWS
+	.dw	CSKIP
+	.dw	EXIT
+	.dw	DROP
+	.dw	TOWORD
+	.dw	EXIT
+
+; Read word from C<, copy to WORDBUF, null-terminate, and return, make
 ; HL point to WORDBUF.
-; Advance (INPUTPOS) to the character following the last copied character.
-; When we're at EOL, we call readline directly, so this call always returns
-; a word.
 	.db "WORD"
 	.fill 3
-	.dw KEY
+	.dw TOWORD
 	.db 0
 WORD:
-	.dw nativeWord
-	call	toword
+	.dw	compiledWord
+	.dw	WORDBUF_	; ( a )
+	.dw	TOWORD		; ( a c )
+	; branch mark
+	.dw	OVER		; ( a c a )
+	.dw	STORE		; ( a )
+	.dw	NUMBER		; ( a 1 )
+	.dw	1
+	.dw	PLUS		; ( a+1 )
+	.dw	CIN		; ( a c )
+	.dw	DUP		; ( a c c )
+	.dw	ISWS		; ( a c f )
+	.dw	CSKIP		; ( a c )
+	.dw	BBR
+	.db	20	; here - mark
+	; at this point, we have ( a WS )
+	.dw	DROP
+	.dw	NUMBER
+	.dw	0
+	.dw	SWAP		; ( 0 a )
+	.dw	STORE		; ()
+	.dw	WORDBUF_
+	.dw	EXIT
+
+.wcpy:
+	.dw	nativeWord
 	ld	de, WORDBUF
 	push	de		; we already have our result
 .loop:
@@ -1231,7 +1185,6 @@ WORD:
 	; null-terminate the string.
 	xor	a
 	ld	(de), a
-	ld	(INPUTPOS), hl
 	jp	next
 
 
@@ -1284,6 +1237,27 @@ PARSEI:
 	.dw	EXIT
 
 
+; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
+; HL points to new (HERE)
+ENTRYHEAD:
+	.dw	nativeWord
+	pop	hl
+	ld	de, (HERE)
+	call	strcpy
+	ex	de, hl		; (HERE) now in HL
+	ld	de, (CURRENT)
+	ld	a, NAMELEN
+	call	addHL
+	call	DEinHL
+	; Set word flags: not IMMED, so it's 0
+	xor	a
+	ld	(hl), a
+	inc	hl
+	ld	(CURRENT), hl
+	ld	(HERE), hl
+	jp	next
+
+
 	.db "CREATE"
 	.fill 1
 	.dw PARSE
@@ -1291,21 +1265,48 @@ PARSEI:
 CREATE:
 	.dw	compiledWord
 	.dw	WORD
-	.dw	.create
+	.dw	ENTRYHEAD
+	.dw	NUMBER
+	.dw	cellWord
+	.dw	WR
 	.dw	EXIT
 
-.create:
-	.dw	nativeWord
-	pop	hl
-	call	entryhead
-	ld	de, cellWord
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
+; WARNING: there are no limit checks. We must be cautious, in core code, not
+; to create more than SYSV_BUFSIZE/2 sys vars.
+; Also: SYSV shouldn't be used during runtime: SYSVNXT won't point at the
+; right place. It should only be used during stage1 compilation. This is why
+; this word is not documented in dictionary.txt
+	.db	"(sysv)"
+	.fill	1
+	.dw	CREATE
+	.db	0
+SYSV:
+	.dw	compiledWord
+	.dw	WORD
+	.dw	ENTRYHEAD
+	.dw	NUMBER
+	.dw	sysvarWord
+	.dw	WR
+	.dw	NUMBER
+	.dw	SYSVNXT
+	.dw	FETCH
+	.dw	WR
+	; word written, now let's INC SYSVNXT
+	.dw	NUMBER		; a
+	.dw	SYSVNXT
+	.dw	DUP		; a a
+	.dw	FETCH		; a a@
+	.dw	NUMBER		; a a@ 2
+	.dw	2
+	.dw	PLUS		; a a@+2
+	.dw	SWAP		; a@+2 a
+	.dw	STORE
+	.dw	EXIT
+
 
 	.db "HERE"
 	.fill 3
-	.dw CREATE
+	.dw SYSV
 	.db 0
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
@@ -1325,18 +1326,18 @@ PARSEPTR_:
 	.dw sysvarWord
 	.dw PARSEPTR
 
-	.db	"IN>"
-	.fill	4
+	.db	"(wbuf)"
+	.fill	1
 	.dw	PARSEPTR_
 	.db	0
-INP:
+WORDBUF_:
 	.dw	sysvarWord
-	.dw	INPUTPOS
+	.dw	WORDBUF
 
 ; ( n a -- )
 	.db "!"
 	.fill 6
-	.dw INP
+	.dw WORDBUF_
 	.db 0
 STORE:
 	.dw nativeWord

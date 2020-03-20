@@ -32,7 +32,7 @@ directly, but as part of another word.
 "*I*" in description indicates an IMMEDIATE word.
 
 *** Defining words ***
-(find) x    -- a f          Read word x and find it in dict. If found, f=1 and
+(find)      a -- a f        Read at a and find it in dict. If found, f=1 and
                             a = wordref. If not found, f=0 and a = string addr.
 : x ...     --              Define a new word
 ;           R:I --          Exit a colon definition
@@ -186,6 +186,7 @@ core.
 ." xxx"     --              *I* Compiles string literal xxx followed by a call
                             to (print)
                             are never considered negative. "-1 .X -> ffff"
+C<          -- c            Read one char from buffered input.
 EMIT        c --            Spit char c to output stream
 IN>         -- a            Address of variable containing current pos in input
                             buffer.
@@ -195,6 +196,8 @@ PC@         a -- c          Fetch c from port a
 WORD        -- a            Read one word from buffered input and push its addr
 
 There are also ascii const emitters:
+BS
+CR
 LF
 SPC
 
