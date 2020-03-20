@@ -131,7 +131,6 @@ forthRdLineNoOk:
 	push	hl
 	jp	EXECUTE+2
 
-	.db	0b10		; UNWORD
 INTERPRET:
 	.dw	compiledWord
 	.dw	FIND_
@@ -148,7 +147,6 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXIT
 
-	.db	0b10		; UNWORD
 MAINLOOP:
 	.dw	compiledWord
 	.dw	INTERPRET
@@ -294,12 +292,6 @@ addHL:
 	ld	e, a
 	add	hl, de
 	pop	de
-	ret
-
-; make Z the opposite of what it is now
-toggleZ:
-	jp	z, unsetZ
-	cp	a
 	ret
 
 ; Copy string from (HL) in (DE), that is, copy bytes until a null char is
@@ -569,21 +561,13 @@ entryhead:
 	ld	a, NAMELEN
 	call	addHL
 	call	DEinHL
-	; Set word flags: not IMMED, not UNWORD, so it's 0
+	; Set word flags: not IMMED, so it's 0
 	xor	a
 	ld	(hl), a
 	inc	hl
 	ld	(CURRENT), hl
 	ld	(HERE), hl
 	ret
-
-; Sets Z if wordref at HL is of the IMMEDIATE type
-HLisIMMED:
-	dec	hl
-	bit	FLAG_IMMED, (hl)
-	inc	hl
-	; We need an invert flag. We want to Z to be set when flag is non-zero.
-	jp	toggleZ
 
 ; Checks flags Z and S and sets BC to 0 if Z, 1 if C and -1 otherwise
 flagsToBC:
@@ -666,7 +650,7 @@ chkPS:
 ; A dictionary entry has this structure:
 ; - 7b name (zero-padded)
 ; - 2b prev pointer
-; - 1b flags (bit 0: IMMEDIATE. bit 1: UNWORD)
+; - 1b flags (bit 0: IMMEDIATE)
 ; - 2b code pointer
 ; - Parameter field (PF)
 ;
@@ -832,7 +816,6 @@ ABORTI:
 	.dw	.private
 	.dw	EXIT
 
-	.db	0b10		; UNWORD
 .private:
 	.dw	nativeWord
 	ld	hl, (HERE)
@@ -987,7 +970,6 @@ COMPILE:
 	.dw	EXECUTE
 	.dw	EXIT
 
-	.db	0b10		; UNWORD
 .word:
 	.dw	compiledWord
 	.dw	WR
@@ -995,7 +977,6 @@ COMPILE:
 	.dw	DROP
 	.dw	EXIT
 
-	.db	0b10		; UNWORD
 .maybeNum:
 	.dw	compiledWord
 	.dw	PARSEI
@@ -1199,7 +1180,6 @@ FINDI:
 	.dw	LITN
 	.dw	EXIT
 
-	.db	0b10		; UNWORD
 FINDERR:
 	.dw	compiledWord
 	.dw	DROP		; Drop str addr, we don't use it
@@ -1285,7 +1265,6 @@ PARSE:
 	; success, stack is already good, we can exit
 	.dw	EXIT
 
-	.db	0b10		; UNWORD
 .error:
 	.dw	compiledWord
 	.dw	LIT
@@ -1295,7 +1274,6 @@ PARSE:
 
 
 ; Indirect parse caller. Reads PARSEPTR and calls
-	.db	0b10		; UNWORD
 PARSEI:
 	.dw	compiledWord
 	.dw	PARSEPTR_
