@@ -38,6 +38,9 @@
 ; Size of the readline buffer. If a typed line reaches this size, the line is
 ; flushed immediately (same as pressing return).
 .equ	INPT_BUFSIZE		0x40
+; Buffer where WORD copies its read word to. It's significantly larger than
+; NAMELEN, but who knows, in a comment, we might have a very long word...
+.equ	WORD_BUFSIZE		0x20
 
 ; Flags for the "flag field" of the word structure
 ; IMMEDIATE word
@@ -59,7 +62,8 @@
 ; runtime.
 .equ	PARSEPTR	@+2
 .equ	INPTBUF		@+2
-.equ	RAMEND		@+INPT_BUFSIZE
+.equ	WORDBUF		@+INPT_BUFSIZE
+.equ	RAMEND		@+WORD_BUFSIZE
 
 ; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
 ; (HERE) will begin at a strategic place.
@@ -1201,9 +1205,9 @@ KEY:
 	push	hl
 	jp	next
 
-; Read word from (INPUTPOS) and return, in HL, a null-terminated word.
-; Advance (INPUTPOS) to the character following the whitespace ending the
-; word.
+; Read word from (INPUTPOS), copy to WORDBUF, null-terminate, and return, make
+; HL point to WORDBUF.
+; Advance (INPUTPOS) to the character following the last copied character.
 ; When we're at EOL, we call readline directly, so this call always returns
 ; a word.
 	.db "WORD"
@@ -1213,22 +1217,20 @@ KEY:
 WORD:
 	.dw nativeWord
 	call	toword
-	push	hl	; we already have our result
+	ld	de, WORDBUF
+	push	de		; we already have our result
 .loop:
-	inc	hl
 	ld	a, (hl)
-	; special case: is A null? If yes, we will *not* inc A so that we don't
-	; go over the bounds of our input string.
-	or	a
-	jr	z, .noinc
 	cp	' '+1
-	jr	nc, .loop
-	; we've just read a whitespace, HL is pointing to it. Let's transform
-	; it into a null-termination, inc HL, then set (INPUTPOS).
-	xor	a
-	ld	(hl), a
+	jr	c, .loopend
+	ld	(de), a
 	inc	hl
-.noinc:
+	inc	de
+	jr	.loop
+.loopend:
+	; null-terminate the string.
+	xor	a
+	ld	(de), a
 	ld	(INPUTPOS), hl
 	jp	next
 
