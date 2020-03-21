@@ -145,6 +145,7 @@ NOT         f -- f          Push the logical opposite of f
 *** Strings ***
 LIT< x      --              Read following word and write to HERE as a string
                             literal.
+LITS        a --            Write word at addr a as a atring literal.
 SCMP        a1 a2 -- n      Compare strings a1 and a2. See CMP
 SLEN        a -- n          Push length of str at a.
 
