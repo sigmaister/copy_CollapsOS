@@ -151,11 +151,6 @@ forthMain:
 .cinName:
 	.db	"C<", 0
 
-forthLoop:
-	ld	hl, INTERPRET
-	push	hl
-	jp	EXECUTE+2
-
 BEGIN:
 	.dw	compiledWord
 	.dw	LIT
@@ -678,19 +673,33 @@ EXIT:
 	.dw EXIT
 	.db 0
 QUIT:
-	.dw nativeWord
+	.dw compiledWord
+	.dw	NUMBER
+	.dw	0
+	.dw	FLAGS_
+	.dw	STORE
+	.dw	.private
+	.dw	INTERPRET
+
+.private:
+	.dw	nativeWord
 	ld	ix, RS_ADDR
-	jp	forthLoop
+	jp	next
 
 	.db "ABORT"
 	.fill 2
 	.dw QUIT
 	.db 0
 ABORT:
-	.dw nativeWord
+	.dw	compiledWord
+	.dw	.private
+	.dw	QUIT
+
+.private:
+	.dw	nativeWord
 	; Reinitialize PS
 	ld	sp, (INITIAL_SP)
-	jp	QUIT+2
+	jp	next
 
 abortUnderflow:
 	ld	hl, .word
