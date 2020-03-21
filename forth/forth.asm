@@ -168,12 +168,11 @@ INTERPRET:
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	FBR
-	.db	34
+	.db	32
 	; It's a word, execute it
 	.dw	FLAGS_
 	.dw	FETCH
-	.dw	NUMBER
-	.dw	0x0001			; Bit 0 on
+	.dw	ONE			; Bit 0 on
 	.dw	OR
 	.dw	FLAGS_
 	.dw	STORE
@@ -186,11 +185,11 @@ INTERPRET:
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	BBR
-	.db	41
+	.db	39
 	; FBR mark, try number
 	.dw	PARSEI
 	.dw	BBR
-	.db	46
+	.db	44
 	; infinite loop
 
 ; *** Collapse OS lib copy ***
@@ -212,12 +211,6 @@ intoHL:
 	pop 	de
 	ret
 
-intoDE:
-	ex 	de, hl
-	call 	intoHL
-	ex 	de, hl		; de preserved by intoHL, so no push/pop needed
-	ret
-
 ; add the value of A into HL
 ; affects carry flag according to the 16-bit addition, Z, S and P untouched.
 addHL:
@@ -231,22 +224,13 @@ addHL:
 ; Copy string from (HL) in (DE), that is, copy bytes until a null char is
 ; encountered. The null char is also copied.
 ; HL and DE point to the char right after the null char.
-strcpyM:
+strcpy:
 	ld	a, (hl)
 	ld	(de), a
 	inc	hl
 	inc	de
 	or	a
-	jr	nz, strcpyM
-	ret
-
-; Like strcpyM, but preserve HL and DE
-strcpy:
-	push	hl
-	push	de
-	call	strcpyM
-	pop	de
-	pop	hl
+	jr	nz, strcpy
 	ret
 
 ; Compares strings pointed to by HL and DE until one of them hits its null char.
@@ -273,20 +257,20 @@ strcmp:
 	; early, set otherwise)
 	ret
 
-; Compares strings pointed to by HL and DE up to A count of characters. If
+; Compares strings pointed to by HL and DE up to NAMELEN count of characters. If
 ; equal, Z is set. If not equal, Z is reset.
 strncmp:
 	push	bc
 	push	hl
 	push	de
 
-	ld	b, a
+	ld	b, NAMELEN
 .loop:
 	ld	a, (de)
 	cp	(hl)
 	jr	nz, .end	; not equal? break early. NZ is carried out
 				; to the called
-	cp	0		; If our chars are null, stop the cmp
+	or	a		; If our chars are null, stop the cmp
 	jr	z, .end		; The positive result will be carried to the
 	                        ; caller
 	inc	hl
@@ -414,17 +398,6 @@ parseDecimal:
 	ret
 
 ; *** Support routines ***
-; Sets Z if (HL) == E and (HL+1) == D
-HLPointsDE:
-	ld	a, (hl)
-	cp	e
-	ret	nz		; no
-	inc	hl
-	ld	a, (hl)
-	dec	hl
-	cp	d		; Z has our answer
-	ret
-
 ; Find the entry corresponding to word where (HL) points to and sets DE to
 ; point to that entry.
 ; Z if found, NZ if not.
@@ -440,7 +413,6 @@ find:
 	ex	de, hl
 	sbc	hl, bc
 	ex	de, hl		; We're good, DE points to word name
-	ld	a, NAMELEN
 	call	strncmp
 	pop	de		; <-- lvl 1, return to wordref
 	jr	z, .end		; found
@@ -457,7 +429,9 @@ find:
 ; Z is set if DE point to 0 (no entry). NZ if not.
 .prev:
 	dec	de \ dec de \ dec de	; prev field
-	call	intoDE
+	ex 	de, hl
+	call 	intoHL
+	ex 	de, hl		; de preserved by intoHL, so no push/pop needed
 	; DE points to prev. Is it zero?
 	xor	a
 	or	d
@@ -637,7 +611,6 @@ numberWord:
 	push	de
 	jp	next
 
-	.db	0b10		; Flags
 NUMBER:
 	.dw	numberWord
 
@@ -652,7 +625,6 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
-	.db	0b10		; Flags
 LIT:
 	.dw	litWord
 
@@ -674,8 +646,7 @@ EXIT:
 	.db 0
 QUIT:
 	.dw compiledWord
-	.dw	NUMBER
-	.dw	0
+	.dw	ZERO
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	.private
@@ -961,7 +932,7 @@ SCPY:
 	.dw	nativeWord
 	pop	hl
 	ld	de, (HERE)
-	call	strcpyM
+	call	strcpy
 	ld	(HERE), de
 	jp	next
 
@@ -1090,8 +1061,7 @@ ISWS:
 	.dw	NUMBER
 	.dw	33
 	.dw	CMP
-	.dw	NUMBER
-	.dw	1
+	.dw	ONE
 	.dw	PLUS
 	.dw	NOT
 	.dw	EXIT
@@ -1139,27 +1109,27 @@ TOWORD:
 	.db 0
 WORD:
 	.dw	compiledWord
-	.dw	WORDBUF_	; ( a )
+	.dw	NUMBER		; ( a )
+	.dw	WORDBUF
 	.dw	TOWORD		; ( a c )
 	; branch mark
 	.dw	OVER		; ( a c a )
 	.dw	STORE		; ( a )
-	.dw	NUMBER		; ( a 1 )
-	.dw	1
+	.dw	ONE		; ( a 1 )
 	.dw	PLUS		; ( a+1 )
 	.dw	CIN		; ( a c )
 	.dw	DUP		; ( a c c )
 	.dw	ISWS		; ( a c f )
 	.dw	CSKIP		; ( a c )
 	.dw	BBR
-	.db	20	; here - mark
+	.db	18	; here - mark
 	; at this point, we have ( a WS )
 	.dw	DROP
-	.dw	NUMBER
-	.dw	0
+	.dw	ZERO
 	.dw	SWAP		; ( 0 a )
 	.dw	STORE		; ()
-	.dw	WORDBUF_
+	.dw	NUMBER
+	.dw	WORDBUF
 	.dw	EXIT
 
 .wcpy:
@@ -1237,7 +1207,7 @@ ENTRYHEAD:
 	pop	hl
 	ld	de, (HERE)
 	call	strcpy
-	ex	de, hl		; (HERE) now in HL
+	ld	hl, (HERE)
 	ld	de, (CURRENT)
 	ld	a, NAMELEN
 	call	addHL
@@ -1319,17 +1289,9 @@ PARSEPTR_:
 	.dw sysvarWord
 	.dw PARSEPTR
 
-	.db	"(wbuf)"
-	.fill	1
-	.dw	PARSEPTR_
-	.db	0
-WORDBUF_:
-	.dw	sysvarWord
-	.dw	WORDBUF
-
 	.db	"FLAGS"
 	.fill	2
-	.dw	WORDBUF_
+	.dw	PARSEPTR_
 	.db	0
 FLAGS_:
 	.dw	sysvarWord
@@ -1674,10 +1636,34 @@ XOR:
 	push	hl
 	jp	next
 
+; It might look peculiar to have specific words for "0" and "1", but although
+; it slightly beefs ups the ASM part of the binary, this one-byte-save-per-use
+; really adds up when we compare total size.
+
+	.db	"0"
+	.fill	6
+	.dw	XOR
+	.db	0
+ZERO:
+	.dw	nativeWord
+	ld	hl, 0
+	push	hl
+	jp	next
+
+	.db	"1"
+	.fill	6
+	.dw	ZERO
+	.db	0
+ONE:
+	.dw	nativeWord
+	ld	hl, 1
+	push	hl
+	jp	next
+
 ; ( a1 a2 -- b )
 	.db "SCMP"
 	.fill 3
-	.dw XOR
+	.dw ONE
 	.db 0
 SCMP:
 	.dw nativeWord
@@ -1721,16 +1707,16 @@ CSKIP:
 	jp	z, next		; False, do nothing.
 	ld	hl, (IP)
 	ld	de, NUMBER
-	call	HLPointsDE
+	call	.HLPointsDE
 	jr	z, .isNum
 	ld	de, FBR
-	call	HLPointsDE
+	call	.HLPointsDE
 	jr	z, .isBranch
 	ld	de, BBR
-	call	HLPointsDE
+	call	.HLPointsDE
 	jr	z, .isBranch
 	ld	de, LIT
-	call	HLPointsDE
+	call	.HLPointsDE
 	jr	nz, .isWord
 	; We have a literal
 	inc	hl \ inc hl
@@ -1751,6 +1737,17 @@ CSKIP:
 .end:
 	ld	(IP), hl
 	jp	next
+
+; Sets Z if (HL) == E and (HL+1) == D
+.HLPointsDE:
+	ld	a, (hl)
+	cp	e
+	ret	nz		; no
+	inc	hl
+	ld	a, (hl)
+	dec	hl
+	cp	d		; Z has our answer
+	ret
 
 ; This word's atom is followed by 1b *relative* offset (to the cell's addr) to
 ; where to branch to. For example, The branching cell of "IF THEN" would
