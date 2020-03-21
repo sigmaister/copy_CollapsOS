@@ -143,7 +143,8 @@ CMP         n1 n2 -- n      Compare n1 and n2 and set n to -1, 0, or 1.
 NOT         f -- f          Push the logical opposite of f
 
 *** Strings ***
-LITS x      -- a            Read following LIT and push its addr to a
+LIT< x      --              Read following word and write to HERE as a string
+                            literal.
 SCMP        a1 a2 -- n      Compare strings a1 and a2. See CMP
 SLEN        a -- n          Push length of str at a.
 

@@ -5,7 +5,7 @@
 : BEGIN H ; IMMEDIATE
 : AGAIN COMPILE (bbr) H -^ C, ; IMMEDIATE
 : UNTIL COMPILE SKIP? COMPILE (bbr) H -^ C, ; IMMEDIATE
-: ( BEGIN LITS ) WORD SCMP NOT UNTIL ; IMMEDIATE
+: ( BEGIN LIT< ) WORD SCMP NOT UNTIL ; IMMEDIATE
 ( Hello, hello, krkrkrkr... do you hear me?
   Ah, voice at last! Some lines above need comments
   BTW: Forth lines limited to 64 cols because of default

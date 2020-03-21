@@ -988,24 +988,18 @@ LITN:
 	ld	(HERE), hl
 	jp	next
 
-	.db	"LITS"
+	.db	"LIT<"
 	.fill	3
 	.dw	LITN
 	.db	1		; IMMEDIATE
-LITS:
+LITRD:
 	.dw	compiledWord
-	.dw	.wrLIT
+	.dw	NUMBER
+	.dw	LIT
+	.dw	WR
 	.dw	WORD
 	.dw	.scpy
 	.dw	EXIT
-
-.wrLIT:
-	.dw	nativeWord
-	ld	hl, (HERE)
-	ld	de, LIT
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
 
 .scpy:
 	.dw	nativeWord
@@ -1018,7 +1012,7 @@ LITS:
 
 	.db	"(find)"
 	.fill	1
-	.dw	LITS
+	.dw	LITRD
 	.db	0
 FIND_:
 	.dw	nativeWord
