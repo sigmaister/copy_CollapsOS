@@ -53,6 +53,9 @@
 .equ	HERE		@+2
 ; Interpreter pointer. See Execution model comment below.
 .equ	IP		@+2
+; Global flags
+; Bit 0: whether the interpreter is executing a word (as opposed to parsing)
+.equ	FLAGS		@+2
 ; Pointer to the system's number parsing function. It points to then entry that
 ; had the "(parse)" name at startup. During stage0, it's out builtin PARSE,
 ; but at stage1, it becomes "(parse)" from core.fs. It can also be changed at
@@ -170,15 +173,29 @@ INTERPRET:
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	FBR
-	.db	6
+	.db	34
 	; It's a word, execute it
+	.dw	FLAGS_
+	.dw	FETCH
+	.dw	NUMBER
+	.dw	0x0001			; Bit 0 on
+	.dw	OR
+	.dw	FLAGS_
+	.dw	STORE
 	.dw	EXECUTE
+	.dw	FLAGS_
+	.dw	FETCH
+	.dw	NUMBER
+	.dw	0xfffe			; Bit 0 off
+	.dw	AND
+	.dw	FLAGS_
+	.dw	STORE
 	.dw	BBR
-	.db	13
+	.db	41
 	; FBR mark, try number
 	.dw	PARSEI
 	.dw	BBR
-	.db	18
+	.db	46
 	; infinite loop
 
 ; *** Collapse OS lib copy ***
@@ -1334,10 +1351,18 @@ WORDBUF_:
 	.dw	sysvarWord
 	.dw	WORDBUF
 
+	.db	"FLAGS"
+	.fill	2
+	.dw	WORDBUF_
+	.db	0
+FLAGS_:
+	.dw	sysvarWord
+	.dw	FLAGS
+
 ; ( n a -- )
 	.db "!"
 	.fill 6
-	.dw WORDBUF_
+	.dw FLAGS_
 	.db 0
 STORE:
 	.dw nativeWord

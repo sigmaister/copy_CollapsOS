@@ -61,8 +61,9 @@
 
 ( Read one line in input buffer and make IN> point to it )
 : (rdln)
-    ( TODO: don't emit prompt in middle of defs and comments )
-    LF '>' EMIT SPC
+    ( Should we prompt? if we're executing a word, FLAGS bit
+      0, then we shouldn't. )
+    FLAGS @ 0x1 AND NOT IF LF '>' EMIT SPC THEN
     (infl)
     BEGIN (rdlnc) NOT UNTIL
     IN( @ IN> !
