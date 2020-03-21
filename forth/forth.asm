@@ -1618,10 +1618,65 @@ DIVMOD:
 	push	bc
 	jp	next
 
+
+	.db	"AND"
+	.fill	4
+	.dw	DIVMOD
+	.db	0
+AND:
+	.dw	nativeWord
+	pop	hl
+	pop	de
+	call	chkPS
+	ld	a, e
+	and	l
+	ld	l, a
+	ld	a, d
+	and	h
+	ld	h, a
+	push	hl
+	jp	next
+
+	.db	"OR"
+	.fill	5
+	.dw	AND
+	.db	0
+OR:
+	.dw	nativeWord
+	pop	hl
+	pop	de
+	call	chkPS
+	ld	a, e
+	or	l
+	ld	l, a
+	ld	a, d
+	or	h
+	ld	h, a
+	push	hl
+	jp	next
+
+	.db	"XOR"
+	.fill	4
+	.dw	OR
+	.db	0
+XOR:
+	.dw	nativeWord
+	pop	hl
+	pop	de
+	call	chkPS
+	ld	a, e
+	xor	l
+	ld	l, a
+	ld	a, d
+	xor	h
+	ld	h, a
+	push	hl
+	jp	next
+
 ; ( a1 a2 -- b )
 	.db "SCMP"
 	.fill 3
-	.dw DIVMOD
+	.dw XOR
 	.db 0
 SCMP:
 	.dw nativeWord

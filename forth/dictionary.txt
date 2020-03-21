@@ -120,7 +120,7 @@ CURRENT     -- a            Set a to wordref of last added entry.
 HERE        -- a            Push HERE's address
 H           -- a            HERE @
 
-*** Arithmetic ***
+*** Arithmetic / Bits ***
 
 +           a b -- c        a + b -> c
 -           a b -- c        a - b -> c
@@ -129,6 +129,9 @@ H           -- a            HERE @
 /           a b -- c        a / b -> c
 MOD         a b -- c        a % b -> c
 /MOD        a b -- r q      r:remainder q:quotient
+AND         a b -- c        a & b -> c
+OR          a b -- c        a | b -> c
+XOR         a b -- c        a ^ b -> c
 
 *** Logic ***
 =           n1 n2 -- f      Push true if n1 == n2
