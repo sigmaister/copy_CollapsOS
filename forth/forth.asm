@@ -754,42 +754,10 @@ PRINT:
 	inc	hl
 	jr	.loop
 
-
-	.db	'.', '"'
-	.fill	5
-	.dw	PRINT
-	.db	1		; IMMEDIATE
-PRINTI:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	LIT
-	.dw	WR
-	; BBR mark
-	.dw	CIN
-	.dw	DUP
-	.dw	NUMBER
-	.dw	'"'
-	.dw	CMP
-	.dw	CSKIP
-	.dw	FBR
-	.db	6
-	.dw	CWR
-	.dw	BBR
-	.db	19
-	; FBR mark
-	; null terminate string
-	.dw	NUMBER
-	.dw	0
-	.dw	CWR
-	.dw	NUMBER
-	.dw	PRINT
-	.dw	WR
-	.dw	EXIT
-
 ; ( c port -- )
 	.db "PC!"
 	.fill 4
-	.dw PRINTI
+	.dw PRINT
 	.db 0
 PSTORE:
 	.dw nativeWord
@@ -895,29 +863,26 @@ DEFINE:
 	.dw	compiledWord
 	.dw	WORD
 	.dw	FIND_
+	.dw	NOT
 	.dw	CSKIP
-	.dw	.maybeNum
+	.dw	FBR
+	.db	7
+	; Maybe number
+	.dw	PARSEI
+	.dw	LITN
+	.dw	EXIT
+	; FBR mark
 	.dw	DUP
 	.dw	ISIMMED
 	.dw	CSKIP
-	.dw	.word
+	.dw	FBR
+	.db	5
 	; is immediate. just execute.
 	.dw	EXECUTE
 	.dw	EXIT
-
-.word:
-	.dw	compiledWord
+	; FBR mark
+	; just a word, write
 	.dw	WR
-	.dw	R2P		; exit .compile
-	.dw	DROP
-	.dw	EXIT
-
-.maybeNum:
-	.dw	compiledWord
-	.dw	PARSEI
-	.dw	LITN
-	.dw	R2P		; exit .compile
-	.dw	DROP
 	.dw	EXIT
 
 
@@ -988,25 +953,39 @@ LITN:
 	ld	(HERE), hl
 	jp	next
 
-	.db	"LITS"
+	.db	"SCPY"
 	.fill	3
 	.dw	LITN
-	.db	1		; IMMEDIATE
-LITS:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	LIT
-	.dw	WR
-	.dw	.scpy
-	.dw	EXIT
-
-.scpy:
+	.db	0
+SCPY:
 	.dw	nativeWord
 	pop	hl
 	ld	de, (HERE)
 	call	strcpyM
 	ld	(HERE), de
 	jp	next
+
+
+	.db	"LIT"
+	.fill	4
+	.dw	SCPY
+	.db	0
+LIT_:
+	.dw	compiledWord
+	.dw	NUMBER
+	.dw	LIT
+	.dw	WR
+	.dw	EXIT
+
+	.db	"LITS"
+	.fill	3
+	.dw	LIT_
+	.db	0
+LITS:
+	.dw	compiledWord
+	.dw	LIT_
+	.dw	SCPY
+	.dw	EXIT
 
 
 	.db	"LIT<"

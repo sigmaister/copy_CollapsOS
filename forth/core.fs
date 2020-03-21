@@ -44,17 +44,17 @@
 : > CMP 1 = ;
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
-: ABORT" [COMPILE] ." COMPILE ABORT ; IMMEDIATE
 
-( In addition to pushing H this compiles 2 >R so that loop variables are sent
-  to PS at runtime )
+( In addition to pushing H this compiles 2 >R so that loop
+  variables are sent to PS at runtime )
 : DO
     COMPILE SWAP COMPILE >R COMPILE >R
     H
 ; IMMEDIATE
 
-( One could think that we should have a sub word to avoid all these COMPILE,
-  but we can't because otherwise it messes with the RS )
+( One could think that we should have a sub word to avoid all
+  these COMPILE, but we can't because otherwise it messes with
+  the RS )
 : LOOP
     COMPILE R> 1 LITN COMPILE + COMPILE DUP COMPILE >R
     COMPILE I' COMPILE = COMPILE SKIP? COMPILE (bbr)
