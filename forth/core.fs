@@ -1,6 +1,7 @@
 : H HERE @ ;
 : -^ SWAP - ;
 : COMPILE ' LITN ['] , , ; IMMEDIATE
+: [COMPILE] ' , ; IMMEDIATE
 : BEGIN H ; IMMEDIATE
 : AGAIN COMPILE (bbr) H -^ C, ; IMMEDIATE
 : UNTIL COMPILE SKIP? COMPILE (bbr) H -^ C, ; IMMEDIATE
@@ -36,7 +37,6 @@
     H 1 -           ( push a. -1 for allot offset )
 ; IMMEDIATE
 
-: ? @ . ;
 : VARIABLE CREATE 2 ALLOT ;
 : CONSTANT CREATE H ! DOES> @ ;
 : = CMP NOT ;
@@ -44,6 +44,7 @@
 : > CMP 1 = ;
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
+: ABORT" [COMPILE] ." COMPILE ABORT ; IMMEDIATE
 
 ( In addition to pushing H this compiles 2 >R so that loop variables are sent
   to PS at runtime )

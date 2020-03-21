@@ -712,21 +712,9 @@ abortUnderflow:
 	.dw	PRINT
 	.dw	ABORT
 
-	.db	"ABORT", '"'
-	.fill	1
-	.dw	ABORT
-	.db	1		; IMMEDIATE
-ABORTI:
-	.dw	compiledWord
-	.dw	PRINTI
-	.dw	NUMBER
-	.dw	ABORT
-	.dw	WR
-	.dw	EXIT
-
 	.db "BYE"
 	.fill 4
-	.dw ABORTI
+	.dw ABORT
 	.db 0
 BYE:
 	.dw nativeWord
@@ -871,42 +859,9 @@ EXECUTE:
 	jp	(hl)	; go!
 
 
-	.db	"[COMPIL"
-	.dw	EXECUTE
-	.db	1		; IMMEDIATE
-COMPILE:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	FIND_
-	.dw	CSKIP
-	.dw	.maybeNum
-	.dw	DUP
-	.dw	ISIMMED
-	.dw	CSKIP
-	.dw	.word
-	; is immediate. just execute.
-	.dw	EXECUTE
-	.dw	EXIT
-
-.word:
-	.dw	compiledWord
-	.dw	WR
-	.dw	R2P		; exit COMPILE
-	.dw	DROP
-	.dw	EXIT
-
-.maybeNum:
-	.dw	compiledWord
-	.dw	PARSEI
-	.dw	LITN
-	.dw	R2P		; exit COMPILE
-	.dw	DROP
-	.dw	EXIT
-
-
 	.db	";"
 	.fill	6
-	.dw	COMPILE
+	.dw	EXECUTE
 	.db	1		; IMMEDIATE
 ENDDEF:
 	.dw	compiledWord
@@ -931,10 +886,40 @@ DEFINE:
 	.dw	compiledWord
 	.dw	WR
 	; BBR branch mark
-	.dw	COMPILE
+	.dw	.compile
 	.dw	BBR
 	.db	4
 	; no need for EXIT, ENDDEF takes care of taking us out
+
+.compile:
+	.dw	compiledWord
+	.dw	WORD
+	.dw	FIND_
+	.dw	CSKIP
+	.dw	.maybeNum
+	.dw	DUP
+	.dw	ISIMMED
+	.dw	CSKIP
+	.dw	.word
+	; is immediate. just execute.
+	.dw	EXECUTE
+	.dw	EXIT
+
+.word:
+	.dw	compiledWord
+	.dw	WR
+	.dw	R2P		; exit .compile
+	.dw	DROP
+	.dw	EXIT
+
+.maybeNum:
+	.dw	compiledWord
+	.dw	PARSEI
+	.dw	LITN
+	.dw	R2P		; exit .compile
+	.dw	DROP
+	.dw	EXIT
+
 
 
 	.db "DOES>"

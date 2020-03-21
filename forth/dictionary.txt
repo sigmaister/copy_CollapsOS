@@ -44,7 +44,8 @@ directly, but as part of another word.
 ALLOT       n --            Move HERE by n bytes
 C,          b --            Write byte b in HERE and advance it.
 CREATE x    --              Create cell named x. Doesn't allocate a PF.
-[COMPILE] x --              Compile word x and write it to HERE
+[COMPILE] x --              Compile word x and write it to HERE. IMMEDIATE
+                            words are *not* executed.
 COMPILE x   --              Meta compiles. Kind of blows the mind. See below.
 CONSTANT x  n --            Creates cell x that when called pushes its value
 DOES>       --              See description at top of file

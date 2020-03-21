@@ -23,6 +23,8 @@
     AGAIN
 ;
 
+: ? @ . ;
+
 : PUSHDGTS
     999 SWAP        ( stop indicator )
     DUP 0 = IF '0' EXIT THEN    ( 0 is a special case )
