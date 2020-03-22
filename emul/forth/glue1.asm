@@ -1,6 +1,6 @@
 ; Warning: The offsets of native dict entries must be exactly the same between
 ;          glue0.asm and glue1.asm
-.equ	LATEST		CODE_END	; override
+.equ	LATEST		RAMSTART	; override
 .equ	STDIO_PORT	0x00
 
 	jp	init
@@ -26,9 +26,6 @@ emulPutC:
 	out	(STDIO_PORT), a
 	ret
 
-.out $		; should be the same as in glue0, minus 2
-; stage0 spits, at the beginning of the binary, the address of the latest word
-; Therefore, we can set the LATEST label to here and we should be good.
-CODE_END:
+.out $		; should be the same as in glue0
 .bin "core.bin"
 RAMSTART:

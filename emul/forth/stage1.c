@@ -71,9 +71,6 @@ int main(int argc, char *argv[])
 
 #ifndef DEBUG
     // We're done, now let's spit dict data
-    // let's start with LATEST spitting.
-    putchar(m->mem[CURRENT]);
-    putchar(m->mem[CURRENT+1]);
     uint16_t here = m->mem[HERE] + (m->mem[HERE+1] << 8);
     for (int i=sizeof(KERNEL); i<here; i++) {
         putchar(m->mem[i]);

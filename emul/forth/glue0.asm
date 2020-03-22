@@ -34,6 +34,6 @@ emulPutC:
 	out	(STDIO_PORT), a
 	ret
 
-.dw	0		; placeholder used in glue1.
 CODE_END:
+.out LATEST
 .out $		; should be the same as in glue1

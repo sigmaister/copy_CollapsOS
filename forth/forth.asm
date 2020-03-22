@@ -119,12 +119,10 @@ forthMain:
 	push	af \ push af \ push af
 	ld	(INITIAL_SP), sp
 	ld	ix, RS_ADDR
-	; LATEST is a *indirect* label to the latest entry of the dict. See
-	; default at the bottom of dict.asm. This indirection allows us to
-	; override latest to a value set in a binary dict compiled separately,
-	; for example by the stage0 bin.
+	; LATEST is a label to the latest entry of the dict. This can be
+	; overridden if a binary dict has been grafted to the end of this
+	; binary
 	ld	hl, LATEST
-	call	intoHL
 	ld	(CURRENT), hl
 	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
@@ -416,9 +414,12 @@ find:
 	call	strncmp
 	pop	de		; <-- lvl 1, return to wordref
 	jr	z, .end		; found
+	push	hl		; .prev destroys HL
 	call	.prev
+	pop	hl
 	jr	nz, .inner
 	; Z set? end of dict unset Z
+	xor	a
 	inc	a
 .end:
 	pop	bc
@@ -429,15 +430,21 @@ find:
 ; Z is set if DE point to 0 (no entry). NZ if not.
 .prev:
 	dec	de \ dec de \ dec de	; prev field
+	push	de			; --> lvl 1
 	ex 	de, hl
 	call 	intoHL
-	ex 	de, hl		; de preserved by intoHL, so no push/pop needed
-	; DE points to prev. Is it zero?
-	xor	a
-	or	d
+	ex 	de, hl			; DE contains prev offset
+	pop	hl			; <-- lvl 1
+	; HL is prev field's addr
+	; Is offset zero?
+	ld	a, d
 	or	e
-	; Z will be set if DE is zero
-	ret
+	ret	z			; no prev entry
+	; get absolute addr from offset
+	; carry cleared from "or e"
+	sbc	hl, de
+	ex	de, hl			; result in DE
+	ret				; NZ set from SBC
 
 ; Checks flags Z and S and sets BC to 0 if Z, 1 if C and -1 otherwise
 flagsToBC:
@@ -519,10 +526,13 @@ chkPS:
 ; It's important that this part is at the end of the resulting binary.
 ; A dictionary entry has this structure:
 ; - 7b name (zero-padded)
-; - 2b prev pointer
+; - 2b prev offset
 ; - 1b flags (bit 0: IMMEDIATE)
 ; - 2b code pointer
 ; - Parameter field (PF)
+;
+; The prev offset is the number of bytes between the prev field and the
+; previous word's code pointer.
 ;
 ; The code pointer point to "word routines". These routines expect to be called
 ; with IY pointing to the PF. They themselves are expected to end by jumping
@@ -642,7 +652,7 @@ EXIT:
 ; ( R:I -- )
 	.db "QUIT"
 	.fill 3
-	.dw EXIT
+	.dw $-EXIT
 	.db 0
 QUIT:
 	.dw compiledWord
@@ -659,7 +669,7 @@ QUIT:
 
 	.db "ABORT"
 	.fill 2
-	.dw QUIT
+	.dw $-QUIT
 	.db 0
 ABORT:
 	.dw	compiledWord
@@ -685,7 +695,7 @@ abortUnderflow:
 
 	.db "BYE"
 	.fill 4
-	.dw ABORT
+	.dw $-ABORT
 	.db 0
 BYE:
 	.dw nativeWord
@@ -700,7 +710,7 @@ BYE:
 ; ( c -- )
 	.db "EMIT"
 	.fill 3
-	.dw BYE
+	.dw $-BYE
 	.db 0
 EMIT:
 	.dw nativeWord
@@ -711,7 +721,7 @@ EMIT:
 	jp	next
 
 	.db	"(print)"
-	.dw	EMIT
+	.dw	$-EMIT
 	.db	0
 PRINT:
 	.dw	nativeWord
@@ -728,7 +738,7 @@ PRINT:
 ; ( c port -- )
 	.db "PC!"
 	.fill 4
-	.dw PRINT
+	.dw $-PRINT
 	.db 0
 PSTORE:
 	.dw nativeWord
@@ -741,7 +751,7 @@ PSTORE:
 ; ( port -- c )
 	.db "PC@"
 	.fill 4
-	.dw PSTORE
+	.dw $-PSTORE
 	.db 0
 PFETCH:
 	.dw nativeWord
@@ -754,7 +764,7 @@ PFETCH:
 
 	.db	"C,"
 	.fill	5
-	.dw	PFETCH
+	.dw	$-PFETCH
 	.db	0
 CWR:
 	.dw	nativeWord
@@ -769,7 +779,7 @@ CWR:
 
 	.db	","
 	.fill	6
-	.dw	CWR
+	.dw	$-CWR
 	.db	0
 WR:
 	.dw	nativeWord
@@ -782,7 +792,7 @@ WR:
 
 
 	.db	"ROUTINE"
-	.dw	WR
+	.dw	$-WR
 	.db	1			; IMMEDIATE
 ROUTINE:
 	.dw	compiledWord
@@ -818,6 +828,9 @@ ROUTINE:
 	jr	z, .end
 	ld	de, NUMBER
 	cp	'N'
+	jr	z, .end
+	ld	de, chkPS
+	cp	'P'
 	jr	nz, .notgood
 	; continue to end on match
 .end:
@@ -834,7 +847,7 @@ ROUTINE:
 
 ; ( addr -- )
 	.db "EXECUTE"
-	.dw ROUTINE
+	.dw $-ROUTINE
 	.db 0
 EXECUTE:
 	.dw nativeWord
@@ -851,7 +864,7 @@ EXECUTE:
 
 	.db	";"
 	.fill	6
-	.dw	EXECUTE
+	.dw	$-EXECUTE
 	.db	1		; IMMEDIATE
 ENDDEF:
 	.dw	compiledWord
@@ -866,7 +879,7 @@ ENDDEF:
 
 	.db	":"
 	.fill	6
-	.dw	ENDDEF
+	.dw	$-ENDDEF
 	.db	1		; IMMEDIATE
 DEFINE:
 	.dw	compiledWord
@@ -911,7 +924,7 @@ DEFINE:
 
 	.db "DOES>"
 	.fill 2
-	.dw DEFINE
+	.dw $-DEFINE
 	.db 0
 DOES:
 	.dw nativeWord
@@ -932,7 +945,7 @@ DOES:
 
 
 	.db "IMMEDIA"
-	.dw DOES
+	.dw $-DOES
 	.db 0
 IMMEDIATE:
 	.dw nativeWord
@@ -944,7 +957,7 @@ IMMEDIATE:
 
 	.db	"IMMED?"
 	.fill	1
-	.dw	IMMEDIATE
+	.dw	$-IMMEDIATE
 	.db	0
 ISIMMED:
 	.dw	nativeWord
@@ -962,7 +975,7 @@ ISIMMED:
 ; ( n -- )
 	.db	"LITN"
 	.fill	3
-	.dw	ISIMMED
+	.dw	$-ISIMMED
 	.db	0
 LITN:
 	.dw nativeWord
@@ -977,7 +990,7 @@ LITN:
 
 	.db	"SCPY"
 	.fill	3
-	.dw	LITN
+	.dw	$-LITN
 	.db	0
 SCPY:
 	.dw	nativeWord
@@ -990,7 +1003,7 @@ SCPY:
 
 	.db	"(find)"
 	.fill	1
-	.dw	SCPY
+	.dw	$-SCPY
 	.db	0
 FIND_:
 	.dw	nativeWord
@@ -1010,7 +1023,7 @@ FIND_:
 
 	.db	"'"
 	.fill	6
-	.dw	FIND_
+	.dw	$-FIND_
 	.db	0
 FIND:
 	.dw	compiledWord
@@ -1022,7 +1035,7 @@ FIND:
 
 	.db	"[']"
 	.fill	4
-	.dw	FIND
+	.dw	$-FIND
 	.db	0b01		; IMMEDIATE
 FINDI:
 	.dw	compiledWord
@@ -1044,7 +1057,7 @@ FINDERR:
 ; ( -- c )
 	.db "KEY"
 	.fill 4
-	.dw FINDI
+	.dw $-FINDI
 	.db 0
 KEY:
 	.dw nativeWord
@@ -1073,7 +1086,7 @@ CIN:
 ; 32 CMP 1 -
 	.db	"WS?"
 	.fill	4
-	.dw	KEY
+	.dw	$-KEY
 	.db	0
 ISWS:
 	.dw	compiledWord
@@ -1087,7 +1100,7 @@ ISWS:
 
 	.db	"NOT"
 	.fill	4
-	.dw	ISWS
+	.dw	$-ISWS
 	.db	0
 NOT:
 	.dw	nativeWord
@@ -1107,7 +1120,7 @@ NOT:
 ; C< DUP 32 CMP 1 - SKIP? EXIT DROP TOWORD
 	.db	"TOWORD"
 	.fill	1
-	.dw	NOT
+	.dw	$-NOT
 	.db	0
 TOWORD:
 	.dw	compiledWord
@@ -1124,7 +1137,7 @@ TOWORD:
 ; HL point to WORDBUF.
 	.db "WORD"
 	.fill 3
-	.dw TOWORD
+	.dw $-TOWORD
 	.db 0
 WORD:
 	.dw	compiledWord
@@ -1171,7 +1184,7 @@ WORD:
 
 
 	.db	"(parsed"
-	.dw	WORD
+	.dw	$-WORD
 	.db	0
 PARSED:
 	.dw	nativeWord
@@ -1192,7 +1205,7 @@ PARSED:
 
 
 	.db	"(parse)"
-	.dw	PARSED
+	.dw	$-PARSED
 	.db	0
 PARSE:
 	.dw	compiledWord
@@ -1222,7 +1235,7 @@ PARSEI:
 ; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
 	.db	"(entry)"
-	.dw	PARSE
+	.dw	$-PARSE
 	.db	0
 ENTRYHEAD:
 	.dw	nativeWord
@@ -1233,6 +1246,11 @@ ENTRYHEAD:
 	ld	de, (CURRENT)
 	ld	a, NAMELEN
 	call	addHL
+	push	hl		; --> lvl 1
+	or	a	; clear carry
+	sbc	hl, de
+	ex	de, hl
+	pop	hl		; <-- lvl 1
 	call	DEinHL
 	; Set word flags: not IMMED, so it's 0
 	xor	a
@@ -1250,7 +1268,7 @@ ENTRYHEAD:
 ; this word is not documented in dictionary.txt
 	.db	"(sysv)"
 	.fill	1
-	.dw	ENTRYHEAD
+	.dw	$-ENTRYHEAD
 	.db	0
 SYSV:
 	.dw	compiledWord
@@ -1278,21 +1296,21 @@ SYSV:
 
 	.db "HERE"
 	.fill 3
-	.dw SYSV
+	.dw $-SYSV
 	.db 0
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
 	.dw HERE
 
 	.db "CURRENT"
-	.dw HERE_
+	.dw $-HERE_
 	.db 0
 CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
 	.db "(parse*"
-	.dw CURRENT_
+	.dw $-CURRENT_
 	.db 0
 PARSEPTR_:
 	.dw sysvarWord
@@ -1300,7 +1318,7 @@ PARSEPTR_:
 
 	.db	"FLAGS"
 	.fill	2
-	.dw	PARSEPTR_
+	.dw	$-PARSEPTR_
 	.db	0
 FLAGS_:
 	.dw	sysvarWord
@@ -1309,7 +1327,7 @@ FLAGS_:
 ; ( n a -- )
 	.db "!"
 	.fill 6
-	.dw FLAGS_
+	.dw $-FLAGS_
 	.db 0
 STORE:
 	.dw nativeWord
@@ -1323,7 +1341,7 @@ STORE:
 ; ( n a -- )
 	.db "C!"
 	.fill 5
-	.dw STORE
+	.dw $-STORE
 	.db 0
 CSTORE:
 	.dw nativeWord
@@ -1336,7 +1354,7 @@ CSTORE:
 ; ( a -- n )
 	.db "@"
 	.fill 6
-	.dw CSTORE
+	.dw $-CSTORE
 	.db 0
 FETCH:
 	.dw nativeWord
@@ -1349,7 +1367,7 @@ FETCH:
 ; ( a -- c )
 	.db "C@"
 	.fill 5
-	.dw FETCH
+	.dw $-FETCH
 	.db 0
 CFETCH:
 	.dw nativeWord
@@ -1363,7 +1381,7 @@ CFETCH:
 ; ( a -- )
 	.db "DROP"
 	.fill 3
-	.dw CFETCH
+	.dw $-CFETCH
 	.db 0
 DROP:
 	.dw nativeWord
@@ -1373,7 +1391,7 @@ DROP:
 ; ( a b -- b a )
 	.db "SWAP"
 	.fill 3
-	.dw DROP
+	.dw $-DROP
 	.db 0
 SWAP:
 	.dw nativeWord
@@ -1386,7 +1404,7 @@ SWAP:
 ; ( a b c d -- c d a b )
 	.db "2SWAP"
 	.fill 2
-	.dw SWAP
+	.dw $-SWAP
 	.db 0
 SWAP2:
 	.dw nativeWord
@@ -1404,7 +1422,7 @@ SWAP2:
 ; ( a -- a a )
 	.db "DUP"
 	.fill 4
-	.dw SWAP2
+	.dw $-SWAP2
 	.db 0
 DUP:
 	.dw nativeWord
@@ -1417,7 +1435,7 @@ DUP:
 ; ( a b -- a b a b )
 	.db "2DUP"
 	.fill 3
-	.dw DUP
+	.dw $-DUP
 	.db 0
 DUP2:
 	.dw nativeWord
@@ -1433,7 +1451,7 @@ DUP2:
 ; ( a b -- a b a )
 	.db "OVER"
 	.fill 3
-	.dw DUP2
+	.dw $-DUP2
 	.db 0
 OVER:
 	.dw nativeWord
@@ -1448,7 +1466,7 @@ OVER:
 ; ( a b c d -- a b c d a b )
 	.db "2OVER"
 	.fill 2
-	.dw OVER
+	.dw $-OVER
 	.db 0
 OVER2:
 	.dw nativeWord
@@ -1468,7 +1486,7 @@ OVER2:
 ; ( a b c -- b c a)
 	.db "ROT"
 	.fill 4
-	.dw OVER2
+	.dw $-OVER2
 	.db 0
 ROT:
 	.dw nativeWord
@@ -1483,7 +1501,7 @@ ROT:
 
 	.db	">R"
 	.fill	5
-	.dw	ROT
+	.dw	$-ROT
 	.db	0
 P2R:
 	.dw	nativeWord
@@ -1494,7 +1512,7 @@ P2R:
 
 	.db	"R>"
 	.fill	5
-	.dw	P2R
+	.dw	$-P2R
 	.db	0
 R2P:
 	.dw	nativeWord
@@ -1504,7 +1522,7 @@ R2P:
 
 	.db	"I"
 	.fill	6
-	.dw	R2P
+	.dw	$-R2P
 	.db	0
 I:
 	.dw	nativeWord
@@ -1515,7 +1533,7 @@ I:
 
 	.db	"I'"
 	.fill	5
-	.dw	I
+	.dw	$-I
 	.db	0
 IPRIME:
 	.dw	nativeWord
@@ -1526,7 +1544,7 @@ IPRIME:
 
 	.db	"J"
 	.fill	6
-	.dw	IPRIME
+	.dw	$-IPRIME
 	.db	0
 J:
 	.dw	nativeWord
@@ -1538,7 +1556,7 @@ J:
 ; ( a b -- c ) A + B
 	.db "+"
 	.fill 6
-	.dw J
+	.dw $-J
 	.db 0
 PLUS:
 	.dw nativeWord
@@ -1552,7 +1570,7 @@ PLUS:
 ; ( a b -- c ) A - B
 	.db "-"
 	.fill 6
-	.dw PLUS
+	.dw $-PLUS
 	.db 0
 MINUS:
 	.dw nativeWord
@@ -1567,7 +1585,7 @@ MINUS:
 ; ( a b -- c ) A * B
 	.db "*"
 	.fill 6
-	.dw MINUS
+	.dw $-MINUS
 	.db 0
 MULT:
 	.dw nativeWord
@@ -1594,7 +1612,7 @@ MULT:
 
 	.db	"/MOD"
 	.fill	3
-	.dw MULT
+	.dw $-MULT
 	.db 0
 DIVMOD:
 	.dw nativeWord
@@ -1609,7 +1627,7 @@ DIVMOD:
 
 	.db	"AND"
 	.fill	4
-	.dw	DIVMOD
+	.dw	$-DIVMOD
 	.db	0
 AND:
 	.dw	nativeWord
@@ -1627,7 +1645,7 @@ AND:
 
 	.db	"OR"
 	.fill	5
-	.dw	AND
+	.dw	$-AND
 	.db	0
 OR:
 	.dw	nativeWord
@@ -1645,7 +1663,7 @@ OR:
 
 	.db	"XOR"
 	.fill	4
-	.dw	OR
+	.dw	$-OR
 	.db	0
 XOR:
 	.dw	nativeWord
@@ -1667,7 +1685,7 @@ XOR:
 
 	.db	"0"
 	.fill	6
-	.dw	XOR
+	.dw	$-XOR
 	.db	0
 ZERO:
 	.dw	nativeWord
@@ -1677,7 +1695,7 @@ ZERO:
 
 	.db	"1"
 	.fill	6
-	.dw	ZERO
+	.dw	$-ZERO
 	.db	0
 ONE:
 	.dw	nativeWord
@@ -1688,7 +1706,7 @@ ONE:
 ; ( a1 a2 -- b )
 	.db "SCMP"
 	.fill 3
-	.dw ONE
+	.dw $-ONE
 	.db 0
 SCMP:
 	.dw nativeWord
@@ -1703,7 +1721,7 @@ SCMP:
 ; ( n1 n2 -- f )
 	.db "CMP"
 	.fill 4
-	.dw SCMP
+	.dw $-SCMP
 	.db 0
 CMP:
 	.dw nativeWord
@@ -1721,7 +1739,7 @@ CMP:
 ; to after null-termination.
 	.db	"SKIP?"
 	.fill	2
-	.dw	CMP
+	.dw	$-CMP
 	.db	0
 CSKIP:
 	.dw	nativeWord
@@ -1779,7 +1797,7 @@ CSKIP:
 ; contain 3. Add this value to RS.
 	.db	"(fbr)"
 	.fill	2
-	.dw	CSKIP
+	.dw	$-CSKIP
 	.db	0
 FBR:
 	.dw	nativeWord
@@ -1793,7 +1811,7 @@ FBR:
 
 	.db	"(bbr)"
 	.fill	2
-	.dw	FBR
+	.dw	$-FBR
 	.db	0
 BBR:
 	.dw	nativeWord
@@ -1805,5 +1823,11 @@ BBR:
 	ld	(IP), hl
 	jp	next
 
+; To allow dict binaries to "hook themselves up", we always end such binary
+; with a dummy, *empty* entry. Therefore, we can have a predictable place for
+; getting a prev label.
+
+	.db	"_______"
+	.dw	$-BBR
+	.db	0
 LATEST:
-	.dw BBR
