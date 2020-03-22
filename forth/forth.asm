@@ -988,41 +988,9 @@ SCPY:
 	jp	next
 
 
-	.db	"LIT"
-	.fill	4
-	.dw	SCPY
-	.db	0
-LIT_:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	LIT
-	.dw	WR
-	.dw	EXIT
-
-	.db	"LITS"
-	.fill	3
-	.dw	LIT_
-	.db	0
-LITS:
-	.dw	compiledWord
-	.dw	LIT_
-	.dw	SCPY
-	.dw	EXIT
-
-
-	.db	"LIT<"
-	.fill	3
-	.dw	LITS
-	.db	1		; IMMEDIATE
-LITRD:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	LITS
-	.dw	EXIT
-
 	.db	"(find)"
 	.fill	1
-	.dw	LITRD
+	.dw	SCPY
 	.db	0
 FIND_:
 	.dw	nativeWord

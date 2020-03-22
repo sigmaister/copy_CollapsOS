@@ -1,5 +1,9 @@
 : H HERE @ ;
 : -^ SWAP - ;
+: [LITN] LITN ; IMMEDIATE
+: LIT ROUTINE S [LITN] , ;
+: LITS LIT SCPY ;
+: LIT< WORD LITS ; IMMEDIATE
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
 : BEGIN H ; IMMEDIATE
@@ -37,7 +41,6 @@
     H 1 -           ( push a. -1 for allot offset )
 ; IMMEDIATE
 
-: [LITN] LITN ; IMMEDIATE
 : CREATE
     WORD (entry)     ( empty header with name )
     ROUTINE C [LITN] ( push cellWord addr )
