@@ -1,12 +1,19 @@
 ( Z80 assembler )
 
+: CODE
+    ( same as CREATE, but with ROUTINE V )
+    WORD (entry)
+    ROUTINE V [LITN] ,
+;
+
 ( Splits word into msb/lsb, lsb being on TOS )
 : SPLITB
     DUP 0x100 /
     SWAP 0xff AND
 ;
 
-: A, .X ;
+( To debug, change C, to .X )
+: A, C, ;
 7 CONSTANT A
 0 CONSTANT B
 1 CONSTANT C
@@ -122,3 +129,4 @@
 
 ( Specials )
 : JRe, 0x18 A, 2 - A, ;
+: JPNEXT, ROUTINE N [LITN] JPnn, ;
