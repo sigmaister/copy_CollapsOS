@@ -37,6 +37,12 @@
     H 1 -           ( push a. -1 for allot offset )
 ; IMMEDIATE
 
+: [LITN] LITN ; IMMEDIATE
+: CREATE
+    WORD (entry)     ( empty header with name )
+    ROUTINE C [LITN] ( push cellWord addr )
+    ,                ( write it )
+;
 : VARIABLE CREATE 2 ALLOT ;
 : CONSTANT CREATE H ! DOES> @ ;
 : = CMP NOT ;

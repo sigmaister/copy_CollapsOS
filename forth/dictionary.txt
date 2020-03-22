@@ -52,6 +52,7 @@ DOES>       --              See description at top of file
 IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
 LITN        n --            Write number n as a literal.
+[LITN]      n --            *I* Immediate version of LITN.
 ROUTINE x   -- a            Push the addr of the specified core routine
                             C=cellWord L=compiledWord V=nativeWord N=next S=LIT
                             N=NUMBER Y=sysvarWord D=doesWord

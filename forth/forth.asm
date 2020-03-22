@@ -783,7 +783,7 @@ WR:
 
 	.db	"ROUTINE"
 	.dw	WR
-	.db	0
+	.db	1			; IMMEDIATE
 ROUTINE:
 	.dw	compiledWord
 	.dw	WORD
@@ -1253,6 +1253,9 @@ PARSEI:
 
 ; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
+	.db	"(entry)"
+	.dw	PARSE
+	.db	0
 ENTRYHEAD:
 	.dw	nativeWord
 	pop	hl
@@ -1272,19 +1275,6 @@ ENTRYHEAD:
 	jp	next
 
 
-	.db "CREATE"
-	.fill 1
-	.dw PARSE
-	.db 0
-CREATE:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	ENTRYHEAD
-	.dw	NUMBER
-	.dw	cellWord
-	.dw	WR
-	.dw	EXIT
-
 ; WARNING: there are no limit checks. We must be cautious, in core code, not
 ; to create more than SYSV_BUFSIZE/2 sys vars.
 ; Also: SYSV shouldn't be used during runtime: SYSVNXT won't point at the
@@ -1292,7 +1282,7 @@ CREATE:
 ; this word is not documented in dictionary.txt
 	.db	"(sysv)"
 	.fill	1
-	.dw	CREATE
+	.dw	ENTRYHEAD
 	.db	0
 SYSV:
 	.dw	compiledWord
