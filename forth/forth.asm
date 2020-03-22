@@ -781,9 +781,60 @@ WR:
 	jp	next
 
 
+	.db	"ROUTINE"
+	.dw	WR
+	.db	0
+ROUTINE:
+	.dw	compiledWord
+	.dw	WORD
+	.dw	.private
+	.dw	EXIT
+
+.private:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	ld	a, (hl)
+	ld	de, cellWord
+	cp	'C'
+	jr	z, .end
+	ld	de, compiledWord
+	cp	'L'
+	jr	z, .end
+	ld	de, nativeWord
+	cp	'V'
+	jr	z, .end
+	ld	de, next
+	cp	'N'
+	jr	z, .end
+	ld	de, sysvarWord
+	cp	'Y'
+	jr	z, .end
+	ld	de, doesWord
+	cp	'D'
+	jr	z, .end
+	ld	de, LIT
+	cp	'S'
+	jr	z, .end
+	ld	de, NUMBER
+	cp	'N'
+	jr	nz, .notgood
+	; continue to end on match
+.end:
+	; is our slen 1?
+	inc	hl
+	ld	a, (hl)
+	or	a
+	jr	z, .good
+.notgood:
+	ld	de, 0
+.good:
+	push	de
+	jp	next
+
 ; ( addr -- )
 	.db "EXECUTE"
-	.dw WR
+	.dw ROUTINE
 	.db 0
 EXECUTE:
 	.dw nativeWord
