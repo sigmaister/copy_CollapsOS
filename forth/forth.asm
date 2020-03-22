@@ -1456,9 +1456,25 @@ OVER2:
 	push	bc	; B
 	jp	next
 
+; ( a b c -- b c a)
+	.db "ROT"
+	.fill 4
+	.dw OVER2
+	.db 0
+ROT:
+	.dw nativeWord
+	pop	hl	; C
+	pop	de	; B
+	pop	bc	; A
+	call	chkPS
+	push	de	; B
+	push	hl	; C
+	push	bc	; A
+	jp	next
+
 	.db	">R"
 	.fill	5
-	.dw	OVER2
+	.dw	ROT
 	.db	0
 P2R:
 	.dw	nativeWord
