@@ -33,11 +33,11 @@ forth/forth0.bin: forth/glue0.asm $(ZASMBIN)
 forth/forth0-bin.h: forth/forth0.bin
 	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
 
-forth/stage1: forth/stage1.c $(OBJS) forth/forth0-bin.h 
-	$(CC) forth/stage1.c $(OBJS) -o $@
+forth/stage1: forth/stage.c $(OBJS) forth/forth0-bin.h 
+	$(CC) forth/stage.c $(OBJS) -o $@
 
-forth/stage1dbg: forth/stage1.c $(OBJS) forth/forth0-bin.h 
-	$(CC) -DDEBUG forth/stage1.c $(OBJS) -o $@
+forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h 
+	$(CC) -DDEBUG forth/stage.c $(OBJS) -o $@
 
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
 	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null

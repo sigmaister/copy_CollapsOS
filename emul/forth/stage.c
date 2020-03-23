@@ -4,20 +4,19 @@
 #include "../emul.h"
 #include "forth0-bin.h"
 
-/* Stage 1
+/* Staging binaries
 
-The role of the stage 1 executable is to start from a bare Forth executable
-(stage 0) that will compile core non-native definitions into binary form and
-append this to existing bootstrap binary to form our final Forth bin.
+The role of a stage executable is to compile definitions in a dictionary and
+then spit the difference between the starting binary and the new binary.
+
+That binary can then be grafted to an exiting Forth binary to augment its
+dictionary.
 
 We could, if we wanted, run only with the bootstrap binary and compile core
 defs at runtime, but that would mean that those defs live in RAM. In may system,
 RAM is much more constrained than ROM, so it's worth it to give ourselves the
 trouble of compiling defs to binary.
 
-This stage 0 executable has to be layed out in a particular manner: HERE must
-directly follow executable's last byte so that we don't waste spce and also
-that wordref offsets correspond.
 */
 
 // When DEBUG is set, stage1 is a core-less forth that works interactively.
@@ -28,13 +27,12 @@ that wordref offsets correspond.
 // in sync with glue.asm
 #define RAMSTART 0x900
 #define STDIO_PORT 0x00
-// In sync with glue code. This way, we can know where HERE was when we stopped
-// running
-#define HERE 0xe700
-// We also need to know what CURRENT is so we can write our first two bytes
-#define CURRENT 0xe702
+// To know which part of RAM to dump, we listen to port 2, which at the end of
+// its compilation process, spits its HERE addr to port 2 (MSB first)
+#define HERE_PORT 0x02
 
 static int running;
+static uint16_t ending_here = 0;
 
 static uint8_t iord_stdio()
 {
@@ -54,12 +52,19 @@ static void iowr_stdio(uint8_t val)
 #endif
 }
 
+static void iowr_here(uint8_t val)
+{
+    ending_here <<= 8;
+    ending_here |= val;
+}
+
 int main(int argc, char *argv[])
 {
     Machine *m = emul_init();
     m->ramstart = RAMSTART;
     m->iord[STDIO_PORT] = iord_stdio;
     m->iowr[STDIO_PORT] = iowr_stdio;
+    m->iowr[HERE_PORT] = iowr_here;
     // initialize memory
     for (int i=0; i<sizeof(KERNEL); i++) {
         m->mem[i] = KERNEL[i];
@@ -71,8 +76,8 @@ int main(int argc, char *argv[])
 
 #ifndef DEBUG
     // We're done, now let's spit dict data
-    uint16_t here = m->mem[HERE] + (m->mem[HERE+1] << 8);
-    for (int i=sizeof(KERNEL); i<here; i++) {
+    fprintf(stderr, "hey, %x\n", ending_here);
+    for (int i=sizeof(KERNEL); i<ending_here; i++) {
         putchar(m->mem[i]);
     }
 #endif
