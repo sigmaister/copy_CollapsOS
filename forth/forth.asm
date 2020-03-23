@@ -883,7 +883,6 @@ ENDDEF:
 	.db	1		; IMMEDIATE
 DEFINE:
 	.dw	compiledWord
-	.dw	WORD
 	.dw	ENTRYHEAD
 	.dw	NUMBER
 	.dw	compiledWord
@@ -1238,6 +1237,12 @@ PARSEI:
 	.dw	$-PARSE
 	.db	0
 ENTRYHEAD:
+	.dw	compiledWord
+	.dw	WORD
+	.dw	.private
+	.dw	EXIT
+
+.private:
 	.dw	nativeWord
 	pop	hl
 	ld	de, (HERE)
@@ -1272,7 +1277,6 @@ ENTRYHEAD:
 	.db	0
 SYSV:
 	.dw	compiledWord
-	.dw	WORD
 	.dw	ENTRYHEAD
 	.dw	NUMBER
 	.dw	sysvarWord

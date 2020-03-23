@@ -42,7 +42,7 @@
 ; IMMEDIATE
 
 : CREATE
-    WORD (entry)     ( empty header with name )
+    (entry)          ( empty header with name )
     ROUTINE C [LITN] ( push cellWord addr )
     ,                ( write it )
 ;

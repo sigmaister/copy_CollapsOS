@@ -2,7 +2,7 @@
 
 : CODE
     ( same as CREATE, but with ROUTINE V )
-    WORD (entry)
+    (entry)
     ROUTINE V [LITN] ,
 ;
 
