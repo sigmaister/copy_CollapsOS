@@ -1405,28 +1405,10 @@ SWAP:
 	push	hl
 	jp	next
 
-; ( a b c d -- c d a b )
-	.db "2SWAP"
-	.fill 2
-	.dw $-SWAP
-	.db 0
-SWAP2:
-	.dw nativeWord
-	pop	de		; D
-	pop	hl		; C
-	pop	bc		; B
-	call	chkPS
-
-	ex	(sp), hl	; A in HL
-	push	de		; D
-	push	hl		; A
-	push	bc		; B
-	jp	next
-
 ; ( a -- a a )
 	.db "DUP"
 	.fill 4
-	.dw $-SWAP2
+	.dw $-SWAP
 	.db 0
 DUP:
 	.dw nativeWord
@@ -1436,26 +1418,10 @@ DUP:
 	push	hl
 	jp	next
 
-; ( a b -- a b a b )
-	.db "2DUP"
-	.fill 3
-	.dw $-DUP
-	.db 0
-DUP2:
-	.dw nativeWord
-	pop	hl	; B
-	pop	de	; A
-	call	chkPS
-	push	de
-	push	hl
-	push	de
-	push	hl
-	jp	next
-
 ; ( a b -- a b a )
 	.db "OVER"
 	.fill 3
-	.dw $-DUP2
+	.dw $-DUP
 	.db 0
 OVER:
 	.dw nativeWord
@@ -1467,29 +1433,9 @@ OVER:
 	push	de
 	jp	next
 
-; ( a b c d -- a b c d a b )
-	.db "2OVER"
-	.fill 2
-	.dw $-OVER
-	.db 0
-OVER2:
-	.dw nativeWord
-	pop	hl	; D
-	pop	de	; C
-	pop	bc	; B
-	pop	iy	; A
-	call	chkPS
-	push	iy	; A
-	push	bc	; B
-	push	de	; C
-	push	hl	; D
-	push	iy	; A
-	push	bc	; B
-	jp	next
-
 	.db	">R"
 	.fill	5
-	.dw	$-OVER2
+	.dw	$-OVER
 	.db	0
 P2R:
 	.dw	nativeWord

@@ -30,4 +30,44 @@ CODE ROT
     BC PUSHqq,      ( A )
 ;CODE
 
+( a b -- a b a b )
+CODE 2DUP
+    HL POPqq,       ( B )
+    DE POPqq,       ( A )
+    ROUTINE P CALLnn,
+    DE PUSHqq,      ( A )
+    HL PUSHqq,      ( B )
+    DE PUSHqq,      ( A )
+    HL PUSHqq,      ( B )
+;CODE
+
+( a b c d -- a b c d a b )
+
+CODE 2OVER
+    HL POPqq,       ( D )
+    DE POPqq,       ( C )
+    BC POPqq,       ( B )
+    IY POPqq,       ( A )
+    ROUTINE P CALLnn,
+    IY PUSHqq,      ( A )
+    BC PUSHqq,      ( B )
+    DE PUSHqq,      ( C )
+    HL PUSHqq,      ( D )
+    IY PUSHqq,      ( A )
+    BC PUSHqq,      ( B )
+;CODE
+
+( a b c d -- c d a b )
+
+CODE 2SWAP
+    HL POPqq,       ( D )
+    DE POPqq,       ( C )
+    BC POPqq,       ( B )
+    IY POPqq,       ( A )
+    ROUTINE P CALLnn,
+    DE PUSHqq,      ( C )
+    HL PUSHqq,      ( D )
+    IY PUSHqq,      ( A )
+    BC PUSHqq,      ( B )
+;CODE
 

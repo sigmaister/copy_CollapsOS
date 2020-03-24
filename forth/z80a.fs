@@ -22,6 +22,11 @@
 3 CONSTANT AF
 3 CONSTANT SP
 
+( As a general rule, IX and IY are equivalent to spitting an
+  extra 0xdd / 0xfd and then spit the equivalent of HL )
+: IX 0xdd A, HL ;
+: IY 0xfd A, HL ;
+
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
 0xc9 OP1 RET,
