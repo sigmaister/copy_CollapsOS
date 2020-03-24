@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include "../emul.h"
-#include "forth1-bin.h"
+#include "forth2-bin.h"
 
 // in sync with glue.asm
 #define RAMSTART 0x900

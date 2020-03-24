@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "../emul.h"
+#ifdef STAGE2
+#include "forth1-bin.h"
+#else
 #include "forth0-bin.h"
+#endif
 
 /* Staging binaries
 
@@ -32,7 +36,11 @@ trouble of compiling defs to binary.
 #define HERE_PORT 0x02
 
 static int running;
-static uint16_t ending_here = 0;
+// We support double-pokes, that is, a first poke to tell where to start the
+// dump and a second one to tell where to stop. If there is only one poke, it's
+// then ending HERE and we start at sizeof(KERNEL).
+static uint16_t start_here = 0;
+static uint16_t end_here = 0;
 
 static uint8_t iord_stdio()
 {
@@ -54,8 +62,10 @@ static void iowr_stdio(uint8_t val)
 
 static void iowr_here(uint8_t val)
 {
-    ending_here <<= 8;
-    ending_here |= val;
+    start_here <<=8;
+    start_here |= (end_here >> 8);
+    end_here <<= 8;
+    end_here |= val;
 }
 
 int main(int argc, char *argv[])
@@ -76,8 +86,10 @@ int main(int argc, char *argv[])
 
 #ifndef DEBUG
     // We're done, now let's spit dict data
-    fprintf(stderr, "hey, %x\n", ending_here);
-    for (int i=sizeof(KERNEL); i<ending_here; i++) {
+    if (start_here == 0) {
+        start_here = sizeof(KERNEL);
+    }
+    for (int i=start_here; i<end_here; i++) {
         putchar(m->mem[i]);
     }
 #endif

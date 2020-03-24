@@ -27,8 +27,8 @@ shell/shell-bin.h: shell/shell.bin
 shell/shell: shell/shell.c $(SHELLOBJS) shell/shell-bin.h 
 	$(CC) shell/shell.c $(SHELLOBJS) -o $@
 
-forth/forth0.bin: forth/glue0.asm $(ZASMBIN)
-	$(ZASMBIN) $(KERNEL) ../forth < forth/glue0.asm | tee $@ > /dev/null
+forth/forth0.bin: forth/stage0.asm $(ZASMBIN)
+	$(ZASMBIN) $(KERNEL) ../forth forth/stagec.asm < forth/stage0.asm | tee $@ > /dev/null
 
 forth/forth0-bin.h: forth/forth0.bin
 	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
@@ -39,16 +39,30 @@ forth/stage1: forth/stage.c $(OBJS) forth/forth0-bin.h
 forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h 
 	$(CC) -DDEBUG forth/stage.c $(OBJS) -o $@
 
-forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
-	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null
-
-forth/forth1.bin: forth/glue1.asm forth/core.bin $(ZASMBIN)
-	$(ZASMBIN) $(KERNEL) ../forth forth/core.bin < forth/glue1.asm | tee $@ > /dev/null
+# z80c.bin is not in the prerequisites because its a bootstrap binary that
+# should be updated manually through make fbootstrap.
+forth/forth1.bin: forth/stage1.asm forth/forth0.bin $(ZASMBIN)
+	$(ZASMBIN) $(KERNEL) ../forth forth/z80c.bin forth/stagec.asm < forth/stage1.asm | tee $@ > /dev/null
 
 forth/forth1-bin.h: forth/forth1.bin
 	./bin2c.sh KERNEL < forth/forth1.bin | tee $@ > /dev/null
 
-forth/forth: forth/forth.c $(OBJS) forth/forth1-bin.h 
+forth/stage2: forth/stage.c $(OBJS) forth/forth1-bin.h 
+	$(CC) -DSTAGE2 forth/stage.c $(OBJS) -o $@
+
+forth/stage2dbg: forth/stage.c $(OBJS) forth/forth1-bin.h 
+	$(CC) -DSTAGE2 -DDEBUG forth/stage.c $(OBJS) -o $@
+
+forth/core.bin: $(FORTHSRC_PATHS) forth/stage2
+	cat $(FORTHSRC_PATHS) | ./forth/stage2 | tee $@ > /dev/null
+
+forth/forth2.bin: forth/stage2.asm forth/core.bin $(ZASMBIN)
+	$(ZASMBIN) $(KERNEL) ../forth forth/core.bin forth/z80c.bin forth/stagec.asm < forth/stage2.asm | tee $@ > /dev/null
+
+forth/forth2-bin.h: forth/forth2.bin
+	./bin2c.sh KERNEL < forth/forth2.bin | tee $@ > /dev/null
+
+forth/forth: forth/forth.c $(OBJS) forth/forth2-bin.h 
 	$(CC) forth/forth.c $(OBJS) -o $@
 
 zasm/kernel-bin.h: zasm/kernel.bin
@@ -93,6 +107,10 @@ cfsin/user.h: shell/user.h
 updatebootstrap: $(ZASMBIN)
 	$(ZASMBIN) $(KERNEL) < zasm/glue.asm > zasm/kernel.bin
 	$(ZASMBIN) $(KERNEL) $(APPS) zasm/user.h < $(APPS)/zasm/glue.asm > zasm/zasm.bin
+
+.PHONY: fbootstrap
+fbootstrap: forth/stage1
+	cat $(FORTHSRC_PATHS) ../forth/z80c.fs ../forth/dummy.fs | ./forth/stage1 | tee forth/z80c.bin > /dev/null
 
 .PHONY: clean
 clean:

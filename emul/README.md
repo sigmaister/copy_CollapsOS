@@ -80,6 +80,39 @@ code of the program is the value of `A` when the program halts.
 
 This is used for unit tests.
 
+## forth
+
+Collapse OS' Forth interpreter, which will probably soon replace the whole OS.
+
+At this point, it is not yet entirely self-hosting, but will be eventually.
+Because of that aim, it currently builds in a particular manner.
+
+There are 3 build stages.
+
+**Stage 0**: This stage is created with zasm by assembling `forth/forth.asm`
+through `stage0.asm`. This yields `forth0.bin`. We then wrap this binary with
+`stage.c` to create the `stage1` binary, which allows us to get to the next
+stage.
+
+The long term goal is to gradually extract contents from `forth.asm` and have
+nothing but Forth source files.
+
+**Stage 1**: The `stage1` binary allows us to augment `forth0.bin` with
+contents from `z80c.fs`, which compiles native words using Forth's Z80
+assembler. This yields `z80c.bin`.
+
+This is where there's a chiken-and-egg issue: Forth's assembler needs our full
+Forth interpreter, but that interpreter needs native words from `z80c.fs`. This
+is why `z80c.bin` is committed into the git repo and it's built automatically
+with `make`. Updating `z80c.bin` is a specific make rule, `fbootstrap`.
+
+Then, from there, we augment `forth0.bin` with `z80c.bin` and yield
+`forth1.bin`, from which we create `stage2`.
+
+**Stage 2**: From there, the way is clear to compile the dict of our full Forth
+interpreter, which we do using `stage2` and produce `forth2.bin`, from which we
+can create our final `forth` executable.
+
 ## Problems?
 
 If the libz80-wrapped zasm executable works badly (hangs, spew garbage, etc.),
