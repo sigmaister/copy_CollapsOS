@@ -166,29 +166,30 @@ INTERPRET:
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	FBR
-	.db	32
+	.db	18
 	; It's a word, execute it
-	.dw	FLAGS_
-	.dw	FETCH
+	; For now, we only have one flag, let's take advantage of
+	; this to keep code simple.
 	.dw	ONE			; Bit 0 on
-	.dw	OR
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	EXECUTE
-	.dw	FLAGS_
-	.dw	FETCH
-	.dw	NUMBER
-	.dw	0xfffe			; Bit 0 off
-	.dw	AND
+	.dw	ZERO			; Bit 0 off
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	BBR
-	.db	39
+	.db	25
 	; FBR mark, try number
 	.dw	PARSEI
 	.dw	BBR
-	.db	44
+	.db	30
 	; infinite loop
+
+; Oops, I forgot to create a stable ABI before starting to rely on stability...
+; I'll fix this soon, but for now, I need to offset a recent simplification
+; I've made in INTERPRET above. If we don't, z80c.bin doesn't refer to proper
+; routine addresses...
+.fill 14
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -1559,27 +1560,9 @@ DIVMOD:
 	jp	next
 
 
-	.db	"AND"
-	.fill	4
-	.dw	$-DIVMOD
-	.db	0
-AND:
-	.dw	nativeWord
-	pop	hl
-	pop	de
-	call	chkPS
-	ld	a, e
-	and	l
-	ld	l, a
-	ld	a, d
-	and	h
-	ld	h, a
-	push	hl
-	jp	next
-
 	.db	"OR"
 	.fill	5
-	.dw	$-AND
+	.dw	$-DIVMOD
 	.db	0
 OR:
 	.dw	nativeWord
@@ -1764,4 +1747,3 @@ BBR:
 	.db	"_______"
 	.dw	$-BBR
 	.db	0
-LATEST:

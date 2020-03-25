@@ -71,3 +71,15 @@ CODE 2SWAP
     BC PUSHqq,      ( B )
 ;CODE
 
+CODE AND
+    HL POPqq,
+    DE POPqq,
+    chkPS,
+    A E LDrr,
+    L ANDr,
+    L A LDrr,
+    A D LDrr,
+    H ANDr,
+    H A LDrr,
+    HL PUSHqq,
+;CODE

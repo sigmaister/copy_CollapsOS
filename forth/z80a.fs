@@ -45,6 +45,15 @@
 0x46 OP1r LDr(HL),
 0x70 OP1r LD(HL)r,
 
+( r -- )
+: OP1r0
+    CREATE C,
+    DOES>
+    C@              ( r op )
+    OR A,
+;
+0xa0 OP1r0 ANDr,
+
 ( qq -- also works for ss )
 : OP1qq
     CREATE C,
@@ -138,3 +147,6 @@
 
 : ;CODE JPNEXT, ;
 
+
+( Routines )
+: chkPS, ROUTINE P [LITN] CALLnn, ;

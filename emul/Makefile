@@ -44,7 +44,7 @@ forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
 	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null
 
-forth/forth1.bin: forth/stage1.asm forth/forth0.bin $(ZASMBIN)
+forth/forth1.bin: forth/stage1.asm forth/forth0.bin forth/core.bin $(ZASMBIN)
 	$(ZASMBIN) $(KERNEL) ../forth forth/z80c.bin forth/core.bin forth/stagec.asm < forth/stage1.asm | tee $@ > /dev/null
 
 forth/forth1-bin.h: forth/forth1.bin
