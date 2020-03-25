@@ -84,6 +84,19 @@ CODE AND
     HL PUSHqq,
 ;CODE
 
+CODE OR
+    HL POPqq,
+    DE POPqq,
+    chkPS,
+    A E LDrr,
+    L ORr,
+    L A LDrr,
+    A D LDrr,
+    H ORr,
+    H A LDrr,
+    HL PUSHqq,
+;CODE
+
 CODE PC!
     BC POPqq,
     HL POPqq,

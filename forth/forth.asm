@@ -1505,27 +1505,9 @@ DIVMOD:
 	jp	next
 
 
-	.db	"OR"
-	.fill	5
-	.dw	$-DIVMOD
-	.db	0
-OR:
-	.dw	nativeWord
-	pop	hl
-	pop	de
-	call	chkPS
-	ld	a, e
-	or	l
-	ld	l, a
-	ld	a, d
-	or	h
-	ld	h, a
-	push	hl
-	jp	next
-
 	.db	"XOR"
 	.fill	4
-	.dw	$-OR
+	.dw	$-DIVMOD
 	.db	0
 XOR:
 	.dw	nativeWord

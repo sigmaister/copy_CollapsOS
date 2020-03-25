@@ -53,6 +53,7 @@
     OR A,
 ;
 0xa0 OP1r0 ANDr,
+0xb0 OP1r0 ORr,
 
 ( qq -- also works for ss )
 : OP1qq
