@@ -54,6 +54,7 @@
 ;
 0xa0 OP1r0 ANDr,
 0xb0 OP1r0 ORr,
+0xa8 OP1r0 XORr,
 
 ( qq -- also works for ss )
 : OP1qq

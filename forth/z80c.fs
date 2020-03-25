@@ -97,6 +97,19 @@ CODE OR
     HL PUSHqq,
 ;CODE
 
+CODE XOR
+    HL POPqq,
+    DE POPqq,
+    chkPS,
+    A E LDrr,
+    L XORr,
+    L A LDrr,
+    A D LDrr,
+    H XORr,
+    H A LDrr,
+    HL PUSHqq,
+;CODE
+
 CODE PC!
     BC POPqq,
     HL POPqq,

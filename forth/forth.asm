@@ -1505,31 +1505,13 @@ DIVMOD:
 	jp	next
 
 
-	.db	"XOR"
-	.fill	4
-	.dw	$-DIVMOD
-	.db	0
-XOR:
-	.dw	nativeWord
-	pop	hl
-	pop	de
-	call	chkPS
-	ld	a, e
-	xor	l
-	ld	l, a
-	ld	a, d
-	xor	h
-	ld	h, a
-	push	hl
-	jp	next
-
 ; It might look peculiar to have specific words for "0" and "1", but although
 ; it slightly beefs ups the ASM part of the binary, this one-byte-save-per-use
 ; really adds up when we compare total size.
 
 	.db	"0"
 	.fill	6
-	.dw	$-XOR
+	.dw	$-DIVMOD
 	.db	0
 ZERO:
 	.dw	nativeWord
