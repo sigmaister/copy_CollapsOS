@@ -90,3 +90,11 @@ CODE PC!
     chkPS,
     L OUT(C)r,
 ;CODE
+
+CODE PC@
+    BC POPqq,
+    chkPS,
+    H 0 LDrn,
+    L INr(C),
+    HL PUSHqq,
+;CODE

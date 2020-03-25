@@ -733,23 +733,9 @@ PRINT:
 	inc	hl
 	jr	.loop
 
-; ( port -- c )
-	.db "PC@"
-	.fill 4
-	.dw $-PRINT
-	.db 0
-PFETCH:
-	.dw nativeWord
-	pop	bc
-	call	chkPS
-	ld	h, 0
-	in	l, (c)
-	push	hl
-	jp	next
-
 	.db	"C,"
 	.fill	5
-	.dw	$-PFETCH
+	.dw	$-PRINT
 	.db	0
 CWR:
 	.dw	nativeWord

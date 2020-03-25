@@ -124,7 +124,7 @@
     OR A,
 ;
 0xed41 OP2r OUT(C)r,
-0xeb40 OP2r INr(C),
+0xed40 OP2r INr(C),
 
 ( dd nn -- )
 : OP3ddnn
