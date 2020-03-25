@@ -107,11 +107,24 @@
     C@              ( b r op )
     ROT             ( r op b )
     8 *             ( r op b<<3 )
-    OR OR Z,
+    OR OR A,
 ;
 0xc0 OP2br SETbr,
 0x80 OP2br RESbr,
 0x40 OP2br BITbr,
+
+( cell contains both bytes. MSB is spit as-is, LSB is ORed with r )
+( r -- )
+: OP2r
+    CREATE ,
+    DOES>
+    @ 256 /MOD      ( r lsb msb )
+    A,              ( r lsb )
+    SWAP 8 *        ( lsb r<<3 )
+    OR A,
+;
+0xed41 OP2r OUT(C)r,
+0xeb40 OP2r INr(C),
 
 ( dd nn -- )
 : OP3ddnn

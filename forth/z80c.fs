@@ -83,3 +83,10 @@ CODE AND
     H A LDrr,
     HL PUSHqq,
 ;CODE
+
+CODE PC!
+    BC POPqq,
+    HL POPqq,
+    chkPS,
+    L OUT(C)r,
+;CODE

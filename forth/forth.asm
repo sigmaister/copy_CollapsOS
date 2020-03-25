@@ -21,11 +21,6 @@
 ;
 ; PutC: Write character specified in A onto the device.
 ;
-; *** ASCII ***
-.equ	BS	0x08
-.equ	CR	0x0d
-.equ	LF	0x0a
-.equ	DEL	0x7f
 ; *** Const ***
 ; Base of the Return Stack
 .equ	RS_ADDR		0xf000
@@ -738,23 +733,10 @@ PRINT:
 	inc	hl
 	jr	.loop
 
-; ( c port -- )
-	.db "PC!"
-	.fill 4
-	.dw $-PRINT
-	.db 0
-PSTORE:
-	.dw nativeWord
-	pop	bc
-	pop	hl
-	call	chkPS
-	out	(c), l
-	jp	next
-
 ; ( port -- c )
 	.db "PC@"
 	.fill 4
-	.dw $-PSTORE
+	.dw $-PRINT
 	.db 0
 PFETCH:
 	.dw nativeWord
