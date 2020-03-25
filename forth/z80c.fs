@@ -34,7 +34,7 @@ CODE ROT
 CODE 2DUP
     HL POPqq,       ( B )
     DE POPqq,       ( A )
-    ROUTINE P CALLnn,
+    chkPS,
     DE PUSHqq,      ( A )
     HL PUSHqq,      ( B )
     DE PUSHqq,      ( A )
@@ -48,7 +48,7 @@ CODE 2OVER
     DE POPqq,       ( C )
     BC POPqq,       ( B )
     IY POPqq,       ( A )
-    ROUTINE P CALLnn,
+    chkPS,
     IY PUSHqq,      ( A )
     BC PUSHqq,      ( B )
     DE PUSHqq,      ( C )
@@ -64,7 +64,7 @@ CODE 2SWAP
     DE POPqq,       ( C )
     BC POPqq,       ( B )
     IY POPqq,       ( A )
-    ROUTINE P CALLnn,
+    chkPS,
     DE PUSHqq,      ( C )
     HL PUSHqq,      ( D )
     IY PUSHqq,      ( A )

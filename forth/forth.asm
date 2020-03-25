@@ -108,6 +108,14 @@
 ; At the end of every compiledWord is an EXIT. This pops RS, sets IP to it, and
 ; continues.
 
+; *** Stable ABI ***
+; Those jumps below are supposed to stay at these offsets, always. If they
+; change bootstrap binaries have to be adjusted because they rely on them.
+.fill 0x1a-$
+JUMPTBL:
+	jp	next
+	jp	chkPS
+
 ; *** Code ***
 forthMain:
 	; STACK OVERFLOW PROTECTION:
@@ -184,12 +192,6 @@ INTERPRET:
 	.dw	BBR
 	.db	30
 	; infinite loop
-
-; Oops, I forgot to create a stable ABI before starting to rely on stability...
-; I'll fix this soon, but for now, I need to offset a recent simplification
-; I've made in INTERPRET above. If we don't, z80c.bin doesn't refer to proper
-; routine addresses...
-.fill 14
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -815,7 +817,7 @@ ROUTINE:
 	ld	de, nativeWord
 	cp	'V'
 	jr	z, .end
-	ld	de, next
+	ld	de, JUMPTBL
 	cp	'N'
 	jr	z, .end
 	ld	de, sysvarWord
@@ -828,9 +830,9 @@ ROUTINE:
 	cp	'S'
 	jr	z, .end
 	ld	de, NUMBER
-	cp	'N'
+	cp	'M'
 	jr	z, .end
-	ld	de, chkPS
+	ld	de, JUMPTBL+3
 	cp	'P'
 	jr	nz, .notgood
 	; continue to end on match

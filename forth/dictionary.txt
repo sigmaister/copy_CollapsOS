@@ -55,7 +55,7 @@ LITN        n --            Write number n as a literal.
 [LITN]      n --            *I* Immediate version of LITN.
 ROUTINE x   -- a            Push the addr of the specified core routine
                             C=cellWord L=compiledWord V=nativeWord N=next S=LIT
-                            N=NUMBER Y=sysvarWord D=doesWord
+                            M=NUMBER Y=sysvarWord D=doesWord
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
 
 Compilation vs meta-compilation. When you compile a word with "[COMPILE] foo",
