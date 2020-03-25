@@ -1269,41 +1269,9 @@ ENTRYHEAD:
 	jp	next
 
 
-; WARNING: there are no limit checks. We must be cautious, in core code, not
-; to create more than SYSV_BUFSIZE/2 sys vars.
-; Also: SYSV shouldn't be used during runtime: SYSVNXT won't point at the
-; right place. It should only be used during stage1 compilation. This is why
-; this word is not documented in dictionary.txt
-	.db	"(sysv)"
-	.fill	1
-	.dw	$-ENTRYHEAD
-	.db	0
-SYSV:
-	.dw	compiledWord
-	.dw	ENTRYHEAD
-	.dw	NUMBER
-	.dw	sysvarWord
-	.dw	WR
-	.dw	NUMBER
-	.dw	SYSVNXT
-	.dw	FETCH
-	.dw	WR
-	; word written, now let's INC SYSVNXT
-	.dw	NUMBER		; a
-	.dw	SYSVNXT
-	.dw	DUP		; a a
-	.dw	FETCH		; a a@
-	.dw	NUMBER		; a a@ 2
-	.dw	2
-	.dw	PLUS		; a a@+2
-	.dw	SWAP		; a@+2 a
-	.dw	STORE
-	.dw	EXIT
-
-
 	.db "HERE"
 	.fill 3
-	.dw $-SYSV
+	.dw $-ENTRYHEAD
 	.db 0
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
@@ -1331,10 +1299,17 @@ FLAGS_:
 	.dw	sysvarWord
 	.dw	FLAGS
 
+	.db	"SYSVNXT"
+	.dw	$-FLAGS_
+	.db	0
+SYSVNXT_:
+	.dw	sysvarWord
+	.dw	SYSVNXT
+
 ; ( n a -- )
 	.db "!"
 	.fill 6
-	.dw $-FLAGS_
+	.dw $-SYSVNXT_
 	.db 0
 STORE:
 	.dw nativeWord

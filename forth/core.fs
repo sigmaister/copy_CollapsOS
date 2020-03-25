@@ -71,3 +71,16 @@
     COMPILE R> COMPILE DROP COMPILE R> COMPILE DROP
 ; IMMEDIATE
 
+( WARNING: there are no limit checks. We must be cautious, in
+  core code, not to create more than SYSV_BUFSIZE/2 sys vars.
+  Also: SYSV shouldn't be used during runtime: SYSVNXT won't
+  point at the right place. It should only be used during
+  stage1 compilation. This is why this word is not documented
+  in dictionary.txt )
+
+: (sysv)
+    (entry)
+    ROUTINE Y [LITN] ,
+    SYSVNXT @ ,
+    2 SYSVNXT +!
+;
