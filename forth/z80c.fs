@@ -110,6 +110,21 @@ CODE XOR
     HL PUSHqq,
 ;CODE
 
+CODE C!
+    HL POPqq,
+    DE POPqq,
+    chkPS,
+    E LD(HL)r,
+;CODE
+
+CODE C@
+    HL POPqq,
+    chkPS,
+    L LDr(HL),
+    H 0 LDrn,
+    HL PUSHqq,
+;CODE
+
 CODE PC!
     BC POPqq,
     HL POPqq,

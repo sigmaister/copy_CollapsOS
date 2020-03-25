@@ -1288,23 +1288,10 @@ STORE:
 	ld	(iy+1), h
 	jp	next
 
-; ( n a -- )
-	.db "C!"
-	.fill 5
-	.dw $-STORE
-	.db 0
-CSTORE:
-	.dw nativeWord
-	pop	hl
-	pop	de
-	call	chkPS
-	ld	(hl), e
-	jp	next
-
 ; ( a -- n )
 	.db "@"
 	.fill 6
-	.dw $-CSTORE
+	.dw $-STORE
 	.db 0
 FETCH:
 	.dw nativeWord
@@ -1314,24 +1301,10 @@ FETCH:
 	push	hl
 	jp	next
 
-; ( a -- c )
-	.db "C@"
-	.fill 5
-	.dw $-FETCH
-	.db 0
-CFETCH:
-	.dw nativeWord
-	pop	hl
-	call	chkPS
-	ld	l, (hl)
-	ld	h, 0
-	push	hl
-	jp	next
-
 ; ( a -- )
 	.db "DROP"
 	.fill 3
-	.dw $-CFETCH
+	.dw $-FETCH
 	.db 0
 DROP:
 	.dw nativeWord
