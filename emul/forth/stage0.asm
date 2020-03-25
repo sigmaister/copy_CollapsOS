@@ -3,5 +3,5 @@
 .inc "stagec.asm"
 .inc "forth.asm"
 
+.bin "z80c.bin"
 CODE_END:
-.out $		; should be the same as in stage{1,2}

@@ -90,28 +90,26 @@ Because of that aim, it currently builds in a particular manner.
 There are 3 build stages.
 
 **Stage 0**: This stage is created with zasm by assembling `forth/forth.asm`
-through `stage0.asm`. This yields `forth0.bin`. We then wrap this binary with
-`stage.c` to create the `stage1` binary, which allows us to get to the next
-stage.
+and `z80c.bin` through `stage0.asm`. This yields `forth0.bin`. We then wrap
+this binary with `stage.c` to create the `stage1` binary, which allows us to
+get to the next stage.
 
-The long term goal is to gradually extract contents from `forth.asm` and have
-nothing but Forth source files.
+`z80c.bin` is a "chicken-and-egg" typf of binary that is committed in the repo.
+It is the result of compiling `z80c.fs`, but this needs stage2.
 
 **Stage 1**: The `stage1` binary allows us to augment `forth0.bin` with
-contents from `z80c.fs`, which compiles native words using Forth's Z80
-assembler. This yields `z80c.bin`.
+the compiled dictionary of a full Forth interpreter. We feed it with
+`$(FORTHSRCS)` and then dump the resulting compiled dict. 
 
-This is where there's a chiken-and-egg issue: Forth's assembler needs our full
-Forth interpreter, but that interpreter needs native words from `z80c.fs`. This
-is why `z80c.bin` is committed into the git repo and it's built automatically
-with `make`. Updating `z80c.bin` is a specific make rule, `fbootstrap`.
+From there, we can create `forth1.bin`, which is wrapped by both the `forth`
+and `stage2` executables. `forth` is the interpreter you'll use.
 
-Then, from there, we augment `forth0.bin` with `z80c.bin` and yield
-`forth1.bin`, from which we create `stage2`.
+**Stage 2**: `stage2` is used to resolve the chicken-and-egg problem and use
+the power of a full Forth intepreter, including an assembler, to assemble
+`z80c.bin`. This is a manual step executed through `make fbootstrap`.
 
-**Stage 2**: From there, the way is clear to compile the dict of our full Forth
-interpreter, which we do using `stage2` and produce `forth2.bin`, from which we
-can create our final `forth` executable.
+Normally, running this step should yield the exact same `z80c.bin` as before,
+unless of course you've changed the source.
 
 ## Problems?
 
