@@ -130,7 +130,7 @@ CODE *
     DE INCss,
 ( noinc )
     A DECr,
-    0 12 - JRNZe, ( loop )
+    -12 JRNZe, ( loop )
     HL PUSHqq,
 ;CODE
 
@@ -154,7 +154,7 @@ CODE /MOD
     DE ADDHLss,
     C DECr,
 ( skip )
-    0 12 - DJNZe, ( loop )
+    -12 DJNZe, ( loop )
     B A LDrr,
     HL PUSHqq,
     BC PUSHqq,

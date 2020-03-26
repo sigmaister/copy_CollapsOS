@@ -296,6 +296,8 @@ strskip:
 parseDecimal:
 	; First char is special: it has to succeed.
 	ld	a, (hl)
+	cp	'-'
+	jr	z, .negative
 	; Parse the decimal char at A and extract it's 0-9 numerical value. Put the
 	; result in A.
 	; On success, the carry flag is reset. On error, it is set.
@@ -347,6 +349,19 @@ parseDecimal:
 	exx		; HL as a string pointer, restore BC
 	pop	de	; <-- lvl 1, result
 	cp	a	; ensure Z
+	ret
+
+.negative:
+	inc	hl
+	call	parseDecimal
+	ret	nz
+	push	hl	; --> lvl 1
+	or	a	; clear carry
+	ld	hl, 0
+	sbc	hl, de
+	ex	de, hl
+	pop	hl	; <-- lvl 1
+	xor	a	; set Z
 	ret
 
 ; *** Support routines ***
