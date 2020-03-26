@@ -24,7 +24,7 @@ CODE ROT
     HL POPqq,       ( C )
     DE POPqq,       ( B )
     BC POPqq,       ( A )
-    ROUTINE P CALLnn,
+    chkPS,
     DE PUSHqq,      ( B )
     HL PUSHqq,      ( C )
     BC PUSHqq,      ( A )

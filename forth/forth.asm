@@ -106,8 +106,9 @@
 ; *** Stable ABI ***
 ; Those jumps below are supposed to stay at these offsets, always. If they
 ; change bootstrap binaries have to be adjusted because they rely on them.
-.fill 0x1a-$
+.fill 0x17-$
 JUMPTBL:
+	jp	nativeWord
 	jp	next
 	jp	chkPS
 
@@ -297,35 +298,6 @@ strskip:
 	ex	af, af'
 	pop	bc
 	ret
-
-; Borrowed from Tasty Basic by Dimitri Theulings (GPL).
-; Divide HL by DE, placing the result in BC and the remainder in HL.
-divide:
-	push hl		; --> lvl 1
-	ld l, h		; divide h by de
-	ld h, 0
-	call .dv1
-	ld b, c		; save result in b
-	ld a, l		; (remainder + l) / de
-	pop hl		; <-- lvl 1
-	ld h, a
-.dv1:
-	ld c, 0xff	; result in c
-.dv2:
-	inc c		; dumb routine
-	call .subde	; divide using subtract and count
-	jr nc, .dv2
-	add hl, de
-	ret
-.subde:
-	ld a, l
-	sub e		; subtract de from hl
-	ld l, a
-	ld a, h
-	sbc a, d
-	ld h, a
-	ret
-
 
 ; Parse string at (HL) as a decimal value and return value in DE.
 ; Reads as many digits as it can and stop when:
@@ -782,10 +754,10 @@ ROUTINE:
 	ld	de, compiledWord
 	cp	'L'
 	jr	z, .end
-	ld	de, nativeWord
+	ld	de, JUMPTBL
 	cp	'V'
 	jr	z, .end
-	ld	de, JUMPTBL
+	ld	de, JUMPTBL+3
 	cp	'N'
 	jr	z, .end
 	ld	de, sysvarWord
@@ -800,7 +772,7 @@ ROUTINE:
 	ld	de, NUMBER
 	cp	'M'
 	jr	z, .end
-	ld	de, JUMPTBL+3
+	ld	de, JUMPTBL+6
 	cp	'P'
 	jr	nz, .notgood
 	; continue to end on match
@@ -1433,6 +1405,8 @@ MULT:
 	jp	next
 
 
+; Borrowed from http://wikiti.brandonw.net/
+; Divides AC by DE and places the quotient in AC and the remainder in HL
 	.db	"/MOD"
 	.fill	3
 	.dw $-MULT
@@ -1440,10 +1414,24 @@ MULT:
 DIVMOD:
 	.dw nativeWord
 	pop	de
-	pop	hl
+	pop	bc
 	call	chkPS
-	call	divide
-	push	hl
+	ld	a, b		; AC
+	ld	b, 16
+	ld	hl, 0
+.loop:
+	scf
+	rl	c
+	rla
+	adc	hl, hl
+	sbc	hl, de
+	jr	nc, .skip
+	add	hl, de
+	dec	c
+.skip:
+	djnz	.loop
+	ld	b, a
+	push	hl	; REM
 	push	bc
 	jp	next
 
