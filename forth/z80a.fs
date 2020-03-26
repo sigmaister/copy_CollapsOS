@@ -61,6 +61,7 @@
 0xa0 OP1r0 ANDr,
 0xb0 OP1r0 ORr,
 0xa8 OP1r0 XORr,
+0xb8 OP1r0 CPr,
 
 ( qq -- also works for ss )
 : OP1qq
@@ -93,7 +94,7 @@
     DOES>
     C@ A, A,
 ;
-0xd3 OP2n OUTAn,
+0xd3 OP2n OUTnA,
 0xdb OP2n INAn,
 
 ( r n -- )

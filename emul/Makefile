@@ -103,7 +103,7 @@ updatebootstrap: $(ZASMBIN)
 # words and they write to HERE at initialization.
 .PHONY: fbootstrap
 fbootstrap: forth/stage2
-	cat ../forth/dummy.fs ../forth/z80c.fs ../forth/dummy.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
+	cat ../forth/dummy.fs ../forth/z80c.fs forth/emul.fs ../forth/dummy.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
 
 .PHONY: clean
 clean:

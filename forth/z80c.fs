@@ -17,6 +17,9 @@
   These restrictions are temporary, I'll figure something out
   so that we can end up fully bootstrap Forth from within
   itself.
+
+  Oh, also: KEY and EMIT are not defined here. There're
+  expected to be defined in platform-specific code.
 )
 
 ( a b c -- b c a )

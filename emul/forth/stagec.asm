@@ -16,9 +16,4 @@ emulGetC:
 	cp	a		; ensure Z
 	ret
 
-emulPutC:
-	out	(STDIO_PORT), a
-	ret
-
 .equ	GETC	emulGetC
-.equ	PUTC	emulPutC
