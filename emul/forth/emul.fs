@@ -8,3 +8,10 @@ CODE (emit)
     A L LDrr,
     0 OUTnA,
 ;CODE
+
+CODE KEY
+    0 INAn,
+    H 0 LDrn,
+    L A LDrr,
+    HL PUSHqq,
+;CODE

@@ -141,7 +141,8 @@ forthMain:
 	call	find
 	jr	z, .skip
 	; no? then use KEY
-	ld	de, KEY
+	ld	hl, .keyName
+	call	find
 .skip:
 	ld	(CINPTR), de
 	; Set up SYSVNXT
@@ -157,6 +158,8 @@ forthMain:
 	.db	"(c<)", 0
 .emitName:
 	.db	"(emit)", 0
+.keyName:
+	.db	"KEY", 0
 
 BEGIN:
 	.dw	compiledWord
@@ -985,22 +988,10 @@ FIND_:
 	push	de
 	jp	next
 
-; ( -- c )
-	.db "KEY"
-	.dw $-FIND_
-	.db 3
-KEY:
-	.dw nativeWord
-	call	GETC
-	ld	h, 0
-	ld	l, a
-	push	hl
-	jp	next
-
 ; This is an indirect word that can be redirected through "CINPTR"
 ; code: it is replaced in readln.fs.
 	.db "C<"
-	.dw $-KEY
+	.dw $-FIND_
 	.db 2
 CIN:
 	.dw	compiledWord

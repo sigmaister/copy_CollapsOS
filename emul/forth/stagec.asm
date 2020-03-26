@@ -9,11 +9,3 @@ init:
 	ld	sp, 0xffff
 	call	forthMain
 	halt
-
-emulGetC:
-	; Blocks until a char is returned
-	in	a, (STDIO_PORT)
-	cp	a		; ensure Z
-	ret
-
-.equ	GETC	emulGetC
