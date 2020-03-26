@@ -167,23 +167,25 @@ INTERPRET:
 	.dw	FIND_
 	.dw	CSKIP
 	.dw	FBR
-	.db	18
+	.db	22
 	; It's a word, execute it
 	; For now, we only have one flag, let's take advantage of
 	; this to keep code simple.
-	.dw	ONE			; Bit 0 on
+	.dw	NUMBER			; Bit 0 on
+	.dw	1
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	EXECUTE
-	.dw	ZERO			; Bit 0 off
+	.dw	NUMBER			; Bit 0 off
+	.dw	0
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	BBR
-	.db	25
+	.db	29
 	; FBR mark, try number
 	.dw	PARSEI
 	.dw	BBR
-	.db	30
+	.db	34
 	; infinite loop
 
 ; *** Collapse OS lib copy ***
@@ -628,7 +630,8 @@ EXIT:
 	.db 4
 QUIT:
 	.dw compiledWord
-	.dw	ZERO
+	.dw	NUMBER
+	.dw	0
 	.dw	FLAGS_
 	.dw	STORE
 	.dw	.private
@@ -992,7 +995,8 @@ ISWS:
 	.dw	NUMBER
 	.dw	33
 	.dw	CMP
-	.dw	ONE
+	.dw	NUMBER
+	.dw	1
 	.dw	PLUS
 	.dw	NOT
 	.dw	EXIT
@@ -1043,17 +1047,19 @@ WORD:
 	; branch mark
 	.dw	OVER		; ( a c a )
 	.dw	STORE		; ( a )
-	.dw	ONE		; ( a 1 )
+	.dw	NUMBER		; ( a 1 )
+	.dw	1
 	.dw	PLUS		; ( a+1 )
 	.dw	CIN		; ( a c )
 	.dw	DUP		; ( a c c )
 	.dw	ISWS		; ( a c f )
 	.dw	CSKIP		; ( a c )
 	.dw	BBR
-	.db	18	; here - mark
+	.db	20	; here - mark
 	; at this point, we have ( a WS )
 	.dw	DROP
-	.dw	ZERO
+	.dw	NUMBER
+	.dw	0
 	.dw	SWAP		; ( 0 a )
 	.dw	STORE		; ()
 	.dw	NUMBER
@@ -1374,32 +1380,9 @@ MULT:
 	push	hl
 	jp	next
 
-
-; It might look peculiar to have specific words for "0" and "1", but although
-; it slightly beefs ups the ASM part of the binary, this one-byte-save-per-use
-; really adds up when we compare total size.
-
-	.db	"0"
-	.dw	$-MULT
-	.db	1
-ZERO:
-	.dw	nativeWord
-	ld	hl, 0
-	push	hl
-	jp	next
-
-	.db	"1"
-	.dw	$-ZERO
-	.db	1
-ONE:
-	.dw	nativeWord
-	ld	hl, 1
-	push	hl
-	jp	next
-
 ; ( a1 a2 -- b )
 	.db "SCMP"
-	.dw $-ONE
+	.dw $-MULT
 	.db 4
 SCMP:
 	.dw nativeWord
