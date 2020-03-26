@@ -7,5 +7,5 @@
   current HERE value. The staging executable needs it to know
   what to dump. )
 
-HERE @ 256 / 2 PC!
-HERE @ 2 PC!
+H@ 256 / 2 PC!
+H@ 2 PC!

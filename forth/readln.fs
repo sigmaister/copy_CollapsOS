@@ -21,9 +21,9 @@
 
 ( Initializes the readln subsystem )
 : (c<$)
-    HERE @ IN( !
+    H@ IN( !
     INBUFSZ ALLOT
-    HERE @ IN) !
+    H@ IN) !
     (infl)
 ;
 

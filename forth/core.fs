@@ -1,4 +1,4 @@
-: H HERE @ ;
+: H@ HERE @ ;
 : -^ SWAP - ;
 : [LITN] LITN ; IMMEDIATE
 : LIT ROUTINE S [LITN] , ;
@@ -9,9 +9,9 @@
 : ['] WORD (find) SKIP? _err LITN ; IMMEDIATE
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
-: BEGIN H ; IMMEDIATE
-: AGAIN COMPILE (bbr) H -^ C, ; IMMEDIATE
-: UNTIL COMPILE SKIP? COMPILE (bbr) H -^ C, ; IMMEDIATE
+: BEGIN H@ ; IMMEDIATE
+: AGAIN COMPILE (bbr) H@ -^ C, ; IMMEDIATE
+: UNTIL COMPILE SKIP? COMPILE (bbr) H@ -^ C, ; IMMEDIATE
 : ( BEGIN LIT< ) WORD SCMP NOT UNTIL ; IMMEDIATE
 ( Hello, hello, krkrkrkr... do you hear me?
   Ah, voice at last! Some lines above need comments
@@ -30,21 +30,21 @@
 : IF                ( -- a | a: br cell addr )
     COMPILE SKIP?   ( if true, don't branch )
     COMPILE (fbr)
-    H               ( push a )
+    H@              ( push a )
     1 ALLOT         ( br cell allot )
 ; IMMEDIATE
 
 : THEN              ( a -- | a: br cell addr )
-    DUP H -^ SWAP   ( a-H a )
+    DUP H@ -^ SWAP   ( a-H a )
     C!
 ; IMMEDIATE
 
 : ELSE              ( a1 -- a2 | a1: IF cell a2: ELSE cell )
     COMPILE (fbr)
     1 ALLOT
-    DUP H -^ SWAP   ( a-H a )
+    DUP H@ -^ SWAP  ( a-H a )
     C!
-    H 1 -           ( push a. -1 for allot offset )
+    H@ 1 -          ( push a. -1 for allot offset )
 ; IMMEDIATE
 
 : CREATE
@@ -53,18 +53,18 @@
     ,                ( write it )
 ;
 : VARIABLE CREATE 2 ALLOT ;
-: CONSTANT CREATE H ! DOES> @ ;
+: CONSTANT CREATE H@ ! DOES> @ ;
 : = CMP NOT ;
 : < CMP 0 1 - = ;
 : > CMP 1 = ;
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
 
-( In addition to pushing H this compiles 2 >R so that loop
+( In addition to pushing H@ this compiles 2 >R so that loop
   variables are sent to PS at runtime )
 : DO
     COMPILE SWAP COMPILE >R COMPILE >R
-    H
+    H@
 ; IMMEDIATE
 
 ( One could think that we should have a sub word to avoid all
@@ -73,7 +73,7 @@
 : LOOP
     COMPILE R> 1 LITN COMPILE + COMPILE DUP COMPILE >R
     COMPILE I' COMPILE = COMPILE SKIP? COMPILE (bbr)
-    H -^ C,
+    H@ -^ C,
     COMPILE R> COMPILE DROP COMPILE R> COMPILE DROP
 ; IMMEDIATE
 
