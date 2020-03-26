@@ -26,19 +26,14 @@
 .equ	RS_ADDR		0xf000
 ; Number of bytes we keep as a padding between HERE and the scratchpad
 .equ	PADDING		0x20
-; Max length of dict entry names
-.equ	NAMELEN		7
-; Offset of the code link relative to the beginning of the word
-.equ	CODELINK_OFFSET	NAMELEN+3
-; Buffer where WORD copies its read word to. It's significantly larger than
-; NAMELEN, but who knows, in a comment, we might have a very long word...
+; Buffer where WORD copies its read word to.
 .equ	WORD_BUFSIZE		0x20
 ; Allocated space for sysvars (see comment above SYSVCNT)
 .equ	SYSV_BUFSIZE		0x10
 
 ; Flags for the "flag field" of the word structure
 ; IMMEDIATE word
-.equ	FLAG_IMMED	0
+.equ	FLAG_IMMED	7
 
 ; *** Variables ***
 .equ	INITIAL_SP	RAMSTART
@@ -131,7 +126,7 @@ forthMain:
 	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
 	; Set up PARSEPTR
-	ld	hl, PARSE-CODELINK_OFFSET
+	ld	hl, .parseName
 	call	find
 	ld	(PARSEPTR), de
 	; Set up CINPTR
@@ -150,6 +145,8 @@ forthMain:
 	push	hl
 	jp	EXECUTE+2
 
+.parseName:
+	.db	"(parse)", 0
 .cinName:
 	.db	"(c<)", 0
 
@@ -221,13 +218,17 @@ addHL:
 ; Copy string from (HL) in (DE), that is, copy bytes until a null char is
 ; encountered. The null char is also copied.
 ; HL and DE point to the char right after the null char.
+; B indicates the length of the copied string, including null-termination.
 strcpy:
+	ld	b, 0
+.loop:
 	ld	a, (hl)
 	ld	(de), a
 	inc	hl
 	inc	de
+	inc	b
 	or	a
-	jr	nz, strcpy
+	jr	nz, .loop
 	ret
 
 ; Compares strings pointed to by HL and DE until one of them hits its null char.
@@ -249,38 +250,6 @@ strcmp:
 .end:
 	pop	de
 	pop	hl
-	; Because we don't call anything else than CP that modify the Z flag,
-	; our Z value will be that of the last cp (reset if we broke the loop
-	; early, set otherwise)
-	ret
-
-; Compares strings pointed to by HL and DE up to NAMELEN count of characters. If
-; equal, Z is set. If not equal, Z is reset.
-strncmp:
-	push	bc
-	push	hl
-	push	de
-
-	ld	b, NAMELEN
-.loop:
-	ld	a, (de)
-	cp	(hl)
-	jr	nz, .end	; not equal? break early. NZ is carried out
-				; to the called
-	or	a		; If our chars are null, stop the cmp
-	jr	z, .end		; The positive result will be carried to the
-	                        ; caller
-	inc	hl
-	inc	de
-	djnz	.loop
-	; We went through all chars with success, but our current Z flag is
-	; unset because of the cp 0. Let's do a dummy CP to set the Z flag.
-	cp	a
-
-.end:
-	pop	de
-	pop	hl
-	pop	bc
 	; Because we don't call anything else than CP that modify the Z flag,
 	; our Z value will be that of the last cp (reset if we broke the loop
 	; early, set otherwise)
@@ -370,51 +339,82 @@ parseDecimal:
 ; point to that entry.
 ; Z if found, NZ if not.
 find:
-	push	hl
 	push	bc
-	ld	de, (CURRENT)
-	ld	bc, CODELINK_OFFSET
-.inner:
-	; DE is a wordref, let's go to beginning of struct
-	push	de		; --> lvl 1
-	or	a		; clear carry
-	ex	de, hl
-	sbc	hl, bc
-	ex	de, hl		; We're good, DE points to word name
-	call	strncmp
-	pop	de		; <-- lvl 1, return to wordref
-	jr	z, .end		; found
-	push	hl		; .prev destroys HL
-	call	.prev
-	pop	hl
-	jr	nz, .inner
-	; Z set? end of dict unset Z
+	push	hl
+	; First, figure out string len
+	ld	bc, 0
 	xor	a
-	inc	a
-.end:
-	pop	bc
-	pop	hl
-	ret
-
-; For DE being a wordref, move DE to the previous wordref.
-; Z is set if DE point to 0 (no entry). NZ if not.
-.prev:
+	cpir
+	; C has our length, negative, -1
+	ld	a, c
+	neg
+	dec	a
+	; special case. zero len? we never find anything.
+	jr	z, .fail
+	ld	c, a		; C holds our length
+	; Let's do something weird: We'll hold HL by the *tail*. Because of our
+	; dict structure and because we know our lengths, it's easier to
+	; compare starting from the end. Currently, after CPIR, HL points to
+	; char after null. Let's adjust
+	; Because the compare loop pre-decrements, instead of DECing HL twice,
+	; we DEC it once.
+	dec	hl
+	ld	de, (CURRENT)
+.inner:
+	; DE is a wordref. First step, do our len correspond?
+	push	hl		; --> lvl 1
+	push	de		; --> lvl 2
+	dec	de
+	ld	a, (de)
+	and	0x7f		; remove IMMEDIATE flag
+	cp	c
+	jr	nz, .loopend
+	; match, let's compare the string then
+	dec	de \ dec de	; skip prev field. One less because we
+				; pre-decrement
+	ld	b, c		; loop C times
+.loop:
+	; pre-decrement for easier Z matching
+	dec	de
+	dec	hl
+	ld	a, (de)
+	cp	(hl)
+	jr	nz, .loopend
+	djnz	.loop
+.loopend:
+	; At this point, Z is set if we have a match. In all cases, we want
+	; to pop HL and DE
+	pop	de		; <-- lvl 2
+	pop	hl		; <-- lvl 1
+	jr	z, .end		; match? we're done!
+	; no match, go to prev and continue
+	push	hl			; --> lvl 1
 	dec	de \ dec de \ dec de	; prev field
-	push	de			; --> lvl 1
+	push	de			; --> lvl 2
 	ex 	de, hl
 	call 	intoHL
 	ex 	de, hl			; DE contains prev offset
-	pop	hl			; <-- lvl 1
+	pop	hl			; <-- lvl 2
 	; HL is prev field's addr
 	; Is offset zero?
 	ld	a, d
 	or	e
-	ret	z			; no prev entry
+	jr	z, .noprev		; no prev entry
 	; get absolute addr from offset
 	; carry cleared from "or e"
 	sbc	hl, de
 	ex	de, hl			; result in DE
-	ret				; NZ set from SBC
+.noprev:
+	pop	hl			; <-- lvl 1
+	jr	nz, .inner		; try to match again
+	; Z set? end of dict unset Z
+.fail:
+	xor	a
+	inc	a
+.end:
+	pop	hl
+	pop	bc
+	ret
 
 ; Checks flags Z and S and sets BC to 0 if Z, 1 if C and -1 otherwise
 flagsToBC:
@@ -495,14 +495,18 @@ chkPS:
 ; *** Dictionary ***
 ; It's important that this part is at the end of the resulting binary.
 ; A dictionary entry has this structure:
-; - 7b name (zero-padded)
+; - Xb name. Arbitrary long number of character (but can't be bigger than
+;   input buffer, of course). not null-terminated
 ; - 2b prev offset
-; - 1b flags (bit 0: IMMEDIATE)
+; - 1b size + IMMEDIATE flag
 ; - 2b code pointer
 ; - Parameter field (PF)
 ;
 ; The prev offset is the number of bytes between the prev field and the
 ; previous word's code pointer.
+;
+; The size + flag indicate the size of the name field, with the 7th bit
+; being the IMMEDIATE flag.
 ;
 ; The code pointer point to "word routines". These routines expect to be called
 ; with IY pointing to the PF. They themselves are expected to end by jumping
@@ -611,9 +615,8 @@ LIT:
 ; Pop previous IP from Return stack and execute it.
 ; ( R:I -- )
 	.db	"EXIT"
-	.fill	3
 	.dw	0
-	.db	0
+	.db	4
 EXIT:
 	.dw nativeWord
 	call	popRSIP
@@ -621,9 +624,8 @@ EXIT:
 
 ; ( R:I -- )
 	.db "QUIT"
-	.fill 3
 	.dw $-EXIT
-	.db 0
+	.db 4
 QUIT:
 	.dw compiledWord
 	.dw	ZERO
@@ -638,9 +640,8 @@ QUIT:
 	jp	next
 
 	.db "ABORT"
-	.fill 2
 	.dw $-QUIT
-	.db 0
+	.db 5
 ABORT:
 	.dw	compiledWord
 	.dw	.private
@@ -664,9 +665,8 @@ abortUnderflow:
 	.dw	ABORT
 
 	.db "BYE"
-	.fill 4
 	.dw $-ABORT
-	.db 0
+	.db 3
 BYE:
 	.dw nativeWord
 	; Goodbye Forth! Before we go, let's restore the stack
@@ -679,9 +679,8 @@ BYE:
 
 ; ( c -- )
 	.db "EMIT"
-	.fill 3
 	.dw $-BYE
-	.db 0
+	.db 4
 EMIT:
 	.dw nativeWord
 	pop	hl
@@ -692,7 +691,7 @@ EMIT:
 
 	.db	"(print)"
 	.dw	$-EMIT
-	.db	0
+	.db	7
 PRINT:
 	.dw	nativeWord
 	pop	hl
@@ -706,9 +705,8 @@ PRINT:
 	jr	.loop
 
 	.db	"C,"
-	.fill	5
 	.dw	$-PRINT
-	.db	0
+	.db	2
 CWR:
 	.dw	nativeWord
 	pop	de
@@ -721,9 +719,8 @@ CWR:
 
 
 	.db	","
-	.fill	6
 	.dw	$-CWR
-	.db	0
+	.db	1
 WR:
 	.dw	nativeWord
 	pop	de
@@ -736,7 +733,7 @@ WR:
 
 	.db	"ROUTINE"
 	.dw	$-WR
-	.db	1			; IMMEDIATE
+	.db	0x87			; IMMEDIATE
 ROUTINE:
 	.dw	compiledWord
 	.dw	WORD
@@ -791,7 +788,7 @@ ROUTINE:
 ; ( addr -- )
 	.db "EXECUTE"
 	.dw $-ROUTINE
-	.db 0
+	.db 7
 EXECUTE:
 	.dw nativeWord
 	pop	iy	; is a wordref
@@ -806,9 +803,8 @@ EXECUTE:
 
 
 	.db	";"
-	.fill	6
 	.dw	$-EXECUTE
-	.db	1		; IMMEDIATE
+	.db	0x81		; IMMEDIATE
 ENDDEF:
 	.dw	compiledWord
 	.dw	NUMBER
@@ -821,9 +817,8 @@ ENDDEF:
 	.dw	EXIT
 
 	.db	":"
-	.fill	6
 	.dw	$-ENDDEF
-	.db	1		; IMMEDIATE
+	.db	0x81		; IMMEDIATE
 DEFINE:
 	.dw	compiledWord
 	.dw	ENTRYHEAD
@@ -865,9 +860,8 @@ DEFINE:
 
 
 	.db "DOES>"
-	.fill 2
 	.dw $-DEFINE
-	.db 0
+	.db 5
 DOES:
 	.dw nativeWord
 	; We run this when we're in an entry creation context. Many things we
@@ -886,9 +880,9 @@ DOES:
 	jp	EXIT+2
 
 
-	.db "IMMEDIA"
+	.db "IMMEDIATE"
 	.dw $-DOES
-	.db 0
+	.db 9
 IMMEDIATE:
 	.dw nativeWord
 	ld	hl, (CURRENT)
@@ -898,9 +892,8 @@ IMMEDIATE:
 
 
 	.db	"IMMED?"
-	.fill	1
 	.dw	$-IMMEDIATE
-	.db	0
+	.db	6
 ISIMMED:
 	.dw	nativeWord
 	pop	hl
@@ -916,9 +909,8 @@ ISIMMED:
 
 ; ( n -- )
 	.db	"LITN"
-	.fill	3
 	.dw	$-ISIMMED
-	.db	0
+	.db	4
 LITN:
 	.dw nativeWord
 	ld	hl, (HERE)
@@ -931,9 +923,8 @@ LITN:
 	jp	next
 
 	.db	"SCPY"
-	.fill	3
 	.dw	$-LITN
-	.db	0
+	.db	4
 SCPY:
 	.dw	nativeWord
 	pop	hl
@@ -944,9 +935,8 @@ SCPY:
 
 
 	.db	"(find)"
-	.fill	1
 	.dw	$-SCPY
-	.db	0
+	.db	6
 FIND_:
 	.dw	nativeWord
 	pop	hl
@@ -965,9 +955,8 @@ FIND_:
 
 ; ( -- c )
 	.db "KEY"
-	.fill 4
 	.dw $-FIND_
-	.db 0
+	.db 3
 KEY:
 	.dw nativeWord
 	call	GETC
@@ -979,9 +968,8 @@ KEY:
 ; This is an indirect word that can be redirected through "CINPTR"
 ; code: it is replaced in readln.fs.
 	.db "C<"
-	.fill 5
 	.dw $-KEY
-	.db 0
+	.db 2
 CIN:
 	.dw	compiledWord
 	.dw	NUMBER
@@ -997,9 +985,8 @@ CIN:
 ; Hadn't we wanted to normalize, we'd have written:
 ; 32 CMP 1 -
 	.db	"WS?"
-	.fill	4
 	.dw	$-CIN
-	.db	0
+	.db	3
 ISWS:
 	.dw	compiledWord
 	.dw	NUMBER
@@ -1011,9 +998,8 @@ ISWS:
 	.dw	EXIT
 
 	.db	"NOT"
-	.fill	4
 	.dw	$-ISWS
-	.db	0
+	.db	3
 NOT:
 	.dw	nativeWord
 	pop	hl
@@ -1031,9 +1017,8 @@ NOT:
 ; ( -- c )
 ; C< DUP 32 CMP 1 - SKIP? EXIT DROP TOWORD
 	.db	"TOWORD"
-	.fill	1
 	.dw	$-NOT
-	.db	0
+	.db	6
 TOWORD:
 	.dw	compiledWord
 	.dw	CIN
@@ -1048,9 +1033,8 @@ TOWORD:
 ; Read word from C<, copy to WORDBUF, null-terminate, and return, make
 ; HL point to WORDBUF.
 	.db "WORD"
-	.fill 3
 	.dw $-TOWORD
-	.db 0
+	.db 4
 WORD:
 	.dw	compiledWord
 	.dw	NUMBER		; ( a )
@@ -1095,9 +1079,9 @@ WORD:
 	jp	next
 
 
-	.db	"(parsed"
+	.db	"(parsed)"
 	.dw	$-WORD
-	.db	0
+	.db	8
 PARSED:
 	.dw	nativeWord
 	pop	hl
@@ -1118,7 +1102,7 @@ PARSED:
 
 	.db	"(parse)"
 	.dw	$-PARSED
-	.db	0
+	.db	7
 PARSE:
 	.dw	compiledWord
 	.dw	PARSED
@@ -1148,7 +1132,7 @@ PARSEI:
 ; HL points to new (HERE)
 	.db	"(entry)"
 	.dw	$-PARSE
-	.db	0
+	.db	7
 ENTRYHEAD:
 	.dw	compiledWord
 	.dw	WORD
@@ -1160,19 +1144,21 @@ ENTRYHEAD:
 	pop	hl
 	ld	de, (HERE)
 	call	strcpy
-	ld	hl, (HERE)
+	; DE point to char after null, rewind.
+	dec	de
+	; B counts the null, adjust
+	dec	b
+	ld	a, b
+	ex	de, hl		; HL points to new HERE
 	ld	de, (CURRENT)
-	ld	a, NAMELEN
-	call	addHL
 	push	hl		; --> lvl 1
 	or	a	; clear carry
 	sbc	hl, de
 	ex	de, hl
 	pop	hl		; <-- lvl 1
 	call	DEinHL
-	; Set word flags: not IMMED, so it's 0
-	xor	a
-	ld	(hl), a
+	; Save size
+	ld	(hl), b
 	inc	hl
 	ld	(CURRENT), hl
 	ld	(HERE), hl
@@ -1180,47 +1166,44 @@ ENTRYHEAD:
 
 
 	.db "HERE"
-	.fill 3
 	.dw $-ENTRYHEAD
-	.db 0
+	.db 4
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
 	.dw HERE
 
 	.db "CURRENT"
 	.dw $-HERE_
-	.db 0
+	.db 7
 CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
-	.db "(parse*"
+	.db "(parse*)"
 	.dw $-CURRENT_
-	.db 0
+	.db 8
 PARSEPTR_:
 	.dw sysvarWord
 	.dw PARSEPTR
 
 	.db	"FLAGS"
-	.fill	2
 	.dw	$-PARSEPTR_
-	.db	0
+	.db	5
 FLAGS_:
 	.dw	sysvarWord
 	.dw	FLAGS
 
 	.db	"SYSVNXT"
 	.dw	$-FLAGS_
-	.db	0
+	.db	7
 SYSVNXT_:
 	.dw	sysvarWord
 	.dw	SYSVNXT
 
 ; ( n a -- )
 	.db "!"
-	.fill 6
 	.dw $-SYSVNXT_
-	.db 0
+	.db 1
 STORE:
 	.dw nativeWord
 	pop	iy
@@ -1232,9 +1215,8 @@ STORE:
 
 ; ( a -- n )
 	.db "@"
-	.fill 6
 	.dw $-STORE
-	.db 0
+	.db 1
 FETCH:
 	.dw nativeWord
 	pop	hl
@@ -1245,9 +1227,8 @@ FETCH:
 
 ; ( a -- )
 	.db "DROP"
-	.fill 3
 	.dw $-FETCH
-	.db 0
+	.db 4
 DROP:
 	.dw nativeWord
 	pop	hl
@@ -1255,9 +1236,8 @@ DROP:
 
 ; ( a b -- b a )
 	.db "SWAP"
-	.fill 3
 	.dw $-DROP
-	.db 0
+	.db 4
 SWAP:
 	.dw nativeWord
 	pop	hl
@@ -1268,9 +1248,8 @@ SWAP:
 
 ; ( a -- a a )
 	.db "DUP"
-	.fill 4
 	.dw $-SWAP
-	.db 0
+	.db 3
 DUP:
 	.dw nativeWord
 	pop	hl
@@ -1281,9 +1260,8 @@ DUP:
 
 ; ( a b -- a b a )
 	.db "OVER"
-	.fill 3
 	.dw $-DUP
-	.db 0
+	.db 4
 OVER:
 	.dw nativeWord
 	pop	hl	; B
@@ -1295,9 +1273,8 @@ OVER:
 	jp	next
 
 	.db	">R"
-	.fill	5
 	.dw	$-OVER
-	.db	0
+	.db	2
 P2R:
 	.dw	nativeWord
 	pop	hl
@@ -1306,9 +1283,8 @@ P2R:
 	jp	next
 
 	.db	"R>"
-	.fill	5
 	.dw	$-P2R
-	.db	0
+	.db	2
 R2P:
 	.dw	nativeWord
 	call	popRS
@@ -1316,9 +1292,8 @@ R2P:
 	jp	next
 
 	.db	"I"
-	.fill	6
 	.dw	$-R2P
-	.db	0
+	.db	1
 I:
 	.dw	nativeWord
 	ld	l, (ix)
@@ -1327,9 +1302,8 @@ I:
 	jp	next
 
 	.db	"I'"
-	.fill	5
 	.dw	$-I
-	.db	0
+	.db	2
 IPRIME:
 	.dw	nativeWord
 	ld	l, (ix-2)
@@ -1338,9 +1312,8 @@ IPRIME:
 	jp	next
 
 	.db	"J"
-	.fill	6
 	.dw	$-IPRIME
-	.db	0
+	.db	1
 J:
 	.dw	nativeWord
 	ld	l, (ix-4)
@@ -1350,9 +1323,8 @@ J:
 
 ; ( a b -- c ) A + B
 	.db "+"
-	.fill 6
 	.dw $-J
-	.db 0
+	.db 1
 PLUS:
 	.dw nativeWord
 	pop	hl
@@ -1364,9 +1336,8 @@ PLUS:
 
 ; ( a b -- c ) A - B
 	.db "-"
-	.fill 6
 	.dw $-PLUS
-	.db 0
+	.db 1
 MINUS:
 	.dw nativeWord
 	pop	de		; B
@@ -1379,9 +1350,8 @@ MINUS:
 
 ; ( a b -- c ) A * B
 	.db "*"
-	.fill 6
 	.dw $-MINUS
-	.db 0
+	.db 1
 MULT:
 	.dw nativeWord
 	pop	de
@@ -1410,9 +1380,8 @@ MULT:
 ; really adds up when we compare total size.
 
 	.db	"0"
-	.fill	6
 	.dw	$-MULT
-	.db	0
+	.db	1
 ZERO:
 	.dw	nativeWord
 	ld	hl, 0
@@ -1420,9 +1389,8 @@ ZERO:
 	jp	next
 
 	.db	"1"
-	.fill	6
 	.dw	$-ZERO
-	.db	0
+	.db	1
 ONE:
 	.dw	nativeWord
 	ld	hl, 1
@@ -1431,9 +1399,8 @@ ONE:
 
 ; ( a1 a2 -- b )
 	.db "SCMP"
-	.fill 3
 	.dw $-ONE
-	.db 0
+	.db 4
 SCMP:
 	.dw nativeWord
 	pop	de
@@ -1446,9 +1413,8 @@ SCMP:
 
 ; ( n1 n2 -- f )
 	.db "CMP"
-	.fill 4
 	.dw $-SCMP
-	.db 0
+	.db 3
 CMP:
 	.dw nativeWord
 	pop	hl
@@ -1464,9 +1430,8 @@ CMP:
 ; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
 ; to after null-termination.
 	.db	"SKIP?"
-	.fill	2
 	.dw	$-CMP
-	.db	0
+	.db	5
 CSKIP:
 	.dw	nativeWord
 	pop	hl
@@ -1522,9 +1487,8 @@ CSKIP:
 ; where to branch to. For example, The branching cell of "IF THEN" would
 ; contain 3. Add this value to RS.
 	.db	"(fbr)"
-	.fill	2
 	.dw	$-CSKIP
-	.db	0
+	.db	5
 FBR:
 	.dw	nativeWord
 	push	de
@@ -1536,9 +1500,8 @@ FBR:
 	jp	next
 
 	.db	"(bbr)"
-	.fill	2
 	.dw	$-FBR
-	.db	0
+	.db	5
 BBR:
 	.dw	nativeWord
 	ld	hl, (IP)
@@ -1552,7 +1515,5 @@ BBR:
 ; To allow dict binaries to "hook themselves up", we always end such binary
 ; with a dummy, *empty* entry. Therefore, we can have a predictable place for
 ; getting a prev label.
-
-	.db	"_______"
 	.dw	$-BBR
 	.db	0
