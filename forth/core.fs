@@ -4,6 +4,9 @@
 : LIT ROUTINE S [LITN] , ;
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
+: _err LIT< word-not-found (print) ABORT ;
+: ' WORD (find) SKIP? _err ;
+: ['] WORD (find) SKIP? _err LITN ; IMMEDIATE
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
 : BEGIN H ; IMMEDIATE
@@ -14,6 +17,9 @@
   Ah, voice at last! Some lines above need comments
   BTW: Forth lines limited to 64 cols because of default
   input buffer size in Collapse OS
+
+  "_": words starting with "_" are meant to be "private",
+  that is, only used by their immediate surrondings.
 
   COMPILE: Tough one. Get addr of caller word (example above
   (bbr)) and then call LITN on it. )

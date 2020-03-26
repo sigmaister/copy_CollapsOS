@@ -991,43 +991,10 @@ FIND_:
 	push	de
 	jp	next
 
-	.db	"'"
-	.fill	6
-	.dw	$-FIND_
-	.db	0
-FIND:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	FIND_
-	.dw	CSKIP
-	.dw	FINDERR
-	.dw	EXIT
-
-	.db	"[']"
-	.fill	4
-	.dw	$-FIND
-	.db	0b01		; IMMEDIATE
-FINDI:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	FIND_
-	.dw	CSKIP
-	.dw	FINDERR
-	.dw	LITN
-	.dw	EXIT
-
-FINDERR:
-	.dw	compiledWord
-	.dw	DROP		; Drop str addr, we don't use it
-	.dw	LIT
-	.db	"word not found", 0
-	.dw	PRINT
-	.dw	ABORT
-
 ; ( -- c )
 	.db "KEY"
 	.fill 4
-	.dw $-FINDI
+	.dw $-FIND_
 	.db 0
 KEY:
 	.dw nativeWord
