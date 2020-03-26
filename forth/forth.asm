@@ -134,7 +134,7 @@ forthMain:
 	call	find
 	ld	(PARSEPTR), de
 	; Set up CINPTR
-	; do we have a C< impl?
+	; do we have a (c<) impl?
 	ld	hl, .cinName
 	call	find
 	jr	z, .skip
@@ -150,7 +150,7 @@ forthMain:
 	jp	EXECUTE+2
 
 .cinName:
-	.db	"C<", 0
+	.db	"(c<)", 0
 
 BEGIN:
 	.dw	compiledWord
@@ -1005,8 +1005,11 @@ KEY:
 	jp	next
 
 ; This is an indirect word that can be redirected through "CINPTR"
-; This is not a real word because it's not meant to be referred to in Forth
 ; code: it is replaced in readln.fs.
+	.db "C<"
+	.fill 5
+	.dw $-KEY
+	.db 0
 CIN:
 	.dw	compiledWord
 	.dw	NUMBER
@@ -1023,7 +1026,7 @@ CIN:
 ; 32 CMP 1 -
 	.db	"WS?"
 	.fill	4
-	.dw	$-KEY
+	.dw	$-CIN
 	.db	0
 ISWS:
 	.dw	compiledWord

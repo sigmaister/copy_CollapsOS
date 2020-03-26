@@ -69,8 +69,8 @@
     IN( @ IN> !
 ;
 
-( And finally, implement a replacement for the C< routine )
-: C<
+( And finally, implement a replacement for the (c<) routine )
+: (c<)
     IN> @ C@                    ( c )
     ( not EOL? good, inc and return )
     DUP IF 1 IN> +! EXIT THEN   ( c )
