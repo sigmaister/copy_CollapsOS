@@ -1,5 +1,3 @@
-	jp	init
-
 .inc "stagec.asm"
 .inc "forth.asm"
 

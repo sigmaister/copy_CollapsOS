@@ -103,6 +103,8 @@
 ; *** Stable ABI ***
 ; Those jumps below are supposed to stay at these offsets, always. If they
 ; change bootstrap binaries have to be adjusted because they rely on them.
+; We're at 0 here
+	jp	forthMain
 .fill 0x17-$
 JUMPTBL:
 	jp	nativeWord
@@ -683,13 +685,7 @@ abortUnderflow:
 	.db 3
 BYE:
 	.dw nativeWord
-	; Goodbye Forth! Before we go, let's restore the stack
-	ld	sp, (INITIAL_SP)
-	; unwind stack underflow buffer
-	pop	af \ pop af \ pop af
-	; success
-	xor	a
-	ret
+	halt
 
 ; ( c -- )
 	.db "EMIT"
