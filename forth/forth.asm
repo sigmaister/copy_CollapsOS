@@ -696,16 +696,36 @@ EMIT:
 	.dw	$-EMIT
 	.db	7
 PRINT:
+	.dw	compiledWord	; a
+	; BBR mark
+	.dw	DUP		; a a
+	.dw	.getc		; a c
+	.dw	DUP		; a c f
+	.dw	CSKIP		; a c
+	; zero, end of string
+	.dw	FBR
+	.db	12
+	.dw	EMIT		; a
+	.dw	NUMBER		; a 1
+	.dw	1
+	.dw	PLUS		; a+1
+	.dw	BBR
+	.db	21
+	; FBR mark
+	.dw	DROP
+	.dw	DROP
+	.dw	EXIT
+
+; Yes, very much like C@, but it has already been Forth-ified...
+.getc:
 	.dw	nativeWord
 	pop	hl
 	call	chkPS
-.loop:
-	ld	a, (hl)		; load character to send
-	or	a		; is it zero?
-	jp	z, next		; if yes, we're finished
-	call	PUTC
-	inc	hl
-	jr	.loop
+	ld	l, (hl)
+	ld	h, 0
+	push	hl
+	jp	next
+
 
 	.db	"C,"
 	.dw	$-PRINT
