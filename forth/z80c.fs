@@ -113,6 +113,27 @@ CODE XOR
     HL PUSHqq,
 ;CODE
 
+CODE *
+    DE POPqq,
+    BC POPqq,
+    chkPS,
+	( DE * BC -> DE (high) and HL (low) )
+    HL 0 LDddnn,
+    A 0x10 LDrn,
+( loop )
+    HL ADDHLss,
+    E RLr,
+    D RLr,
+    6 JRNCe, ( noinc )
+    BC ADDHLss,
+    3 JRNCe, ( noinc )
+    DE INCss,
+( noinc )
+    A DECr,
+    0 12 - JRNZe, ( loop )
+    HL PUSHqq,
+;CODE
+
 ( Borrowed from http://wikiti.brandonw.net/ )
 ( Divides AC by DE and places the quotient in AC and the
   remainder in HL )

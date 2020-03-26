@@ -1340,35 +1340,9 @@ MINUS:
 	push	hl
 	jp	next
 
-; ( a b -- c ) A * B
-	.db "*"
-	.dw $-MINUS
-	.db 1
-MULT:
-	.dw nativeWord
-	pop	de
-	pop	bc
-	call	chkPS
-	; DE * BC -> DE (high) and HL (low)
-	ld	hl, 0
-	ld	a, 0x10
-.loop:
-	add	hl, hl
-	rl	e
-	rl	d
-	jr	nc, .noinc
-	add	hl, bc
-	jr	nc, .noinc
-	inc	de
-.noinc:
-	dec a
-	jr	nz, .loop
-	push	hl
-	jp	next
-
 ; ( a1 a2 -- b )
 	.db "SCMP"
-	.dw $-MULT
+	.dw $-MINUS
 	.db 4
 SCMP:
 	.dw nativeWord
