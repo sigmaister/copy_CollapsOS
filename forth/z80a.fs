@@ -26,6 +26,12 @@
   extra 0xdd / 0xfd and then spit the equivalent of HL )
 : IX 0xdd A, HL ;
 : IY 0xfd A, HL ;
+: _ix+- 0xff AND 0xdd A, (HL) ;
+: _iy+- 0xff AND 0xfd A, (HL) ;
+: IX+ _ix+- ;
+: IX- 0 -^ _ix+- ;
+: IY+ _iy+- ;
+: IY- 0 -^ _iy+- ;
 
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
@@ -77,16 +83,34 @@
 0x03 OP1qq INCss,
 0x09 OP1qq ADDHLss,
 
-( rd rr )
-: OP1rr
-    CREATE C,
-    DOES>
+: _1rr
     C@              ( rd rr op )
     ROT             ( rr op rd )
     8 *             ( rr op rd<<3 )
     OR OR A,
 ;
+
+( rd rr )
+: OP1rr
+    CREATE C,
+    DOES>
+    _1rr
+;
 0x40 OP1rr LDrr,
+
+( ixy+- HL rd )
+: LDIXYr,
+    ( dd/fd has already been spit )
+    LDrr,           ( ixy+- )
+    A,
+;
+
+( rd ixy+- HL )
+: LDrIXY,
+    ROT             ( ixy+- HL rd )
+    SWAP            ( ixy+- rd HL )
+    LDIXYr,
+;
 
 ( n -- )
 : OP2n

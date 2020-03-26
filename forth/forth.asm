@@ -1313,39 +1313,9 @@ R2P:
 	push	hl
 	jp	next
 
-	.db	"I"
-	.dw	$-R2P
-	.db	1
-I:
-	.dw	nativeWord
-	ld	l, (ix)
-	ld	h, (ix+1)
-	push	hl
-	jp	next
-
-	.db	"I'"
-	.dw	$-I
-	.db	2
-IPRIME:
-	.dw	nativeWord
-	ld	l, (ix-2)
-	ld	h, (ix-1)
-	push	hl
-	jp	next
-
-	.db	"J"
-	.dw	$-IPRIME
-	.db	1
-J:
-	.dw	nativeWord
-	ld	l, (ix-4)
-	ld	h, (ix-3)
-	push	hl
-	jp	next
-
 ; ( a b -- c ) A + B
 	.db "+"
-	.dw $-J
+	.dw $-R2P
 	.db 1
 PLUS:
 	.dw nativeWord

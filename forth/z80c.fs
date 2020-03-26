@@ -168,3 +168,21 @@ CODE PC@
     L INr(C),
     HL PUSHqq,
 ;CODE
+
+CODE I
+    L 0 IX+ LDrIXY,
+    H 1 IX+ LDrIXY,
+    HL PUSHqq,
+;CODE
+
+CODE I'
+    L 2 IX- LDrIXY,
+    H 1 IX- LDrIXY,
+    HL PUSHqq,
+;CODE
+
+CODE J
+    L 4 IX- LDrIXY,
+    H 3 IX- LDrIXY,
+    HL PUSHqq,
+;CODE
