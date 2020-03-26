@@ -1405,44 +1405,13 @@ MULT:
 	jp	next
 
 
-; Borrowed from http://wikiti.brandonw.net/
-; Divides AC by DE and places the quotient in AC and the remainder in HL
-	.db	"/MOD"
-	.fill	3
-	.dw $-MULT
-	.db 0
-DIVMOD:
-	.dw nativeWord
-	pop	de
-	pop	bc
-	call	chkPS
-	ld	a, b		; AC
-	ld	b, 16
-	ld	hl, 0
-.loop:
-	scf
-	rl	c
-	rla
-	adc	hl, hl
-	sbc	hl, de
-	jr	nc, .skip
-	add	hl, de
-	dec	c
-.skip:
-	djnz	.loop
-	ld	b, a
-	push	hl	; REM
-	push	bc
-	jp	next
-
-
 ; It might look peculiar to have specific words for "0" and "1", but although
 ; it slightly beefs ups the ASM part of the binary, this one-byte-save-per-use
 ; really adds up when we compare total size.
 
 	.db	"0"
 	.fill	6
-	.dw	$-DIVMOD
+	.dw	$-MULT
 	.db	0
 ZERO:
 	.dw	nativeWord

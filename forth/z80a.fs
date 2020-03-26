@@ -29,8 +29,13 @@
 
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
-0xc9 OP1 RET,
 0x76 OP1 HALT,
+0xc9 OP1 RET,
+0x17 OP1 RLA,
+0x07 OP1 RLCA,
+0x1f OP1 RRA,
+0x0f OP1 RRCA,
+0x37 OP1 SCF,
 
 ( r -- )
 : OP1r
@@ -42,6 +47,7 @@
     OR A,
 ;
 0x04 OP1r INCr,
+0x05 OP1r DECr,
 0x46 OP1r LDr(HL),
 
 ( r -- )
@@ -68,7 +74,7 @@
 0xc5 OP1qq PUSHqq,
 0xc1 OP1qq POPqq,
 0x03 OP1qq INCss,
-0x09 OP1qq ADHLss,
+0x09 OP1qq ADDHLss,
 
 ( rd rr )
 : OP1rr
@@ -115,6 +121,22 @@
 0x80 OP2br RESbr,
 0x40 OP2br BITbr,
 
+( bitwise rotation ops have a similar sig )
+( r -- )
+: OProt
+    CREATE C,
+    DOES>
+    0xcb A,
+    C@              ( r op )
+    OR A,
+;
+0x10 OProt RLr,
+0x00 OProt RLCr,
+0x18 OProt RRr,
+0x08 OProt RRCr,
+0x20 OProt SLAr,
+0x38 OProt SRLr,
+
 ( cell contains both bytes. MSB is spit as-is, LSB is ORed with r )
 ( r -- )
 : OP2r
@@ -128,6 +150,18 @@
 0xed41 OP2r OUT(C)r,
 0xed40 OP2r INr(C),
 
+( ss -- )
+: OP2ss
+    CREATE C,
+    DOES>
+    0xed A,
+    C@ SWAP         ( op ss )
+    16 *            ( op ss<< 4 )
+    OR A,
+;
+0x4a OP2ss ADCHLss,
+0x42 OP2ss SBCHLss,
+
 ( dd nn -- )
 : OP3ddnn
     CREATE C,
@@ -138,7 +172,7 @@
     OR A,
     SPLITB A, A,
 ;
-0x01 OP2ddnn LDddnn,
+0x01 OP3ddnn LDddnn,
 
 ( nn -- )
 : OP3nn
@@ -150,8 +184,19 @@
 0xcd OP3nn CALLnn,
 0xc3 OP3nn JPnn,
 
+: OPJR
+    CREATE C,
+    DOES>
+    C@ A, 2 - A,
+;
+0x18 OPJR JRe,
+0x38 OPJR JRCe,
+0x30 OPJR JRNCe,
+0x28 OPJR JRZe,
+0x20 OPJR JRNZe,
+0x10 OPJR DJNZe,
+
 ( Specials )
-: JRe, 0x18 A, 2 - A, ;
 : JPNEXT, ROUTINE N [LITN] JPnn, ;
 
 : CODE

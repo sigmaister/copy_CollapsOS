@@ -110,6 +110,32 @@ CODE XOR
     HL PUSHqq,
 ;CODE
 
+( Borrowed from http://wikiti.brandonw.net/ )
+( Divides AC by DE and places the quotient in AC and the
+  remainder in HL )
+CODE /MOD
+    DE POPqq,
+    BC POPqq,
+    chkPS,
+    A B LDrr,
+    B 16 LDrn,
+    HL 0 LDddnn,
+( loop )
+    SCF,
+    C RLr,
+    RLA,
+    HL ADCHLss,
+    DE SBCHLss,
+    4 JRNCe,  ( skip )
+    DE ADDHLss,
+    C DECr,
+( skip )
+    0 12 - DJNZe, ( loop )
+    B A LDrr,
+    HL PUSHqq,
+    BC PUSHqq,
+;CODE
+
 CODE C!
     HL POPqq,
     DE POPqq,
