@@ -29,13 +29,21 @@
 
   This means, of course, that any word compiling a _c word
   can't be executed immediately.
+
+  Also note that because of that "_c" mechanism, it might
+  take two rounds of bootstrapping before the compiled
+  z80c.bin file is "stabilized". That's because the 2nd time
+  around, the recorded offset will have changed.
 )
 
 : _c
-    ['] ROT
+    [
+    ' ROT
     6 -         ( header )
-    ['] _bend
+    ' _bend
     -           ( our offset )
+    LITN
+    ]
     '           ( get word )
     -^          ( apply offset )
     ,           ( write! )
