@@ -222,16 +222,16 @@
 0x10 OPJR DJNZe,
 
 ( Specials )
-: JPNEXT, ROUTINE N [LITN] JPnn, ;
+: JPNEXT, [ ROUTINE N LITN ] JPnn, ;
 
 : CODE
     ( same as CREATE, but with ROUTINE V )
     (entry)
-    ROUTINE V [LITN] ,
+    [ ROUTINE V LITN ] ,
 ;
 
 : ;CODE JPNEXT, ;
 
 
 ( Routines )
-: chkPS, ROUTINE P [LITN] CALLnn, ;
+: chkPS, [ ROUTINE P LITN ] CALLnn, ;

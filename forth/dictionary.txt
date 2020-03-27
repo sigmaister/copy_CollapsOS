@@ -52,7 +52,6 @@ DOES>       --              See description at top of file
 IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
 LITN        n --            Write number n as a literal.
-[LITN]      n --            *I* Immediate version of LITN.
 ROUTINE x   -- a            Push the addr of the specified core routine
                             C=cellWord J=JUMPTBL V=nativeWord N=next S=LIT
                             M=NUMBER Y=sysvarWord D=doesWord
@@ -81,6 +80,10 @@ input stream is executed immediately. In this context, branching doesn't work.
                             atom's cell.
 (bbr)       --              Branches backward by the number specified in its
                             atom's cell.
+[           --              Begin interetative mode. In a definition, words
+                            between here and "]" will be executed instead of
+                            compiled.
+]           --              End interpretative mode.
 ABORT       --              Resets PS and RS and returns to interpreter
 ABORT" x"   --              *I* Compiles a ." followed by a ABORT.
 AGAIN       I:a --          *I* Jump backwards to preceeding BEGIN.

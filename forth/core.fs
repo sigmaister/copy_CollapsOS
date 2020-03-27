@@ -1,7 +1,8 @@
 : H@ HERE @ ;
 : -^ SWAP - ;
-: [LITN] LITN ; IMMEDIATE
-: LIT ROUTINE S [LITN] , ;
+: [ INTERPRET 1 FLAGS ! ; IMMEDIATE
+: ] R> DROP ;
+: LIT [ ROUTINE S LITN ] , ;
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
 : _err LIT< word-not-found (print) ABORT ;
@@ -48,9 +49,9 @@
 ; IMMEDIATE
 
 : CREATE
-    (entry)          ( empty header with name )
-    ROUTINE C [LITN] ( push cellWord addr )
-    ,                ( write it )
+    (entry)            ( empty header with name )
+    [ ROUTINE C LITN ] ( push cellWord addr )
+    ,                  ( write it )
 ;
 : VARIABLE CREATE 2 ALLOT ;
 : CONSTANT CREATE H@ ! DOES> @ ;
@@ -86,7 +87,7 @@
 
 : (sysv)
     (entry)
-    ROUTINE Y [LITN] ,
+    [ ROUTINE Y LITN ] ,
     SYSVNXT @ ,
     2 SYSVNXT +!
 ;
