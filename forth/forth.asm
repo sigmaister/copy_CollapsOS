@@ -839,22 +839,9 @@ EXECUTE:
 	jp	(hl)	; go!
 
 
-	.db	";"
-	.dw	$-EXECUTE
-	.db	0x81		; IMMEDIATE
-ENDDEF:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	EXIT
-	.dw	WR
-	.dw	R2P		; exit COMPILE
-	.dw	DROP
-	.dw	R2P		; exit DEFINE
-	.dw	DROP
-	.dw	EXIT
-
+.fill 22
 	.db	":"
-	.dw	$-ENDDEF
+	.dw	$-EXECUTE
 	.db	0x81		; IMMEDIATE
 DEFINE:
 	.dw	compiledWord
@@ -1269,6 +1256,7 @@ FETCH:
 	.db "DROP"
 	.dw $-FETCH
 	.db 4
+; STABLE ABI
 DROP:
 	.dw nativeWord
 	pop	hl
@@ -1485,5 +1473,6 @@ BBR:
 ; To allow dict binaries to "hook themselves up", we always end such binary
 ; with a dummy, *empty* entry. Therefore, we can have a predictable place for
 ; getting a prev label.
+	.db	"_bend"
 	.dw	$-BBR
-	.db	0
+	.db	5
