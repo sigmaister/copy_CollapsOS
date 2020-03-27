@@ -54,7 +54,6 @@
 ;
 0x04 OP1r INCr,
 0x05 OP1r DECr,
-0x46 OP1r LDr(HL),
 
 ( r -- )
 : OP1r0
@@ -63,7 +62,6 @@
     C@              ( r op )
     OR A,
 ;
-0x70 OP1r0 LD(HL)r,
 0xa0 OP1r0 ANDr,
 0xb0 OP1r0 ORr,
 0xa8 OP1r0 XORr,
@@ -208,6 +206,8 @@
 ;
 0xcd OP3nn CALLnn,
 0xc3 OP3nn JPnn,
+0x22 OP3nn LD(nn)HL,
+0x2a OP3nn LDHL(nn),
 
 : OPJR
     CREATE C,

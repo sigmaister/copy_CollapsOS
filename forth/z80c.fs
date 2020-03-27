@@ -173,13 +173,13 @@ CODE C!
     HL POPqq,
     DE POPqq,
     chkPS,
-    E LD(HL)r,
+    (HL) E LDrr,
 ;CODE
 
 CODE C@
     HL POPqq,
     chkPS,
-    L LDr(HL),
+    L (HL) LDrr,
     H 0 LDrn,
     HL PUSHqq,
 ;CODE
