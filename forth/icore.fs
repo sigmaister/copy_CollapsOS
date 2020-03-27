@@ -55,6 +55,12 @@
     AGAIN
 ;
 
+( This is only the "early parser" in earlier stages. No need
+  for an abort message )
+: (parse)
+    (parsed) SKIP? ABORT
+;
+
 ( ; has to be defined last because it can't be executed now )
 : X             ( can't have its real name now )
     ['] EXIT ,

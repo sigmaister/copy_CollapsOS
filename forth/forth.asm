@@ -1123,23 +1123,7 @@ PARSED:
 	jp	next
 
 
-	.db	"(parse)"
-	.dw	$-PARSED
-	.db	7
-PARSE:
-	.dw	compiledWord
-	.dw	PARSED
-	.dw	CSKIP
-	.dw	.error
-	; success, stack is already good, we can exit
-	.dw	EXIT
-
-.error:
-	.dw	compiledWord
-	.dw	LIT
-	.db	"unknown word", 0
-	.dw	PRINT
-	.dw	ABORT
+.fill 41
 
 
 ; Indirect parse caller. Reads PARSEPTR and calls
@@ -1154,7 +1138,7 @@ PARSEI:
 ; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)
 	.db	"(entry)"
-	.dw	$-PARSE
+	.dw	$-PARSED
 	.db	7
 ENTRYHEAD:
 	.dw	compiledWord
