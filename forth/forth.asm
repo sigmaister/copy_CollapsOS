@@ -66,6 +66,8 @@
 .equ	CINPTR		@+2
 ; Pointer to (emit) word
 .equ	EMITPTR		@+2
+; Pointer to (print) word
+.equ	PRINTPTR	@+2
 .equ	WORDBUF		@+2
 ; Sys Vars are variables with their value living in the system RAM segment. We
 ; need this mechanisms for core Forth source needing variables. Because core
@@ -151,6 +153,10 @@ forthMain:
 	ld	hl, .emitName
 	call	find
 	ld	(EMITPTR), de
+	; Set up PRINTPTR
+	ld	hl, .printName
+	call	find
+	ld	(PRINTPTR), de
 	; Set up CINPTR
 	; do we have a (c<) impl?
 	ld	hl, .cinName
@@ -174,6 +180,8 @@ forthMain:
 	.db	"(c<)", 0
 .emitName:
 	.db	"(emit)", 0
+.printName:
+	.db	"(print)", 0
 .keyName:
 	.db	"KEY", 0
 
@@ -195,7 +203,7 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 31
+.fill 13
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -681,8 +689,11 @@ abortUnderflow:
 .word:
 	.dw	compiledWord
 	.dw	LIT
-	.db	"stack underflow", 0
-	.dw	PRINT
+	.db	"stack underfl", 0
+	.dw	NUMBER
+	.dw	PRINTPTR
+	.dw	FETCH
+	.dw	EXECUTE
 	.dw	ABORT
 
 	.db "BYE"
@@ -692,6 +703,9 @@ BYE:
 	.dw nativeWord
 	halt
 
+; STABLE ABI
+; Offset: 02aa
+.out $
 ; ( c -- )
 	.db "EMIT"
 	.dw $-BYE
@@ -705,43 +719,10 @@ EMIT:
 	.dw	EXIT
 
 
-	.db	"(print)"
-	.dw	$-EMIT
-	.db	7
-PRINT:
-	.dw	compiledWord	; a
-	; BBR mark
-	.dw	DUP		; a a
-	.dw	.getc		; a c
-	.dw	DUP		; a c f
-	.dw	CSKIP		; a c
-	; zero, end of string
-	.dw	FBR
-	.db	12
-	.dw	EMIT		; a
-	.dw	NUMBER		; a 1
-	.dw	1
-	.dw	PLUS		; a+1
-	.dw	BBR
-	.db	21
-	; FBR mark
-	.dw	DROP
-	.dw	DROP
-	.dw	EXIT
-
-; Yes, very much like C@, but it has already been Forth-ified...
-.getc:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	ld	l, (hl)
-	ld	h, 0
-	push	hl
-	jp	next
-
+.fill 49
 
 	.db	"C,"
-	.dw	$-PRINT
+	.dw	$-EMIT
 	.db	2
 CWR:
 	.dw	nativeWord

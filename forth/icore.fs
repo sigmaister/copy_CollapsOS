@@ -61,6 +61,18 @@
     (parsed) SKIP? ABORT
 ;
 
+( a -- )
+: (print)
+    BEGIN
+    DUP         ( a a )
+    _c C@       ( a c )
+    ( exit if null )
+    DUP NOT IF DROP DROP EXIT THEN
+    EMIT        ( a )
+    1 +         ( a+1 )
+    AGAIN
+;
+
 ( ; has to be defined last because it can't be executed now )
 : X             ( can't have its real name now )
     ['] EXIT ,
