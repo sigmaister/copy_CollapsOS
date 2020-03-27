@@ -750,7 +750,7 @@ WR:
 
 	.db	"ROUTINE"
 	.dw	$-WR
-	.db	0x87			; IMMEDIATE
+	.db	7
 ROUTINE:
 	.dw	compiledWord
 	.dw	WORD
