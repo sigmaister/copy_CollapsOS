@@ -115,8 +115,9 @@
 ; change bootstrap binaries have to be adjusted because they rely on them.
 ; We're at 0 here
 	jp	forthMain
-.fill 0x11-$
+.fill 0x0e-$
 JUMPTBL:
+	jp	compiledWord
 	jp	pushRS
 	jp	popRS
 	jp	nativeWord
@@ -768,10 +769,10 @@ ROUTINE:
 	ld	de, JUMPTBL
 	cp	'J'
 	jr	z, .end
-	ld	de, JUMPTBL+6
+	ld	de, JUMPTBL+9
 	cp	'V'
 	jr	z, .end
-	ld	de, JUMPTBL+9
+	ld	de, JUMPTBL+12
 	cp	'N'
 	jr	z, .end
 	ld	de, sysvarWord
@@ -786,7 +787,7 @@ ROUTINE:
 	ld	de, NUMBER
 	cp	'M'
 	jr	z, .end
-	ld	de, JUMPTBL+12
+	ld	de, JUMPTBL+15
 	cp	'P'
 	jr	nz, .notgood
 	; continue to end on match
@@ -822,52 +823,10 @@ EXECUTE:
 	jp	(hl)	; go!
 
 
-.fill 22
-	.db	":"
-	.dw	$-EXECUTE
-	.db	0x81		; IMMEDIATE
-DEFINE:
-	.dw	compiledWord
-	.dw	ENTRYHEAD
-	.dw	NUMBER
-	.dw	compiledWord
-	.dw	WR
-	; BBR branch mark
-	.dw	.compile
-	.dw	BBR
-	.db	4
-	; no need for EXIT, ENDDEF takes care of taking us out
-
-.compile:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	FIND_
-	.dw	NOT
-	.dw	CSKIP
-	.dw	FBR
-	.db	7
-	; Maybe number
-	.dw	PARSEI
-	.dw	LITN
-	.dw	EXIT
-	; FBR mark
-	.dw	DUP
-	.dw	ISIMMED
-	.dw	CSKIP
-	.dw	FBR
-	.db	5
-	; is immediate. just execute.
-	.dw	EXECUTE
-	.dw	EXIT
-	; FBR mark
-	; just a word, write
-	.dw	WR
-	.dw	EXIT
-
-
+.fill 77
 
 	.db "DOES>"
-	.dw $-DEFINE
+	.dw $-EXECUTE
 	.db 5
 DOES:
 	.dw nativeWord
@@ -1104,17 +1063,7 @@ PARSED:
 	jp	next
 
 
-.fill 41
-
-
-; Indirect parse caller. Reads PARSEPTR and calls
-PARSEI:
-	.dw	compiledWord
-	.dw	PARSEPTR_
-	.dw	FETCH
-	.dw	EXECUTE
-	.dw	EXIT
-
+.fill 51
 
 ; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
 ; HL points to new (HERE)

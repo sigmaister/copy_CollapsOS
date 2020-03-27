@@ -81,13 +81,30 @@
     AGAIN
 ;
 
-( ; has to be defined last because it can't be executed now )
-: X             ( can't have its real name now )
+( : and ; have to be defined last because it can't be
+  executed now also, they can't have their real name
+  right away )
+
+: X
+    (entry)
+    ( JUMPTBL+0 == compiledWord )
+    [ ROUTINE J LITN ] ,
+    BEGIN
+    WORD
+    (find)
+    ( is word )
+    IF DUP IMMED? IF EXECUTE ELSE , THEN
+    ( maybe number )
+    ELSE (parse*) @ EXECUTE LITN THEN
+    AGAIN
+; IMMEDIATE
+
+: Y
     ['] EXIT ,
-    _c R> DROP     ( exit COMPILE )
     _c R> DROP     ( exit : )
 ; IMMEDIATE
 
-( Give ";" its real name )
-';' CURRENT @ 4 - C!
+( Give ":" and ";" their real name )
+':' ' X 4 - C!
+';' ' Y 4 - C!
 

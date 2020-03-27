@@ -220,12 +220,12 @@ CODE J
 CODE >R
     HL POPqq,
     chkPS,
-    ( JUMPTBL+0 == pushRS )
-    ROUTINE J CALLnn,
+    ( JUMPTBL+3 == pushRS )
+    ROUTINE J 3 + CALLnn,
 ;CODE
 
 CODE R>
-    ( JUMPTBL+3 == popRS )
-    ROUTINE J 3 + CALLnn,
+    ( JUMPTBL+6 == popRS )
+    ROUTINE J 6 + CALLnn,
     HL PUSHqq,
 ;CODE
