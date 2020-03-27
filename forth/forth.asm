@@ -10,6 +10,14 @@
 ; self-hosts in a more compact manner. File include is a big part of the
 ; complexity in zasm. If we can get rid of it, we'll be more compact.
 
+; *** ABI STABILITY ***
+;
+; This unit needs to have some of its entry points stay at a stable offset.
+; These have a comment over them indicating the expected offset. These should
+; not move until the Grand Bootstrapping operation has been completed.
+;
+; When you see random ".fill" here and there, it's to ensure that stability.
+
 ; *** Defines ***
 ; GETC: address of a GetC routine
 ; PUTC: address of a PutC routine
@@ -110,6 +118,10 @@ JUMPTBL:
 	jp	nativeWord
 	jp	next
 	jp	chkPS
+NUMBER:
+	.dw	numberWord
+LIT:
+	.dw	litWord
 
 ; *** Code ***
 forthMain:
@@ -175,31 +187,13 @@ BEGIN:
 
 INTERPRET:
 	.dw	compiledWord
-	; BBR mark
-	.dw	WORD
+	.dw	LIT
+	.db	"INTERPRET", 0
 	.dw	FIND_
-	.dw	CSKIP
-	.dw	FBR
-	.db	22
-	; It's a word, execute it
-	; For now, we only have one flag, let's take advantage of
-	; this to keep code simple.
-	.dw	NUMBER			; Bit 0 on
-	.dw	1
-	.dw	FLAGS_
-	.dw	STORE
+	.dw	DROP
 	.dw	EXECUTE
-	.dw	NUMBER			; Bit 0 off
-	.dw	0
-	.dw	FLAGS_
-	.dw	STORE
-	.dw	BBR
-	.db	29
-	; FBR mark, try number
-	.dw	PARSEI
-	.dw	BBR
-	.db	34
-	; infinite loop
+
+.fill 31
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -625,9 +619,6 @@ numberWord:
 	push	de
 	jp	next
 
-NUMBER:
-	.dw	numberWord
-
 ; Similarly to numberWord, this is not a real word, but a string literal.
 ; Instead of being followed by a 2 bytes number, it's followed by a
 ; null-terminated string. When called, puts the string's address on PS
@@ -638,9 +629,6 @@ litWord:
 	inc	hl		; after null termination
 	ld	(IP), hl
 	jp	next
-
-LIT:
-	.dw	litWord
 
 ; Pop previous IP from Return stack and execute it.
 ; ( R:I -- )
@@ -835,6 +823,9 @@ ROUTINE:
 	.db "EXECUTE"
 	.dw $-ROUTINE
 	.db 7
+; STABLE ABI
+; Offset: 0388
+.out $
 EXECUTE:
 	.dw nativeWord
 	pop	iy	; is a wordref
@@ -983,6 +974,9 @@ SCPY:
 	.db	"(find)"
 	.dw	$-SCPY
 	.db	6
+; STABLE ABI
+; Offset: 047c
+.out $
 FIND_:
 	.dw	nativeWord
 	pop	hl
@@ -1070,6 +1064,9 @@ TOWORD:
 	.db "WORD"
 	.dw $-TOWORD
 	.db 4
+; STABLE ABI
+; Offset: 04f7
+.out $
 WORD:
 	.dw	compiledWord
 	.dw	NUMBER		; ( a )
@@ -1202,6 +1199,9 @@ ENTRYHEAD:
 	jp	next
 
 
+; STABLE ABI (every sysvars)
+; Offset: 05ca
+.out $
 	.db "HERE"
 	.dw $-ENTRYHEAD
 	.db 4
@@ -1241,6 +1241,9 @@ SYSVNXT_:
 	.db "!"
 	.dw $-SYSVNXT_
 	.db 1
+; STABLE ABI
+; Offset: 0610
+.out $
 STORE:
 	.dw nativeWord
 	pop	iy
@@ -1390,6 +1393,9 @@ CMP:
 	.db	"SKIP?"
 	.dw	$-CMP
 	.db	5
+; STABLE ABI
+; Offset: 06ee
+.out $
 CSKIP:
 	.dw	nativeWord
 	pop	hl
@@ -1447,6 +1453,9 @@ CSKIP:
 	.db	"(fbr)"
 	.dw	$-CSKIP
 	.db	5
+; STABLE ABI
+; Offset: 073e
+.out $
 FBR:
 	.dw	nativeWord
 	push	de
@@ -1460,6 +1469,9 @@ FBR:
 	.db	"(bbr)"
 	.dw	$-FBR
 	.db	5
+; STABLE ABI
+; Offset: 0757
+.out $
 BBR:
 	.dw	nativeWord
 	ld	hl, (IP)
