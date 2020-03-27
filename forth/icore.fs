@@ -107,8 +107,8 @@
 
 : X
     _c (entry)
-    ( JUMPTBL+0 == compiledWord )
-    [ ROUTINE J LITN ] ,
+    ( JTBL+6 == compiledWord )
+    [ JTBL 6 + LITN ] ,
     BEGIN
     WORD
     (find)

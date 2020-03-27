@@ -115,8 +115,10 @@
 ; change bootstrap binaries have to be adjusted because they rely on them.
 ; We're at 0 here
 	jp	forthMain
-.fill 0x0e-$
+.fill 0x08-$
 JUMPTBL:
+	jp	sysvarWord
+	jp	cellWord
 	jp	compiledWord
 	jp	pushRS
 	jp	popRS
@@ -734,64 +736,11 @@ WR:
 	ld	(HERE), hl
 	jp	next
 
-
-	.db	"ROUTINE"
-	.dw	$-WR
-	.db	7
-ROUTINE:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	.private
-	.dw	EXIT
-
-.private:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	ld	a, (hl)
-	ld	de, cellWord
-	cp	'C'
-	jr	z, .end
-	ld	de, JUMPTBL
-	cp	'J'
-	jr	z, .end
-	ld	de, JUMPTBL+9
-	cp	'V'
-	jr	z, .end
-	ld	de, JUMPTBL+12
-	cp	'N'
-	jr	z, .end
-	ld	de, sysvarWord
-	cp	'Y'
-	jr	z, .end
-	ld	de, doesWord
-	cp	'D'
-	jr	z, .end
-	ld	de, LIT
-	cp	'S'
-	jr	z, .end
-	ld	de, NUMBER
-	cp	'M'
-	jr	z, .end
-	ld	de, JUMPTBL+15
-	cp	'P'
-	jr	nz, .notgood
-	; continue to end on match
-.end:
-	; is our slen 1?
-	inc	hl
-	ld	a, (hl)
-	or	a
-	jr	z, .good
-.notgood:
-	ld	de, 0
-.good:
-	push	de
-	jp	next
+.fill 100
 
 ; ( addr -- )
 	.db "EXECUTE"
-	.dw $-ROUTINE
+	.dw $-WR
 	.db 7
 ; STABLE ABI
 ; Offset: 0388
@@ -1049,13 +998,20 @@ PARSED:
 	jp	next
 
 
-.fill 107
+.fill 96
+
+	.db	"JTBL"
+	.dw	$-PARSED
+	.db	4
+JTBL:
+	.dw	sysvarWord
+	.dw	JUMPTBL
 
 ; STABLE ABI (every sysvars)
 ; Offset: 05ca
 .out $
 	.db "HERE"
-	.dw $-PARSED
+	.dw $-JTBL
 	.db 4
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord

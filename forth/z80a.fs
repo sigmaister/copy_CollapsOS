@@ -222,16 +222,19 @@
 0x10 OPJR DJNZe,
 
 ( Specials )
-: JPNEXT, [ ROUTINE N LITN ] JPnn, ;
+( JTBL+18 == next )
+: JPNEXT, [ JTBL 18 + LITN ] JPnn, ;
 
 : CODE
-    ( same as CREATE, but with ROUTINE V )
+    ( same as CREATE, but with native word )
     (entry)
-    [ ROUTINE V LITN ] ,
+    ( JTBL+15 == next )
+    [ JTBL 15 + LITN ] ,
 ;
 
 : ;CODE JPNEXT, ;
 
 
 ( Routines )
-: chkPS, [ ROUTINE P LITN ] CALLnn, ;
+( JTBL+21 == next )
+: chkPS, [ JTBL 21 + LITN ] CALLnn, ;

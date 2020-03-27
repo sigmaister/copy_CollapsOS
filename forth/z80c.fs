@@ -12,8 +12,6 @@
   any word from our high level Forth, as long as it doesn't
   spit word references.
 
-  ROUTINE stuff is fine. It's not supposed to change.
-
   These restrictions are temporary, I'll figure something out
   so that we can end up fully bootstrap Forth from within
   itself.
@@ -220,12 +218,12 @@ CODE J
 CODE >R
     HL POPqq,
     chkPS,
-    ( JUMPTBL+3 == pushRS )
-    ROUTINE J 3 + CALLnn,
+    ( JTBL+9 == pushRS )
+    JTBL 9 + CALLnn,
 ;CODE
 
 CODE R>
-    ( JUMPTBL+6 == popRS )
-    ROUTINE J 6 + CALLnn,
+    ( JTBL+12 == popRS )
+    JTBL 12 + CALLnn,
     HL PUSHqq,
 ;CODE

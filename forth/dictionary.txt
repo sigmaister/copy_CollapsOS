@@ -52,9 +52,6 @@ DOES>       --              See description at top of file
 IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
 LITN        n --            Write number n as a literal.
-ROUTINE x   -- a            Push the addr of the specified core routine
-                            C=cellWord J=JUMPTBL V=nativeWord N=next S=LIT
-                            M=NUMBER Y=sysvarWord D=doesWord
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
 
 Compilation vs meta-compilation. When you compile a word with "[COMPILE] foo",

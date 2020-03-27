@@ -2,7 +2,7 @@
 : -^ SWAP - ;
 : [ INTERPRET 1 FLAGS ! ; IMMEDIATE
 : ] R> DROP ;
-: LIT [ ROUTINE S LITN ] , ;
+: LIT [ JTBL 26 + LITN ] , ;
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
 : _err LIT< word-not-found (print) ABORT ;
@@ -50,7 +50,7 @@
 
 : CREATE
     (entry)            ( empty header with name )
-    [ ROUTINE C LITN ] ( push cellWord addr )
+    [ JTBL 3 + LITN ]  ( push cellWord addr )
     ,                  ( write it )
 ;
 : VARIABLE CREATE 2 ALLOT ;
@@ -87,7 +87,7 @@
 
 : (sysv)
     (entry)
-    [ ROUTINE Y LITN ] ,
+    [ JTBL LITN ] ,
     SYSVNXT @ ,
     2 SYSVNXT +!
 ;
