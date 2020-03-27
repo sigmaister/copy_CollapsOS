@@ -81,12 +81,27 @@
     AGAIN
 ;
 
+: (entry)
+    HERE @          ( h )
+    WORD            ( h s )
+    SCPY            ( h )
+    ( Adjust HERE -1 because SCPY copies the null )
+    HERE @ 1 _c -   ( h h' )
+    DUP HERE !      ( h h' )
+    SWAP _c -       ( sz )
+    ( write prev value )
+    HERE @ CURRENT @ _c - ,
+    ( write size )
+    C,
+    HERE @ CURRENT !
+;
+
 ( : and ; have to be defined last because it can't be
   executed now also, they can't have their real name
   right away )
 
 : X
-    (entry)
+    _c (entry)
     ( JUMPTBL+0 == compiledWord )
     [ ROUTINE J LITN ] ,
     BEGIN

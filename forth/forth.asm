@@ -1063,50 +1063,13 @@ PARSED:
 	jp	next
 
 
-.fill 51
-
-; Spit name (in (HL)) + prev in (HERE) and adjust (HERE) and (CURRENT)
-; HL points to new (HERE)
-	.db	"(entry)"
-	.dw	$-PARSED
-	.db	7
-ENTRYHEAD:
-	.dw	compiledWord
-	.dw	WORD
-	.dw	.private
-	.dw	EXIT
-
-.private:
-	.dw	nativeWord
-	pop	hl
-	ld	de, (HERE)
-	call	strcpy
-	; DE point to char after null, rewind.
-	dec	de
-	; B counts the null, adjust
-	dec	b
-	ld	a, b
-	ex	de, hl		; HL points to new HERE
-	ld	de, (CURRENT)
-	push	hl		; --> lvl 1
-	or	a	; clear carry
-	sbc	hl, de
-	ex	de, hl
-	pop	hl		; <-- lvl 1
-	call	DEinHL
-	; Save size
-	ld	(hl), b
-	inc	hl
-	ld	(CURRENT), hl
-	ld	(HERE), hl
-	jp	next
-
+.fill 107
 
 ; STABLE ABI (every sysvars)
 ; Offset: 05ca
 .out $
 	.db "HERE"
-	.dw $-ENTRYHEAD
+	.dw $-PARSED
 	.db 4
 HERE_:	; Caution: conflicts with actual variable name
 	.dw sysvarWord
