@@ -113,6 +113,15 @@ CODE XOR
     HL PUSHqq,
 ;CODE
 
+CODE -
+    DE POPqq,
+    HL POPqq,
+    chkPS,
+    A ORr,
+    DE SBCHLss,
+    HL PUSHqq,
+;CODE
+
 CODE *
     DE POPqq,
     BC POPqq,

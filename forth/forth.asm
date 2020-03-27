@@ -1318,23 +1318,11 @@ PLUS:
 	push	hl
 	jp	next
 
-; ( a b -- c ) A - B
-	.db "-"
-	.dw $-PLUS
-	.db 1
-MINUS:
-	.dw nativeWord
-	pop	de		; B
-	pop	hl		; A
-	call	chkPS
-	or	a		; reset carry
-	sbc	hl, de
-	push	hl
-	jp	next
+.fill 18
 
 ; ( a1 a2 -- b )
 	.db "SCMP"
-	.dw $-MINUS
+	.dw $-PLUS
 	.db 4
 SCMP:
 	.dw nativeWord
