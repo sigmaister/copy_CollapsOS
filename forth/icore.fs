@@ -81,6 +81,11 @@
     AGAIN
 ;
 
+: C,
+    HERE @ _c C!
+    HERE @ 1 + HERE !
+;
+
 : (entry)
     HERE @          ( h )
     WORD            ( h s )
@@ -92,7 +97,7 @@
     ( write prev value )
     HERE @ CURRENT @ _c - ,
     ( write size )
-    C,
+    _c C,
     HERE @ CURRENT !
 ;
 

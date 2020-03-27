@@ -720,24 +720,10 @@ EMIT:
 	.dw	EXIT
 
 
-.fill 49
-
-	.db	"C,"
-	.dw	$-EMIT
-	.db	2
-CWR:
-	.dw	nativeWord
-	pop	de
-	call	chkPS
-	ld	hl, (HERE)
-	ld	(hl), e
-	inc	hl
-	ld	(HERE), hl
-	jp	next
-
+.fill 71
 
 	.db	","
-	.dw	$-CWR
+	.dw	$-EMIT
 	.db	1
 WR:
 	.dw	nativeWord
