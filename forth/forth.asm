@@ -113,8 +113,10 @@
 ; change bootstrap binaries have to be adjusted because they rely on them.
 ; We're at 0 here
 	jp	forthMain
-.fill 0x17-$
+.fill 0x11-$
 JUMPTBL:
+	jp	pushRS
+	jp	popRS
 	jp	nativeWord
 	jp	next
 	jp	chkPS
@@ -782,13 +784,13 @@ ROUTINE:
 	ld	de, cellWord
 	cp	'C'
 	jr	z, .end
-	ld	de, compiledWord
-	cp	'L'
-	jr	z, .end
 	ld	de, JUMPTBL
+	cp	'J'
+	jr	z, .end
+	ld	de, JUMPTBL+6
 	cp	'V'
 	jr	z, .end
-	ld	de, JUMPTBL+3
+	ld	de, JUMPTBL+9
 	cp	'N'
 	jr	z, .end
 	ld	de, sysvarWord
@@ -803,7 +805,7 @@ ROUTINE:
 	ld	de, NUMBER
 	cp	'M'
 	jr	z, .end
-	ld	de, JUMPTBL+6
+	ld	de, JUMPTBL+12
 	cp	'P'
 	jr	nz, .notgood
 	; continue to end on match
@@ -1300,28 +1302,12 @@ OVER:
 	push	de
 	jp	next
 
-	.db	">R"
-	.dw	$-OVER
-	.db	2
-P2R:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	call	pushRS
-	jp	next
 
-	.db	"R>"
-	.dw	$-P2R
-	.db	2
-R2P:
-	.dw	nativeWord
-	call	popRS
-	push	hl
-	jp	next
+.fill 31
 
 ; ( a b -- c ) A + B
 	.db "+"
-	.dw $-R2P
+	.dw $-OVER
 	.db 1
 PLUS:
 	.dw nativeWord

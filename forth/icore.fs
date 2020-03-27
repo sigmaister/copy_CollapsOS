@@ -41,15 +41,6 @@
     ,           ( write! )
 ; IMMEDIATE
 
-: X             ( can't have its real name now )
-    ['] EXIT ,
-    R> DROP     ( exit COMPILE )
-    R> DROP     ( exit : )
-; IMMEDIATE
-
-( Give ";" its real name )
-';' CURRENT @ 4 - C!
-
 : INTERPRET
     BEGIN
     WORD
@@ -63,3 +54,14 @@
     THEN
     AGAIN
 ;
+
+( ; has to be defined last because it can't be executed now )
+: X             ( can't have its real name now )
+    ['] EXIT ,
+    _c R> DROP     ( exit COMPILE )
+    _c R> DROP     ( exit : )
+; IMMEDIATE
+
+( Give ";" its real name )
+';' CURRENT @ 4 - C!
+

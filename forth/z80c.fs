@@ -207,3 +207,16 @@ CODE J
     H 3 IX- LDrIXY,
     HL PUSHqq,
 ;CODE
+
+CODE >R
+    HL POPqq,
+    chkPS,
+    ( JUMPTBL+0 == pushRS )
+    ROUTINE J CALLnn,
+;CODE
+
+CODE R>
+    ( JUMPTBL+3 == popRS )
+    ROUTINE J 3 + CALLnn,
+    HL PUSHqq,
+;CODE
