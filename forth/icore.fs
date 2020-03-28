@@ -97,6 +97,12 @@
     HERE @ 1 + HERE !
 ;
 
+: LITN
+    ( JTBL+24 == NUMBER )
+    JTBL 24 + ,
+    ,
+;
+
 : (entry)
     HERE @          ( h )
     WORD            ( h s )
@@ -118,15 +124,16 @@
 
 : X
     _c (entry)
-    ( JTBL+6 == compiledWord )
-    [ JTBL 6 + LITN ] ,
+    ( We cannot use LITN as IMMEDIATE because of bootstrapping
+      issues. JTBL+24 == NUMBER JTBL+6 == compiledWord )
+    [ JTBL 24 + , JTBL 6 + , ] ,
     BEGIN
     WORD
     (find)
     ( is word )
     IF DUP _c IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )
-    ELSE (parse*) @ EXECUTE LITN THEN
+    ELSE (parse*) @ EXECUTE _c LITN THEN
     AGAIN
 ; IMMEDIATE
 

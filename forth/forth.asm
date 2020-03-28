@@ -714,25 +714,10 @@ DOES:
 	jp	EXIT+2
 
 
-.fill 51
-
-; ( n -- )
-	.db	"LITN"
-	.dw	$-DOES
-	.db	4
-LITN:
-	.dw nativeWord
-	ld	hl, (HERE)
-	ld	de, NUMBER
-	call	DEinHL
-	pop	de		; number from stack
-	call	chkPS
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
+.fill 82
 
 	.db	"SCPY"
-	.dw	$-LITN
+	.dw	$-DOES
 	.db	4
 SCPY:
 	.dw	nativeWord
