@@ -79,6 +79,7 @@
 0xc5 OP1qq PUSHqq,
 0xc1 OP1qq POPqq,
 0x03 OP1qq INCss,
+0x0b OP1qq DECss,
 0x09 OP1qq ADDHLss,
 
 : _1rr

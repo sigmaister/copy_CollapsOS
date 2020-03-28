@@ -781,19 +781,10 @@ DOES:
 	jp	EXIT+2
 
 
-	.db "IMMEDIATE"
-	.dw $-DOES
-	.db 9
-IMMEDIATE:
-	.dw nativeWord
-	ld	hl, (CURRENT)
-	dec	hl
-	set	FLAG_IMMED, (hl)
-	jp	next
-
+.fill 23
 
 	.db	"IMMED?"
-	.dw	$-IMMEDIATE
+	.dw	$-DOES
 	.db	6
 ISIMMED:
 	.dw	nativeWord

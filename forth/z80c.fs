@@ -227,3 +227,9 @@ CODE R>
     JTBL 12 + CALLnn,
     HL PUSHqq,
 ;CODE
+
+CODE IMMEDIATE
+    CURRENT LDHL(nn),
+    HL DECss,
+    7 (HL) SETbr,
+;CODE
