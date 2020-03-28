@@ -122,6 +122,8 @@ LIT:
 	.dw	litWord
 	.dw	INITIAL_SP
 	.dw	WORDBUF
+	jp	flagsToBC
+	jp	strcmp
 
 ; *** Code ***
 forthMain:
@@ -180,7 +182,7 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 56
+.fill 50
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -980,25 +982,11 @@ PLUS:
 	push	hl
 	jp	next
 
-.fill 18
-
-; ( a1 a2 -- b )
-	.db "SCMP"
-	.dw $-PLUS
-	.db 4
-SCMP:
-	.dw nativeWord
-	pop	de
-	pop	hl
-	call	chkPS
-	call	strcmp
-	call	flagsToBC
-	push	bc
-	jp	next
+.fill 42
 
 ; ( n1 n2 -- f )
 	.db "CMP"
-	.dw $-SCMP
+	.dw $-PLUS
 	.db 3
 CMP:
 	.dw nativeWord

@@ -254,3 +254,15 @@ CODE (resSP)
     ( INITIAL_SP == JTBL+28 )
     SP JTBL 28 + @ LDdd(nn),
 ;CODE
+
+CODE SCMP
+    DE  POPqq,
+    HL  POPqq,
+    chkPS,
+    ( JTBL+35 == strcmp )
+    JTBL 35 + CALLnn,
+    ( JTBL+32 == flagsToBC )
+    JTBL 32 + CALLnn,
+    BC PUSHqq,
+;CODE
+
