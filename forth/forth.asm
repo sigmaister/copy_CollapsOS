@@ -32,16 +32,10 @@
 ; *** Const ***
 ; Base of the Return Stack
 .equ	RS_ADDR		0xf000
-; Number of bytes we keep as a padding between HERE and the scratchpad
-.equ	PADDING		0x20
 ; Buffer where WORD copies its read word to.
 .equ	WORD_BUFSIZE		0x20
 ; Allocated space for sysvars (see comment above SYSVCNT)
 .equ	SYSV_BUFSIZE		0x10
-
-; Flags for the "flag field" of the word structure
-; IMMEDIATE word
-.equ	FLAG_IMMED	7
 
 ; *** Variables ***
 .equ	INITIAL_SP	RAMSTART
@@ -66,8 +60,6 @@
 .equ	CINPTR		@+2
 ; Pointer to (emit) word
 .equ	EMITPTR		@+2
-; Pointer to (print) word
-.equ	PRINTPTR	@+2
 .equ	WORDBUF		@+2
 ; Sys Vars are variables with their value living in the system RAM segment. We
 ; need this mechanisms for core Forth source needing variables. Because core
@@ -156,10 +148,6 @@ forthMain:
 	ld	hl, .emitName
 	call	find
 	ld	(EMITPTR), de
-	; Set up PRINTPTR
-	ld	hl, .printName
-	call	find
-	ld	(PRINTPTR), de
 	; Set up CINPTR
 	; do we have a (c<) impl?
 	ld	hl, .cinName
@@ -184,8 +172,6 @@ forthMain:
 	.db	"(c<)", 0
 .emitName:
 	.db	"(emit)", 0
-.printName:
-	.db	"(print)", 0
 .keyName:
 	.db	"KEY", 0
 .bootName:
@@ -199,7 +185,7 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 25
+.fill 43
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -679,18 +665,14 @@ ABORT:
 	jp	next
 
 abortUnderflow:
-	ld	hl, .word
-	push	hl
+	ld	hl, .name
+	call	find
+	push	de
 	jp	EXECUTE+2
-.word:
-	.dw	compiledWord
-	.dw	LIT
-	.db	"stack underfl", 0
-	.dw	NUMBER
-	.dw	PRINTPTR
-	.dw	FETCH
-	.dw	EXECUTE
-	.dw	ABORT
+.name:
+	.db "(uflw)", 0
+
+.fill 18
 
 	.db "BYE"
 	.dw $-ABORT

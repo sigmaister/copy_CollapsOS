@@ -86,6 +86,10 @@
     AGAIN
 ;
 
+: (uflw)
+    LIT< stack-underflow _c (print) ABORT
+;
+
 : C,
     HERE @ _c C!
     HERE @ 1 + HERE !
