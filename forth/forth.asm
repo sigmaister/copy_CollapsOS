@@ -982,25 +982,9 @@ PLUS:
 	push	hl
 	jp	next
 
-.fill 42
-
-; ( n1 n2 -- f )
-	.db "CMP"
-	.dw $-PLUS
-	.db 3
-CMP:
-	.dw nativeWord
-	pop	hl
-	pop	de
-	call	chkPS
-	or	a	; clear carry
-	sbc	hl, de
-	call	flagsToBC
-	push	bc
-	jp	next
-
+.fill 65
 	.db	"_bend"
-	.dw	$-CMP
+	.dw	$-PLUS
 	.db	5
 ; Offset: 06ee
 .out $

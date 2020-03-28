@@ -266,3 +266,14 @@ CODE SCMP
     BC PUSHqq,
 ;CODE
 
+CODE CMP
+    HL  POPqq,
+    DE  POPqq,
+    chkPS,
+    A ORr,      ( clear carry )
+    DE SBCHLss,
+    ( JTBL+32 == flagsToBC )
+    JTBL 32 + CALLnn,
+    BC PUSHqq,
+;CODE
+
