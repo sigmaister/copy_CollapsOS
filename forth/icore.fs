@@ -65,7 +65,7 @@
     ( exit if null )
     DUP NOT IF DROP DROP EXIT THEN
     _c EMIT     ( a )
-    1 +         ( a+1 )
+    1 _c +         ( a+1 )
     AGAIN
 ;
 
@@ -75,13 +75,13 @@
 
 : C,
     HERE @ _c C!
-    HERE @ 1 + HERE !
+    HERE @ 1 _c + HERE !
 ;
 
 ( The NOT is to normalize the negative/positive numbers to 1
   or 0. Hadn't we wanted to normalize, we'd have written:
   32 CMP 1 - )
-: WS? 33 _c CMP 1 + NOT ;
+: WS? 33 _c CMP 1 _c + NOT ;
 
 : TOWORD
     BEGIN
@@ -99,7 +99,7 @@
         ( We take advantage of the fact that char MSB is
           always zero to pre-write our null-termination )
         OVER !                  ( a )
-        1 +                     ( a+1 )
+        1 _c +                  ( a+1 )
         C<                      ( a c )
         DUP _c WS?
     UNTIL
@@ -111,7 +111,7 @@
 
 : LITN
     ( JTBL+24 == NUMBER )
-    JTBL 24 + ,
+    JTBL 24 _c + ,
     ,
 ;
 

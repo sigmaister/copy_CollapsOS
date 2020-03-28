@@ -967,24 +967,10 @@ OVER:
 	jp	next
 
 
-.fill 31
+.fill 112
 
-; ( a b -- c ) A + B
-	.db "+"
-	.dw $-OVER
-	.db 1
-PLUS:
-	.dw nativeWord
-	pop	hl
-	pop	de
-	call	chkPS
-	add	hl, de
-	push	hl
-	jp	next
-
-.fill 65
 	.db	"_bend"
-	.dw	$-PLUS
+	.dw	$-OVER
 	.db	5
 ; Offset: 06ee
 .out $
