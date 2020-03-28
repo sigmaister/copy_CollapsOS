@@ -11,8 +11,8 @@
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
 : BEGIN H@ ; IMMEDIATE
-: AGAIN COMPILE (bbr) H@ -^ C, ; IMMEDIATE
-: UNTIL COMPILE SKIP? COMPILE (bbr) H@ -^ C, ; IMMEDIATE
+: AGAIN COMPILE (br) H@ - , ; IMMEDIATE
+: UNTIL COMPILE SKIP? COMPILE (br) H@ - , ; IMMEDIATE
 : ( BEGIN LIT< ) WORD SCMP NOT UNTIL ; IMMEDIATE
 ( Hello, hello, krkrkrkr... do you hear me?
   Ah, voice at last! Some lines above need comments
@@ -23,29 +23,29 @@
   that is, only used by their immediate surrondings.
 
   COMPILE: Tough one. Get addr of caller word (example above
-  (bbr)) and then call LITN on it. )
+  (br)) and then call LITN on it. )
 
 : +! SWAP OVER @ + SWAP ! ;
 : ALLOT HERE +! ;
 
 : IF                ( -- a | a: br cell addr )
     COMPILE SKIP?   ( if true, don't branch )
-    COMPILE (fbr)
+    COMPILE (br)
     H@              ( push a )
-    1 ALLOT         ( br cell allot )
+    2 ALLOT         ( br cell allot )
 ; IMMEDIATE
 
 : THEN              ( a -- | a: br cell addr )
     DUP H@ -^ SWAP   ( a-H a )
-    C!
+    !
 ; IMMEDIATE
 
 : ELSE              ( a1 -- a2 | a1: IF cell a2: ELSE cell )
-    COMPILE (fbr)
-    1 ALLOT
+    COMPILE (br)
+    2 ALLOT
     DUP H@ -^ SWAP  ( a-H a )
-    C!
-    H@ 1 -          ( push a. -1 for allot offset )
+    !
+    H@ 2 -          ( push a. -2 for allot offset )
 ; IMMEDIATE
 
 : CREATE
@@ -73,8 +73,8 @@
   the RS )
 : LOOP
     COMPILE R> 1 LITN COMPILE + COMPILE DUP COMPILE >R
-    COMPILE I' COMPILE = COMPILE SKIP? COMPILE (bbr)
-    H@ -^ C,
+    COMPILE I' COMPILE = COMPILE SKIP? COMPILE (br)
+    H@ - ,
     COMPILE R> COMPILE DROP COMPILE R> COMPILE DROP
 ; IMMEDIATE
 

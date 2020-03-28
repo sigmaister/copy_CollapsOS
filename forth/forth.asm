@@ -655,10 +655,84 @@ abortUnderflow:
 .name:
 	.db "(uflw)", 0
 
-.fill 140
+	.db	"(br)"
+	.dw	$-QUIT
+	.db	4
+BR:
+	.dw	nativeWord
+	ld	hl, (IP)
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	add	hl, de
+	ld	(IP), hl
+	jp	next
+
+; Skip the compword where HL is currently pointing. If it's a regular word,
+; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
+; to after null-termination.
+	.db	"SKIP?"
+	.dw	$-BR
+	.db	5
+CSKIP:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	ld	a, h
+	or	l
+	jp	z, next		; False, do nothing.
+	ld	hl, (IP)
+	ld	de, NUMBER
+	call	.HLPointsDE
+	jr	z, .isNum
+	ld	de, BR
+	call	.HLPointsDE
+	jr	z, .isNum
+	ld	de, FBR
+	call	.HLPointsDE
+	jr	z, .isBranch
+	ld	de, BBR
+	call	.HLPointsDE
+	jr	z, .isBranch
+	ld	de, LIT
+	call	.HLPointsDE
+	jr	nz, .isWord
+	; We have a literal
+	inc	hl \ inc hl
+	call	strskip
+	inc	hl		; byte after word termination
+	jr	.end
+.isNum:
+	; skip by 4
+	inc	hl
+	; continue to isBranch
+.isBranch:
+	; skip by 3
+	inc	hl
+	; continue to isWord
+.isWord:
+	; skip by 2
+	inc	hl \ inc hl
+.end:
+	ld	(IP), hl
+	jp	next
+
+; Sets Z if (HL) == E and (HL+1) == D
+.HLPointsDE:
+	ld	a, (hl)
+	cp	e
+	ret	nz		; no
+	inc	hl
+	ld	a, (hl)
+	dec	hl
+	cp	d		; Z has our answer
+	ret
+
+.fill 29
 
 	.db	","
-	.dw	$-QUIT
+	.dw	$-CSKIP
 	.db	1
 WR:
 	.dw	nativeWord
@@ -839,6 +913,9 @@ WORD:
 	.dw	DUP		; ( a c c )
 	.dw	ISWS		; ( a c f )
 	.dw	CSKIP		; ( a c )
+	; I'm not sure why, I can't seem to successfully change this into
+	; a (br). I'll get rid of the (fbr) and (bbr) words when I'm done
+	; Forth-ifying "WORD"
 	.dw	BBR
 	.db	20	; here - mark
 	; at this point, we have ( a WS )
@@ -1061,71 +1138,12 @@ CMP:
 	push	bc
 	jp	next
 
-; Skip the compword where HL is currently pointing. If it's a regular word,
-; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
-; to after null-termination.
-	.db	"SKIP?"
-	.dw	$-CMP
-	.db	5
-; STABLE ABI
-; Offset: 06ee
-.out $
-CSKIP:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	ld	a, h
-	or	l
-	jp	z, next		; False, do nothing.
-	ld	hl, (IP)
-	ld	de, NUMBER
-	call	.HLPointsDE
-	jr	z, .isNum
-	ld	de, FBR
-	call	.HLPointsDE
-	jr	z, .isBranch
-	ld	de, BBR
-	call	.HLPointsDE
-	jr	z, .isBranch
-	ld	de, LIT
-	call	.HLPointsDE
-	jr	nz, .isWord
-	; We have a literal
-	inc	hl \ inc hl
-	call	strskip
-	inc	hl		; byte after word termination
-	jr	.end
-.isNum:
-	; skip by 4
-	inc	hl
-	; continue to isBranch
-.isBranch:
-	; skip by 3
-	inc	hl
-	; continue to isWord
-.isWord:
-	; skip by 2
-	inc	hl \ inc hl
-.end:
-	ld	(IP), hl
-	jp	next
-
-; Sets Z if (HL) == E and (HL+1) == D
-.HLPointsDE:
-	ld	a, (hl)
-	cp	e
-	ret	nz		; no
-	inc	hl
-	ld	a, (hl)
-	dec	hl
-	cp	d		; Z has our answer
-	ret
-
+.fill 80
 ; This word's atom is followed by 1b *relative* offset (to the cell's addr) to
 ; where to branch to. For example, The branching cell of "IF THEN" would
 ; contain 3. Add this value to RS.
 	.db	"(fbr)"
-	.dw	$-CSKIP
+	.dw	$-CMP
 	.db	5
 ; STABLE ABI
 ; Offset: 073e
@@ -1160,5 +1178,5 @@ BBR:
 ; with a dummy, *empty* entry. Therefore, we can have a predictable place for
 ; getting a prev label.
 	.db	"_bend"
-	.dw	$-BBR
+	.dw	$-CMP
 	.db	5
