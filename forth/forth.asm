@@ -690,12 +690,6 @@ CSKIP:
 	ld	de, BR
 	call	.HLPointsDE
 	jr	z, .isNum
-	ld	de, FBR
-	call	.HLPointsDE
-	jr	z, .isBranch
-	ld	de, BBR
-	call	.HLPointsDE
-	jr	z, .isBranch
 	ld	de, LIT
 	call	.HLPointsDE
 	jr	nz, .isWord
@@ -707,9 +701,6 @@ CSKIP:
 .isNum:
 	; skip by 4
 	inc	hl
-	; continue to isBranch
-.isBranch:
-	; skip by 3
 	inc	hl
 	; continue to isWord
 .isWord:
@@ -730,7 +721,7 @@ CSKIP:
 	cp	d		; Z has our answer
 	ret
 
-.fill 29
+.fill 45
 
 	.db	","
 	.dw	$-CSKIP
@@ -1069,45 +1060,6 @@ CMP:
 	push	bc
 	jp	next
 
-.fill 80
-; This word's atom is followed by 1b *relative* offset (to the cell's addr) to
-; where to branch to. For example, The branching cell of "IF THEN" would
-; contain 3. Add this value to RS.
-	.db	"(fbr)"
-	.dw	$-CMP
-	.db	5
-; STABLE ABI
-; Offset: 073e
-.out $
-FBR:
-	.dw	nativeWord
-	push	de
-	ld	hl, (IP)
-	ld	a, (hl)
-	call	addHL
-	ld	(IP), hl
-	pop	de
-	jp	next
-
-	.db	"(bbr)"
-	.dw	$-FBR
-	.db	5
-; STABLE ABI
-; Offset: 0757
-.out $
-BBR:
-	.dw	nativeWord
-	ld	hl, (IP)
-	ld	d, 0
-	ld	e, (hl)
-	or	a		; clear carry
-	sbc	hl, de
-	ld	(IP), hl
-	jp	next
-
-; To allow dict binaries to "hook themselves up", we always end such binary
-; with a dummy, *empty* entry. Therefore, we can have a predictable place for
-; getting a prev label.
 	.db	"_bend"
 	.dw	$-CMP
 	.db	5
