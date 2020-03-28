@@ -83,7 +83,7 @@
     _c C@       ( a c )
     ( exit if null )
     DUP NOT IF DROP DROP EXIT THEN
-    EMIT        ( a )
+    _c EMIT     ( a )
     1 +         ( a+1 )
     AGAIN
 ;

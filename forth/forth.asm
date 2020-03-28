@@ -58,8 +58,6 @@
 ; interface in Forth, which we plug in during init. If "(c<)" exists in the
 ; dict, CINPTR is set to it. Otherwise, we set KEY
 .equ	CINPTR		@+2
-; Pointer to (emit) word
-.equ	EMITPTR		@+2
 .equ	WORDBUF		@+2
 ; Sys Vars are variables with their value living in the system RAM segment. We
 ; need this mechanisms for core Forth source needing variables. Because core
@@ -146,10 +144,6 @@ forthMain:
 	ld	hl, .parseName
 	call	find
 	ld	(PARSEPTR), de
-	; Set up EMITPTR
-	ld	hl, .emitName
-	call	find
-	ld	(EMITPTR), de
 	; Set up CINPTR
 	; do we have a (c<) impl?
 	ld	hl, .cinName
@@ -172,8 +166,6 @@ forthMain:
 	.db	"(parse)", 0
 .cinName:
 	.db	"(c<)", 0
-.emitName:
-	.db	"(emit)", 0
 .keyName:
 	.db	"KEY", 0
 .bootName:
@@ -187,8 +179,11 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 41
+.fill 58
 
+; STABLE ABI
+; Offset: 00cd
+.out $
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
 ; Forth and the concept of ASM libs will become obsolete. To facilitate this
@@ -660,28 +655,10 @@ abortUnderflow:
 .name:
 	.db "(uflw)", 0
 
-.fill 50
-
-; STABLE ABI
-; Offset: 02aa
-.out $
-; ( c -- )
-	.db "EMIT"
-	.dw $-QUIT
-	.db 4
-EMIT:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	EMITPTR
-	.dw	FETCH
-	.dw	EXECUTE
-	.dw	EXIT
-
-
-.fill 71
+.fill 140
 
 	.db	","
-	.dw	$-EMIT
+	.dw	$-QUIT
 	.db	1
 WR:
 	.dw	nativeWord

@@ -2,7 +2,7 @@
   stdio port is 0
 )
 
-CODE (emit)
+CODE EMIT
     HL POPqq,
     chkPS,
     A L LDrr,
