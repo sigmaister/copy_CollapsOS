@@ -660,21 +660,14 @@ abortUnderflow:
 .name:
 	.db "(uflw)", 0
 
-.fill 41
-
-	.db "BYE"
-	.dw $-QUIT
-	.db 3
-BYE:
-	.dw nativeWord
-	halt
+.fill 50
 
 ; STABLE ABI
 ; Offset: 02aa
 .out $
 ; ( c -- )
 	.db "EMIT"
-	.dw $-BYE
+	.dw $-QUIT
 	.db 4
 EMIT:
 	.dw	compiledWord

@@ -246,6 +246,10 @@ CODE IMMED?
     DE PUSHqq,
 ;CODE
 
+CODE BYE
+    HALT,
+;CODE
+
 CODE (resSP)
     ( INITIAL_SP == JTBL+28 )
     SP JTBL 28 + @ LDdd(nn),
