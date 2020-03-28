@@ -63,6 +63,11 @@
     AGAIN
 ;
 
+: BOOT
+    LIT< (c<$) (find) IF EXECUTE ELSE DROP THEN
+    _c INTERPRET
+;
+
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)

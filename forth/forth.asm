@@ -173,8 +173,9 @@ forthMain:
 	; Set up SYSVNXT
 	ld	hl, SYSVBUF
 	ld	(SYSVNXT), hl
-	ld	hl, BEGIN
-	push	hl
+	ld	hl, .bootName
+	call	find
+	push	de
 	jp	EXECUTE+2
 
 .parseName:
@@ -187,16 +188,8 @@ forthMain:
 	.db	"(print)", 0
 .keyName:
 	.db	"KEY", 0
-
-BEGIN:
-	.dw	compiledWord
-	.dw	LIT
-	.db	"(c<$)", 0
-	.dw	FIND_
-	.dw	NOT
-	.dw	CSKIP
-	.dw	EXECUTE
-	.dw	INTERPRET
+.bootName:
+	.db	"BOOT", 0
 
 INTERPRET:
 	.dw	compiledWord
@@ -206,7 +199,7 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 13
+.fill 25
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
