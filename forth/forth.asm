@@ -121,6 +121,7 @@ NUMBER:
 LIT:
 	.dw	litWord
 	.dw	INITIAL_SP
+	.dw	WORDBUF
 
 ; *** Code ***
 forthMain:
@@ -179,7 +180,7 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 58
+.fill 56
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -890,65 +891,10 @@ TOWORD:
 	.dw	TOWORD
 	.dw	EXIT
 
-; Read word from C<, copy to WORDBUF, null-terminate, and return, make
-; HL point to WORDBUF.
-	.db "WORD"
-	.dw $-TOWORD
-	.db 4
-; STABLE ABI
-; Offset: 04f7
-.out $
-WORD:
-	.dw	compiledWord
-	.dw	NUMBER		; ( a )
-	.dw	WORDBUF
-	.dw	TOWORD		; ( a c )
-	; branch mark
-	.dw	OVER		; ( a c a )
-	.dw	STORE		; ( a )
-	.dw	NUMBER		; ( a 1 )
-	.dw	1
-	.dw	PLUS		; ( a+1 )
-	.dw	CIN		; ( a c )
-	.dw	DUP		; ( a c c )
-	.dw	ISWS		; ( a c f )
-	.dw	CSKIP		; ( a c )
-	; I'm not sure why, I can't seem to successfully change this into
-	; a (br). I'll get rid of the (fbr) and (bbr) words when I'm done
-	; Forth-ifying "WORD"
-	.dw	BBR
-	.db	20	; here - mark
-	; at this point, we have ( a WS )
-	.dw	DROP
-	.dw	NUMBER
-	.dw	0
-	.dw	SWAP		; ( 0 a )
-	.dw	STORE		; ()
-	.dw	NUMBER
-	.dw	WORDBUF
-	.dw	EXIT
-
-.wcpy:
-	.dw	nativeWord
-	ld	de, WORDBUF
-	push	de		; we already have our result
-.loop:
-	ld	a, (hl)
-	cp	' '+1
-	jr	c, .loopend
-	ld	(de), a
-	inc	hl
-	inc	de
-	jr	.loop
-.loopend:
-	; null-terminate the string.
-	xor	a
-	ld	(de), a
-	jp	next
-
+.fill 73
 
 	.db	"(parsed)"
-	.dw	$-WORD
+	.dw	$-TOWORD
 	.db	8
 PARSED:
 	.dw	nativeWord

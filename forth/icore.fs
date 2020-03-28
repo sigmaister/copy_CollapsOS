@@ -51,25 +51,6 @@
 
 : ABORT _c (resSP) QUIT ;
 
-: INTERPRET
-    BEGIN
-    WORD
-    (find)
-    IF
-        1 FLAGS !
-        EXECUTE
-        0 FLAGS !
-    ELSE
-        (parse*) @ EXECUTE
-    THEN
-    AGAIN
-;
-
-: BOOT
-    LIT< (c<$) (find) IF EXECUTE ELSE DROP THEN
-    _c INTERPRET
-;
-
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)
@@ -97,6 +78,26 @@
     HERE @ 1 + HERE !
 ;
 
+( Read word from C<, copy to WORDBUF, null-terminate, and
+  return, make HL point to WORDBUF. )
+: WORD
+    ( JTBL+30 == WORDBUF )
+    [ JTBL 30 + @ LITN ]        ( a )
+    TOWORD                      ( a c )
+    BEGIN
+        ( We take advantage of the fact that char MSB is
+          always zero to pre-write our null-termination )
+        OVER !                  ( a )
+        1 +                     ( a+1 )
+        C<                      ( a c )
+        DUP WS?
+    UNTIL
+    ( a this point, PS is: a WS )
+    ( null-termination is already written )
+    DROP DROP
+    [ JTBL 30 + @ LITN ]
+;
+
 : LITN
     ( JTBL+24 == NUMBER )
     JTBL 24 + ,
@@ -105,7 +106,7 @@
 
 : (entry)
     HERE @          ( h )
-    WORD            ( h s )
+    _c WORD         ( h s )
     SCPY            ( h )
     ( Adjust HERE -1 because SCPY copies the null )
     HERE @ 1 _c -   ( h h' )
@@ -118,6 +119,25 @@
     HERE @ CURRENT !
 ;
 
+: INTERPRET
+    BEGIN
+    _c WORD
+    (find)
+    IF
+        1 FLAGS !
+        EXECUTE
+        0 FLAGS !
+    ELSE
+        (parse*) @ EXECUTE
+    THEN
+    AGAIN
+;
+
+: BOOT
+    LIT< (c<$) (find) IF EXECUTE ELSE DROP THEN
+    _c INTERPRET
+;
+
 ( : and ; have to be defined last because it can't be
   executed now also, they can't have their real name
   right away )
@@ -128,7 +148,7 @@
       issues. JTBL+24 == NUMBER JTBL+6 == compiledWord )
     [ JTBL 24 + , JTBL 6 + , ] ,
     BEGIN
-    WORD
+    _c WORD
     (find)
     ( is word )
     IF DUP _c IMMED? IF EXECUTE ELSE , THEN
