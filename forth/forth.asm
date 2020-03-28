@@ -875,26 +875,11 @@ NOT:
 	push	hl
 	jp	next
 
-; ( -- c )
-; C< DUP 32 CMP 1 - SKIP? EXIT DROP TOWORD
-	.db	"TOWORD"
-	.dw	$-NOT
-	.db	6
-TOWORD:
-	.dw	compiledWord
-	.dw	CIN
-	.dw	DUP
-	.dw	ISWS
-	.dw	CSKIP
-	.dw	EXIT
-	.dw	DROP
-	.dw	TOWORD
-	.dw	EXIT
 
-.fill 73
+.fill 100
 
 	.db	"(parsed)"
-	.dw	$-TOWORD
+	.dw	$-NOT
 	.db	8
 PARSED:
 	.dw	nativeWord

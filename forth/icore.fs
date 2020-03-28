@@ -78,12 +78,18 @@
     HERE @ 1 + HERE !
 ;
 
+: TOWORD
+    BEGIN
+    C< DUP WS? NOT IF EXIT THEN DROP
+    AGAIN
+;
+
 ( Read word from C<, copy to WORDBUF, null-terminate, and
   return, make HL point to WORDBUF. )
 : WORD
     ( JTBL+30 == WORDBUF )
     [ JTBL 30 + @ LITN ]        ( a )
-    TOWORD                      ( a c )
+    _c TOWORD                   ( a c )
     BEGIN
         ( We take advantage of the fact that char MSB is
           always zero to pre-write our null-termination )
