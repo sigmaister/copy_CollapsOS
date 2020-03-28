@@ -233,3 +233,15 @@ CODE IMMEDIATE
     HL DECss,
     7 (HL) SETbr,
 ;CODE
+
+CODE IMMED?
+    HL POPqq,
+    chkPS,
+    HL DECss,
+    DE 0 LDddnn,
+    7 (HL) BITbr,
+    3 JRZe, ( notset )
+    DE INCss,
+( notset )
+    DE PUSHqq,
+;CODE

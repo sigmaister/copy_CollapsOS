@@ -113,7 +113,7 @@
     WORD
     (find)
     ( is word )
-    IF DUP IMMED? IF EXECUTE ELSE , THEN
+    IF DUP _c IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )
     ELSE (parse*) @ EXECUTE LITN THEN
     AGAIN

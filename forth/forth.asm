@@ -781,27 +781,11 @@ DOES:
 	jp	EXIT+2
 
 
-.fill 23
-
-	.db	"IMMED?"
-	.dw	$-DOES
-	.db	6
-ISIMMED:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	dec	hl
-	ld	de, 0
-	bit	FLAG_IMMED, (hl)
-	jr	z, .notset
-	inc	de
-.notset:
-	push	de
-	jp	next
+.fill 51
 
 ; ( n -- )
 	.db	"LITN"
-	.dw	$-ISIMMED
+	.dw	$-DOES
 	.db	4
 LITN:
 	.dw nativeWord
