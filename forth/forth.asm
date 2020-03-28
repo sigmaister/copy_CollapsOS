@@ -830,27 +830,10 @@ CIN:
 	.dw	EXIT
 
 
-; ( c -- f )
-; 33 CMP 1 + NOT
-; The NOT is to normalize the negative/positive numbers to 1 or 0.
-; Hadn't we wanted to normalize, we'd have written:
-; 32 CMP 1 -
-	.db	"WS?"
-	.dw	$-CIN
-	.db	3
-ISWS:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	33
-	.dw	CMP
-	.dw	NUMBER
-	.dw	1
-	.dw	PLUS
-	.dw	NOT
-	.dw	EXIT
+.fill 24
 
 	.db	"NOT"
-	.dw	$-ISWS
+	.dw	$-CIN
 	.db	3
 NOT:
 	.dw	nativeWord

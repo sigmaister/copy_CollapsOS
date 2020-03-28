@@ -78,9 +78,14 @@
     HERE @ 1 + HERE !
 ;
 
+( The NOT is to normalize the negative/positive numbers to 1
+  or 0. Hadn't we wanted to normalize, we'd have written:
+  32 CMP 1 - )
+: WS? 33 CMP 1 + NOT ;
+
 : TOWORD
     BEGIN
-    C< DUP WS? NOT IF EXIT THEN DROP
+    C< DUP _c WS? NOT IF EXIT THEN DROP
     AGAIN
 ;
 
@@ -96,7 +101,7 @@
         OVER !                  ( a )
         1 +                     ( a+1 )
         C<                      ( a c )
-        DUP WS?
+        DUP _c WS?
     UNTIL
     ( a this point, PS is: a WS )
     ( null-termination is already written )
