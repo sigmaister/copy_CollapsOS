@@ -32,6 +32,9 @@
 : IY+ _iy+- ;
 : IY- 0 -^ _iy+- ;
 
+: <<3 8 * ;
+: <<4 16 * ;
+
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
 0x76 OP1 HALT,
@@ -48,7 +51,7 @@
     DOES>
     C@              ( r op )
     SWAP            ( op r )
-    8 *             ( op r<<3 )
+    <<3             ( op r<<3 )
     OR A,
 ;
 0x04 OP1r INCr,
@@ -72,7 +75,7 @@
     DOES>
     C@              ( qq op )
     SWAP            ( op qq )
-    16 *            ( op qq<<4 )
+    <<4             ( op qq<<4 )
     OR A,
 ;
 0xc5 OP1qq PUSHqq,
@@ -84,7 +87,7 @@
 : _1rr
     C@              ( rd rr op )
     ROT             ( rr op rd )
-    8 *             ( rr op rd<<3 )
+    <<3             ( rr op rd<<3 )
     OR OR A,
 ;
 
@@ -125,7 +128,7 @@
     DOES>
     C@              ( r n op )
     ROT             ( n op r )
-    8 *             ( n op r<<3 )
+    <<3             ( n op r<<3 )
     OR A, A,
 ;
 0x06 OP2rn LDrn,
@@ -137,7 +140,7 @@
     0xcb A,
     C@              ( b r op )
     ROT             ( r op b )
-    8 *             ( r op b<<3 )
+    <<3             ( r op b<<3 )
     OR OR A,
 ;
 0xc0 OP2br SETbr,
@@ -167,7 +170,7 @@
     DOES>
     @ SPLITB SWAP   ( r lsb msb )
     A,              ( r lsb )
-    SWAP 8 *        ( lsb r<<3 )
+    SWAP <<3        ( lsb r<<3 )
     OR A,
 ;
 0xed41 OP2r OUT(C)r,
@@ -179,7 +182,7 @@
     DOES>
     0xed A,
     C@ SWAP         ( op ss )
-    16 *            ( op ss<< 4 )
+    <<4             ( op ss<< 4 )
     OR A,
 ;
 0x4a OP2ss ADCHLss,
@@ -191,7 +194,7 @@
     DOES>
     C@              ( dd nn op )
     ROT             ( nn op dd )
-    16 *            ( nn op dd<<4 )
+    <<4             ( nn op dd<<4 )
     OR A,
     SPLITB A, A,
 ;
@@ -222,6 +225,21 @@
 0x10 OPJR DJNZe,
 
 ( Specials )
+
+( dd nn -- )
+: LDdd(nn),
+    0xed A,
+    SWAP <<4 0x4b OR A,
+    SPLITB A, A,
+;
+
+( nn dd -- )
+: LD(nn)dd,
+    0xed A,
+    <<4 0x43 OR A,
+    SPLITB A, A,
+;
+
 ( JTBL+18 == next )
 : JPNEXT, [ JTBL 18 + LITN ] JPnn, ;
 

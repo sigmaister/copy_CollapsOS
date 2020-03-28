@@ -49,6 +49,8 @@
     ,           ( write! )
 ; IMMEDIATE
 
+: ABORT _c (resSP) QUIT ;
+
 : INTERPRET
     BEGIN
     WORD
@@ -71,7 +73,7 @@
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)
-    (parsed) SKIP? ABORT
+    (parsed) SKIP? _c ABORT
 ;
 
 ( a -- )
@@ -87,7 +89,7 @@
 ;
 
 : (uflw)
-    LIT< stack-underflow _c (print) ABORT
+    LIT< stack-underflow _c (print) _c ABORT
 ;
 
 : C,

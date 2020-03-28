@@ -117,10 +117,12 @@ JUMPTBL:
 	jp	nativeWord
 	jp	next
 	jp	chkPS
+; 24
 NUMBER:
 	.dw	numberWord
 LIT:
 	.dw	litWord
+	.dw	INITIAL_SP
 
 ; *** Code ***
 forthMain:
@@ -130,7 +132,7 @@ forthMain:
 	; ourselves a nice 6 bytes buffer. 6 bytes because we seldom have words
 	; requiring more than 3 items from the stack. Then, at each "exit" call
 	; we check for stack underflow.
-	push	af \ push af \ push af
+	ld	sp, 0xfffa
 	ld	(INITIAL_SP), sp
 	ld	ix, RS_ADDR
 	; LATEST is a label to the latest entry of the dict. This can be
@@ -185,7 +187,7 @@ INTERPRET:
 	.dw	DROP
 	.dw	EXECUTE
 
-.fill 43
+.fill 41
 
 ; *** Collapse OS lib copy ***
 ; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
@@ -650,20 +652,6 @@ QUIT:
 	ld	ix, RS_ADDR
 	jp	next
 
-	.db "ABORT"
-	.dw $-QUIT
-	.db 5
-ABORT:
-	.dw	compiledWord
-	.dw	.private
-	.dw	QUIT
-
-.private:
-	.dw	nativeWord
-	; Reinitialize PS
-	ld	sp, (INITIAL_SP)
-	jp	next
-
 abortUnderflow:
 	ld	hl, .name
 	call	find
@@ -672,10 +660,10 @@ abortUnderflow:
 .name:
 	.db "(uflw)", 0
 
-.fill 18
+.fill 41
 
 	.db "BYE"
-	.dw $-ABORT
+	.dw $-QUIT
 	.db 3
 BYE:
 	.dw nativeWord

@@ -245,3 +245,8 @@ CODE IMMED?
 ( notset )
     DE PUSHqq,
 ;CODE
+
+CODE (resSP)
+    ( INITIAL_SP == JTBL+28 )
+    SP JTBL 28 + @ LDdd(nn),
+;CODE
