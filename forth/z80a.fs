@@ -2,8 +2,7 @@
 
 ( Splits word into msb/lsb, lsb being on TOS )
 : SPLITB
-    DUP 0x100 /
-    SWAP 0xff AND
+    256 /MOD SWAP
 ;
 
 ( To debug, change C, to .X )
@@ -166,7 +165,7 @@
 : OP2r
     CREATE ,
     DOES>
-    @ 256 /MOD      ( r lsb msb )
+    @ SPLITB SWAP   ( r lsb msb )
     A,              ( r lsb )
     SWAP 8 *        ( lsb r<<3 )
     OR A,
