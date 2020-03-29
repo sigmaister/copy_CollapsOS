@@ -2,17 +2,17 @@
 : -^ SWAP - ;
 : [ INTERPRET 1 FLAGS ! ; IMMEDIATE
 : ] R> DROP ;
-: LIT [ JTBL 26 + LITN ] , ;
+: LIT JTBL 26 + , ;
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
 : _err LIT< word-not-found (print) ABORT ;
-: ' WORD (find) SKIP? _err ;
-: ['] WORD (find) SKIP? _err LITN ; IMMEDIATE
+: ' WORD (find) NOT (?br) [ 4 , ] _err ;
+: ['] ' LITN ; IMMEDIATE
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
 : BEGIN H@ ; IMMEDIATE
 : AGAIN COMPILE (br) H@ - , ; IMMEDIATE
-: UNTIL COMPILE SKIP? COMPILE (br) H@ - , ; IMMEDIATE
+: UNTIL COMPILE (?br) H@ - , ; IMMEDIATE
 : ( BEGIN LIT< ) WORD SCMP NOT UNTIL ; IMMEDIATE
 ( Hello, hello, krkrkrkr... do you hear me?
   Ah, voice at last! Some lines above need comments
@@ -29,8 +29,7 @@
 : ALLOT HERE +! ;
 
 : IF                ( -- a | a: br cell addr )
-    COMPILE SKIP?   ( if true, don't branch )
-    COMPILE (br)
+    COMPILE (?br)
     H@              ( push a )
     2 ALLOT         ( br cell allot )
 ; IMMEDIATE
@@ -73,7 +72,7 @@
   the RS )
 : LOOP
     COMPILE R> 1 LITN COMPILE + COMPILE DUP COMPILE >R
-    COMPILE I' COMPILE = COMPILE SKIP? COMPILE (br)
+    COMPILE I' COMPILE = COMPILE (?br)
     H@ - ,
     COMPILE R> COMPILE DROP COMPILE R> COMPILE DROP
 ; IMMEDIATE

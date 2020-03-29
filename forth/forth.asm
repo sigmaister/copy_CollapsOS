@@ -670,61 +670,28 @@ BR:
 	ld	(IP), hl
 	jp	next
 
-; Skip the compword where HL is currently pointing. If it's a regular word,
-; it's easy: we inc by 2. If it's a NUMBER, we inc by 4. If it's a LIT, we skip
-; to after null-termination.
-	.db	"SKIP?"
+.fill 72
+
+	.db	"(?br)"
 	.dw	$-BR
 	.db	5
-CSKIP:
+CBR:
 	.dw	nativeWord
 	pop	hl
 	call	chkPS
 	ld	a, h
 	or	l
-	jp	z, next		; False, do nothing.
-	ld	hl, (IP)
-	ld	de, NUMBER
-	call	.HLPointsDE
-	jr	z, .isNum
-	ld	de, BR
-	call	.HLPointsDE
-	jr	z, .isNum
-	ld	de, LIT
-	call	.HLPointsDE
-	jr	nz, .isWord
-	; We have a literal
-	inc	hl \ inc hl
-	call	strskip
-	inc	hl		; byte after word termination
-	jr	.end
-.isNum:
-	; skip by 4
-	inc	hl
-	inc	hl
-	; continue to isWord
-.isWord:
-	; skip by 2
-	inc	hl \ inc hl
-.end:
-	ld	(IP), hl
+	jp	z, BR+2		; False, branch
+	; True, skip next 2 bytes and don't branch
+	ld	hl, IP
+	inc	(hl)
+	inc	(hl)
 	jp	next
 
-; Sets Z if (HL) == E and (HL+1) == D
-.HLPointsDE:
-	ld	a, (hl)
-	cp	e
-	ret	nz		; no
-	inc	hl
-	ld	a, (hl)
-	dec	hl
-	cp	d		; Z has our answer
-	ret
-
-.fill 45
+.fill 18
 
 	.db	","
-	.dw	$-CSKIP
+	.dw	$-CBR
 	.db	1
 WR:
 	.dw	nativeWord
@@ -1046,3 +1013,5 @@ CMP:
 	.db	"_bend"
 	.dw	$-CMP
 	.db	5
+; Offset: 06ee
+.out $

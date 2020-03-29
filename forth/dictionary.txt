@@ -73,10 +73,9 @@ Note about flow words: flow words can only be used in definitions. In the
 INTERPRET loop, they don't have the desired effect because each word from the
 input stream is executed immediately. In this context, branching doesn't work.
 
-(fbr)       --              Branches forward by the number specified in its
-                            atom's cell.
-(bbr)       --              Branches backward by the number specified in its
-                            atom's cell.
+(br)        --              Branches by the number specified in the 2 following
+                            bytes. Can be negative.
+(?br)       f --            Branch if f is false.
 [           --              Begin interetative mode. In a definition, words
                             between here and "]" will be executed instead of
                             compiled.
@@ -92,9 +91,6 @@ INTERPRET   --              Get a line from stdin, compile it in tmp memory,
                             then execute the compiled contents.
 QUIT        R:drop --       Return to interpreter prompt immediately
 RECURSE     R:I -- R:I-2    Run the current word again.
-SKIP?       f --            If f is true, skip the execution of the next atom.
-                            Use this right before ";" and you're gonna have a
-                            bad time.
 THEN        I:a --          *I* Set branching cell at a.
 UNTIL       f --            *I* Jump backwards to BEGIN if f is *false*.
 

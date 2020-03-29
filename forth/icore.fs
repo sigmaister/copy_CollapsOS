@@ -54,7 +54,7 @@
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)
-    (parsed) SKIP? _c ABORT
+    (parsed) NOT IF _c ABORT THEN
 ;
 
 ( a -- )

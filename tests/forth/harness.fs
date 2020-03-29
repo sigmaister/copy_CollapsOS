@@ -4,6 +4,6 @@
 
 : fail SPC ." failed" LF 1 1 PC! BYE ;
 
-: # SKIP? fail SPC ." pass" LF ;
+: # IF SPC ." pass" LF ELSE fail THEN ;
 
 : #eq 2DUP SWAP . SPC '=' EMIT SPC . '?' EMIT = # ;

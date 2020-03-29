@@ -75,10 +75,10 @@
 ;
 
 : (parse)           ( a -- n )
-    (parsec) NOT SKIP? EXIT
-    (parseh) NOT SKIP? EXIT
-    (parseb) NOT SKIP? EXIT
-    (parsed) NOT SKIP? EXIT
+    (parsec) IF EXIT THEN
+    (parseh) IF EXIT THEN
+    (parseb) IF EXIT THEN
+    (parsed) IF EXIT THEN
     ( nothing works )
     ABORT" unknown word! "
 ;
