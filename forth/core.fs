@@ -53,8 +53,30 @@
     11                 ( 11 == cellWord )
     ,                  ( write it )
 ;
+
+( We run this when we're in an entry creation context. Many
+  things we need to do.
+  1. Change the code link to doesWord
+  2. Leave 2 bytes for regular cell variable.
+  3. Write down RS' RTOS to entry.
+  4. exit parent definition
+)
+: DOES>
+    ( Overwrite cellWord in CURRENT )
+    ( 63 == doesWord )
+    63 CURRENT @ !
+    ( When we have a DOES>, we forcefully place HERE to 4
+      bytes after CURRENT. This allows a DOES word to use ","
+      and "C," without messing everything up. )
+    CURRENT @ 4 + HERE !
+    ( HERE points to where we should write R> )
+    R> ,
+    ( We're done. Because we've popped RS, we'll exit parent
+      definition )
+;
+
 : VARIABLE CREATE 2 ALLOT ;
-: CONSTANT CREATE H@ ! DOES> @ ;
+: CONSTANT CREATE , DOES> @ ;
 : = CMP NOT ;
 : < CMP 0 1 - = ;
 : > CMP 1 = ;

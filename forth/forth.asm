@@ -136,6 +136,7 @@
 	.dw	HERE
 	.dw	CURRENT
 	jp	parseDecimal
+	jp	doesWord
 
 ; *** Code ***
 forthMain:
@@ -166,7 +167,7 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-.fill 98
+.fill 95
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -687,33 +688,10 @@ EXECUTE:
 	jp	(hl)	; go!
 
 
-.fill 77
-
-	.db "DOES>"
-	.dw $-EXECUTE
-	.db 5
-DOES:
-	.dw nativeWord
-	; We run this when we're in an entry creation context. Many things we
-	; need to do.
-	; 1. Change the code link to doesWord
-	; 2. Leave 2 bytes for regular cell variable.
-	; 3. Write down IP+2 to entry.
-	; 3. exit. we're done here.
-	ld	hl, (CURRENT)
-	ld	de, doesWord
-	call	DEinHL
-	inc	hl \ inc hl		; cell variable space
-	ld	de, (IP)
-	call	DEinHL
-	ld	(HERE), hl
-	jp	EXIT+2
-
-
-.fill 566
+.fill 677
 
 	.db	"_bend"
-	.dw	$-DOES
+	.dw	$-EXECUTE
 	.db	5
 ; Offset: 0647
 .out $
