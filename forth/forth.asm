@@ -127,6 +127,7 @@ LIT:
 	jp	strcmp
 	.dw	RS_ADDR
 	.dw	CINPTR
+	.dw	SYSVNXT
 
 ; *** Code ***
 forthMain:
@@ -163,19 +164,11 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-.fill 93
+.fill 91
 
 ; STABLE ABI
 ; Offset: 00cd
 .out $
-; *** Collapse OS lib copy ***
-; In the process of Forth-ifying Collapse OS, apps will be slowly rewritten to
-; Forth and the concept of ASM libs will become obsolete. To facilitate this
-; transition, I make, right now, a copy of the routines actually used by Forth's
-; native core. This also has the effect of reducing binary size right now and
-; give us an idea of Forth's compactness.
-; These routines below are copy/paste from apps/lib and stdio.
-
 ; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions.
 ; ld must be done little endian, so least significant byte first.
 intoHL:
@@ -834,18 +827,10 @@ FLAGS_:
 	.dw	sysvarWord
 	.dw	FLAGS
 
-	.db	"SYSVNXT"
-	.dw	$-FLAGS_
-	.db	7
-SYSVNXT_:
-	.dw	sysvarWord
-	.dw	SYSVNXT
-
-
-.fill 51
+.fill 65
 
 	.db	"_bend"
-	.dw	$-SYSVNXT_
+	.dw	$-FLAGS_
 	.db	5
 ; Offset: 0647
 .out $

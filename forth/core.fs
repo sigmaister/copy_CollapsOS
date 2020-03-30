@@ -86,9 +86,14 @@
 
 : (sysv)
     (entry)
+    ( JTBL+0 == sysvarWord )
     [ JTBL LITN ] ,
-    SYSVNXT @ ,
-    2 SYSVNXT +!
+    ( JTBL+42 == SYSVNXT )
+    [ JTBL 42 + @ LITN ] DUP    ( a a )
+    ( Get new sysv addr )
+    @ ,                         ( a )
+    ( increase current sysv counter )
+    2 SWAP +!
 ;
 
 : ."
