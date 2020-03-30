@@ -60,6 +60,11 @@
     [ JTBL 44 + @ LITN ]
 ;
 
+: (parse*)
+    ( JTBL+46 == PARSEPTR )
+    [ JTBL 46 + @ LITN ]
+;
+
 : QUIT
     0 _c FLAGS _c ! _c (resRS)
     LIT< INTERPRET (find) _c DROP EXECUTE
@@ -154,12 +159,13 @@
         EXECUTE
         0 _c FLAGS _c !
     ELSE
-        (parse*) _c @ EXECUTE
+        _c (parse*) _c @ EXECUTE
     THEN
     AGAIN
 ;
 
 : BOOT
+    LIT< (parse) (find) _c DROP _c (parse*) _c !
     LIT< (c<) (find) NOT IF LIT< KEY (find) _c DROP THEN
     ( JTBL+40 == CINPTR )
     [ JTBL 40 + @ LITN ] _c !
@@ -190,7 +196,7 @@
     ( is word )
     IF _c DUP _c IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )
-    ELSE (parse*) _c @ EXECUTE _c LITN THEN
+    ELSE _c (parse*) _c @ EXECUTE _c LITN THEN
     AGAIN
 ; IMMEDIATE
 

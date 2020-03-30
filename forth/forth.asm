@@ -129,6 +129,8 @@ LIT:
 	.dw	CINPTR
 	.dw	SYSVNXT
 	.dw	FLAGS
+; 46
+	.dw	PARSEPTR
 
 ; *** Code ***
 forthMain:
@@ -148,10 +150,6 @@ forthMain:
 	ld	(CURRENT), hl
 	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
-	; Set up PARSEPTR
-	ld	hl, .parseName
-	call	find
-	ld	(PARSEPTR), de
 	; Set up SYSVNXT
 	ld	hl, SYSVBUF
 	ld	(SYSVNXT), hl
@@ -160,12 +158,10 @@ forthMain:
 	push	de
 	jp	EXECUTE+2
 
-.parseName:
-	.db	"(parse)", 0
 .bootName:
 	.db	"BOOT", 0
 
-.fill 89
+.fill 105
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -814,17 +810,10 @@ CURRENT_:
 	.dw sysvarWord
 	.dw CURRENT
 
-	.db "(parse*)"
-	.dw $-CURRENT_
-	.db 8
-PARSEPTR_:
-	.dw sysvarWord
-	.dw PARSEPTR
-
-.fill 77
+.fill 92
 
 	.db	"_bend"
-	.dw	$-PARSEPTR_
+	.dw	$-CURRENT_
 	.db	5
 ; Offset: 0647
 .out $
