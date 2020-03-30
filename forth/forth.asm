@@ -928,10 +928,8 @@ DROP:
 	pop	hl
 	jp	next
 
-.fill 167
-
 	.db	"_bend"
 	.dw	$-DROP
 	.db	5
-; Offset: 06ee
+; Offset: 0647
 .out $
