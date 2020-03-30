@@ -123,7 +123,9 @@ LIT:
 	.dw	INITIAL_SP
 	.dw	WORDBUF
 	jp	flagsToBC
+; 35
 	jp	strcmp
+	.dw	RS_ADDR
 
 ; *** Code ***
 forthMain:
@@ -174,15 +176,7 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-INTERPRET:
-	.dw	compiledWord
-	.dw	LIT
-	.db	"INTERPRET", 0
-	.dw	FIND_
-	.dw	DROP
-	.dw	EXECUTE
-
-.fill 50
+.fill 68
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -632,23 +626,7 @@ EXIT:
 	call	popRSIP
 	jp	next
 
-; ( R:I -- )
-	.db "QUIT"
-	.dw $-EXIT
-	.db 4
-QUIT:
-	.dw compiledWord
-	.dw	NUMBER
-	.dw	0
-	.dw	FLAGS_
-	.dw	STORE
-	.dw	.private
-	.dw	INTERPRET
-
-.private:
-	.dw	nativeWord
-	ld	ix, RS_ADDR
-	jp	next
+.fill 30
 
 abortUnderflow:
 	ld	hl, .name
@@ -659,7 +637,7 @@ abortUnderflow:
 	.db "(uflw)", 0
 
 	.db	"(br)"
-	.dw	$-QUIT
+	.dw	$-EXIT
 	.db	4
 BR:
 	.dw	nativeWord

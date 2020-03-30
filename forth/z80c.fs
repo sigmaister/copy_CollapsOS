@@ -290,6 +290,11 @@ CODE (resSP)
     SP JTBL 28 + @ LDdd(nn),
 ;CODE
 
+CODE (resRS)
+    ( RS_ADDR == JTBL+38 )
+    IX JTBL 38 + @ LDddnn,
+;CODE
+
 CODE SCMP
     DE  POPqq,
     HL  POPqq,

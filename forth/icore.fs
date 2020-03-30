@@ -49,7 +49,9 @@
     ,           ( write! )
 ; IMMEDIATE
 
-: ABORT _c (resSP) QUIT ;
+: QUIT 0 FLAGS ! _c (resRS) LIT< INTERPRET (find) DROP EXECUTE ;
+
+: ABORT _c (resSP) _c QUIT ;
 
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
