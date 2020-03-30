@@ -131,6 +131,8 @@ LIT:
 	.dw	FLAGS
 ; 46
 	.dw	PARSEPTR
+	.dw	HERE
+	.dw	CURRENT
 
 ; *** Code ***
 forthMain:
@@ -161,7 +163,7 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-.fill 105
+.fill 101
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -784,36 +786,10 @@ PARSED:
 	jp	next
 
 
-.fill 96
-
-	.db	"JTBL"
-	.dw	$-PARSED
-	.db	4
-JTBL:
-	.dw	sysvarWord
-	.dw	JUMPTBL
-
-; STABLE ABI (every sysvars)
-; Offset: 05ca
-.out $
-	.db "HERE"
-	.dw $-JTBL
-	.db 4
-HERE_:	; Caution: conflicts with actual variable name
-	.dw sysvarWord
-	.dw HERE
-
-	.db "CURRENT"
-	.dw $-HERE_
-	.db 7
-CURRENT_:
-	.dw sysvarWord
-	.dw CURRENT
-
-.fill 92
+.fill 224
 
 	.db	"_bend"
-	.dw	$-CURRENT_
+	.dw	$-PARSED
 	.db	5
 ; Offset: 0647
 .out $

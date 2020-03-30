@@ -55,6 +55,8 @@
     ,           ( write! )
 ; IMMEDIATE
 
+: JTBL 0x08 ;
+
 : FLAGS
     ( JTBL+44 == FLAGS )
     [ JTBL 44 + @ LITN ]
@@ -63,6 +65,16 @@
 : (parse*)
     ( JTBL+46 == PARSEPTR )
     [ JTBL 46 + @ LITN ]
+;
+
+: HERE
+    ( JTBL+48 == HERE )
+    [ JTBL 48 + @ LITN ]
+;
+
+: CURRENT
+    ( JTBL+50 == CURRENT )
+    [ JTBL 50 + @ LITN ]
 ;
 
 : QUIT
@@ -100,8 +112,8 @@
 ;
 
 : C,
-    HERE _c @ _c C!
-    HERE _c @ 1 _c + HERE _c !
+    _c HERE _c @ _c C!
+    _c HERE _c @ 1 _c + _c HERE _c !
 ;
 
 ( The NOT is to normalize the negative/positive numbers to 1
@@ -136,18 +148,18 @@
 ;
 
 : (entry)
-    HERE _c @       ( h )
+    _c HERE _c @       ( h )
     _c WORD         ( h s )
     SCPY            ( h )
     ( Adjust HERE -1 because SCPY copies the null )
-    HERE _c @ 1 _c - ( h h' )
-    _c DUP HERE _c ! ( h h' )
+    _c HERE _c @ 1 _c - ( h h' )
+    _c DUP _c HERE _c ! ( h h' )
     _c SWAP _c -       ( sz )
     ( write prev value )
-    HERE _c @ CURRENT _c @ _c - ,
+    _c HERE _c @ _c CURRENT _c @ _c - ,
     ( write size )
     _c C,
-    HERE _c @ CURRENT _c !
+    _c HERE _c @ _c CURRENT _c !
 ;
 
 : INTERPRET
@@ -177,7 +189,7 @@
   it to avoid bootstrapping issues )
 : LITN
     ( JTBL+24 == NUMBER )
-    JTBL 24 _c + ,
+    _c JTBL 24 _c + ,
     ,
 ;
 
