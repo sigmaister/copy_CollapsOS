@@ -39,6 +39,15 @@ CODE DUP
     HL PUSHqq,      ( A )
 ;CODE
 
+( a b -- b a )
+CODE SWAP
+    HL POPqq,       ( B )
+    DE POPqq,       ( A )
+    chkPS,
+    HL PUSHqq,      ( B )
+    DE PUSHqq,      ( A )
+;CODE
+
 ( a b -- a b a )
 CODE OVER
     HL POPqq,       ( B )

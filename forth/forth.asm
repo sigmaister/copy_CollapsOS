@@ -928,22 +928,10 @@ DROP:
 	pop	hl
 	jp	next
 
-; ( a b -- b a )
-	.db "SWAP"
-	.dw $-DROP
-	.db 4
-SWAP:
-	.dw nativeWord
-	pop	hl
-	call	chkPS
-	ex	(sp), hl
-	push	hl
-	jp	next
-
-.fill 149
+.fill 167
 
 	.db	"_bend"
-	.dw	$-SWAP
+	.dw	$-DROP
 	.db	5
 ; Offset: 06ee
 .out $

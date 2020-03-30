@@ -122,7 +122,7 @@
     ( Adjust HERE -1 because SCPY copies the null )
     HERE @ 1 _c -   ( h h' )
     _c DUP HERE !   ( h h' )
-    SWAP _c -       ( sz )
+    _c SWAP _c -       ( sz )
     ( write prev value )
     HERE @ CURRENT @ _c - ,
     ( write size )
