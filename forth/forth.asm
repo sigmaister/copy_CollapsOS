@@ -683,12 +683,13 @@ CBR:
 	or	l
 	jp	z, BR+2		; False, branch
 	; True, skip next 2 bytes and don't branch
-	ld	hl, IP
-	inc	(hl)
-	inc	(hl)
+	ld	hl, (IP)
+	inc	hl
+	inc	hl
+	ld	(IP), hl
 	jp	next
 
-.fill 18
+.fill 15
 
 	.db	","
 	.dw	$-CBR
