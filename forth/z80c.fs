@@ -379,6 +379,7 @@ CODE (parsed)
 
 CODE (find)
     HL POPqq,
+    chkPS,
     ( 3 == find )
     3 CALLnn,
     10 JRZe, ( found )
@@ -391,4 +392,21 @@ CODE (find)
     DE PUSHqq,
     DE 1 LDddnn,
     DE PUSHqq,
+;CODE
+
+CODE SCPY
+    HL POPqq,
+    chkPS,
+    DE HERE LDdd(nn),
+    B 0 LDrn,
+( loop )
+    A (HL) LDrr,
+    LD(DE)A,
+    HL INCss,
+    DE INCss,
+    B INCr,
+    A ORr,
+    -6 JRNZe, ( loop )
+    DE A LD(dd)r
+    HERE DE LD(nn)dd,
 ;CODE

@@ -146,9 +146,9 @@
 ;
 
 : (entry)
-    _c HERE _c @       ( h )
+    _c HERE _c @    ( h )
     _c WORD         ( h s )
-    SCPY            ( h )
+    _c SCPY         ( h )
     ( Adjust HERE -1 because SCPY copies the null )
     _c HERE _c @ 1 _c - ( h h' )
     _c DUP _c HERE _c ! ( h h' )

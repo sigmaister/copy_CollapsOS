@@ -710,24 +710,10 @@ DOES:
 	jp	EXIT+2
 
 
-.fill 82
-
-	.db	"SCPY"
-	.dw	$-DOES
-	.db	4
-SCPY:
-	.dw	nativeWord
-	pop	hl
-	ld	de, (HERE)
-	call	strcpy
-	ld	(HERE), de
-	jp	next
-
-
-.fill 460
+.fill 566
 
 	.db	"_bend"
-	.dw	$-SCPY
+	.dw	$-DOES
 	.db	5
 ; Offset: 0647
 .out $
