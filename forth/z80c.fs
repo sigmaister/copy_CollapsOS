@@ -213,6 +213,16 @@ CODE /MOD
     BC PUSHqq,
 ;CODE
 
+CODE @
+    HL POPqq,
+    chkPS,
+    E (HL) LDrr,
+    HL INCss,
+    D (HL) LDrr,
+    EXDEHL,
+    HL PUSHqq,
+;CODE
+
 CODE C!
     HL POPqq,
     DE POPqq,

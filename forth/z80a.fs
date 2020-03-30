@@ -37,6 +37,7 @@
 
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
+0xeb OP1 EXDEHL,
 0x76 OP1 HALT,
 0xc9 OP1 RET,
 0x17 OP1 RLA,

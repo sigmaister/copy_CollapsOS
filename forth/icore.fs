@@ -86,12 +86,12 @@
 
 : C<
     ( JTBL+40 == CINPTR )
-    [ JTBL 40 + @ LITN ] @ EXECUTE
+    [ JTBL 40 + @ LITN ] _c @ EXECUTE
 ;
 
 : C,
-    HERE @ _c C!
-    HERE @ 1 _c + HERE !
+    HERE _c @ _c C!
+    HERE _c @ 1 _c + HERE !
 ;
 
 ( The NOT is to normalize the negative/positive numbers to 1
@@ -126,18 +126,18 @@
 ;
 
 : (entry)
-    HERE @          ( h )
+    HERE _c @       ( h )
     _c WORD         ( h s )
     SCPY            ( h )
     ( Adjust HERE -1 because SCPY copies the null )
-    HERE @ 1 _c -   ( h h' )
+    HERE _c @ 1 _c - ( h h' )
     _c DUP HERE !   ( h h' )
     _c SWAP _c -       ( sz )
     ( write prev value )
-    HERE @ CURRENT @ _c - ,
+    HERE _c @ CURRENT _c @ _c - ,
     ( write size )
     _c C,
-    HERE @ CURRENT !
+    HERE _c @ CURRENT !
 ;
 
 : INTERPRET
@@ -149,7 +149,7 @@
         EXECUTE
         0 FLAGS !
     ELSE
-        (parse*) @ EXECUTE
+        (parse*) _c @ EXECUTE
     THEN
     AGAIN
 ;
@@ -185,7 +185,7 @@
     ( is word )
     IF _c DUP _c IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )
-    ELSE (parse*) @ EXECUTE _c LITN THEN
+    ELSE (parse*) _c @ EXECUTE _c LITN THEN
     AGAIN
 ; IMMEDIATE
 

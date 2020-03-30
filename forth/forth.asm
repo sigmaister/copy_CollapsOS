@@ -857,22 +857,10 @@ STORE:
 	ld	(iy+1), h
 	jp	next
 
-; ( a -- n )
-	.db "@"
-	.dw $-STORE
-	.db 1
-FETCH:
-	.dw nativeWord
-	pop	hl
-	call	chkPS
-	call	intoHL
-	push	hl
-	jp	next
-
-.fill 13
+.fill 30
 
 	.db	"_bend"
-	.dw	$-FETCH
+	.dw	$-STORE
 	.db	5
 ; Offset: 0647
 .out $
