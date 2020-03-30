@@ -126,6 +126,7 @@ LIT:
 ; 35
 	jp	strcmp
 	.dw	RS_ADDR
+	.dw	CINPTR
 
 ; *** Code ***
 forthMain:
@@ -149,16 +150,6 @@ forthMain:
 	ld	hl, .parseName
 	call	find
 	ld	(PARSEPTR), de
-	; Set up CINPTR
-	; do we have a (c<) impl?
-	ld	hl, .cinName
-	call	find
-	jr	z, .skip
-	; no? then use KEY
-	ld	hl, .keyName
-	call	find
-.skip:
-	ld	(CINPTR), de
 	; Set up SYSVNXT
 	ld	hl, SYSVBUF
 	ld	(SYSVNXT), hl
@@ -169,14 +160,10 @@ forthMain:
 
 .parseName:
 	.db	"(parse)", 0
-.cinName:
-	.db	"(c<)", 0
-.keyName:
-	.db	"KEY", 0
 .bootName:
 	.db	"BOOT", 0
 
-.fill 68
+.fill 93
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -764,24 +751,10 @@ FIND_:
 	push	de
 	jp	next
 
-; This is an indirect word that can be redirected through "CINPTR"
-; code: it is replaced in readln.fs.
-	.db "C<"
-	.dw $-FIND_
-	.db 2
-CIN:
-	.dw	compiledWord
-	.dw	NUMBER
-	.dw	CINPTR
-	.dw	FETCH
-	.dw	EXECUTE
-	.dw	EXIT
-
-
-.fill 24
+.fill 41
 
 	.db	"NOT"
-	.dw	$-CIN
+	.dw	$-FIND_
 	.db	3
 NOT:
 	.dw	nativeWord

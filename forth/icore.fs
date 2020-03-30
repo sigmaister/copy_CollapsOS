@@ -75,6 +75,11 @@
     LIT< stack-underflow _c (print) _c ABORT
 ;
 
+: C<
+    ( JTBL+40 == CINPTR )
+    [ JTBL 40 + @ LITN ] @ EXECUTE
+;
+
 : C,
     HERE @ _c C!
     HERE @ 1 _c + HERE !
@@ -87,7 +92,7 @@
 
 : TOWORD
     BEGIN
-    C< _c DUP _c WS? NOT IF EXIT THEN DROP
+    _c C< _c DUP _c WS? NOT IF EXIT THEN DROP
     AGAIN
 ;
 
@@ -102,7 +107,7 @@
           always zero to pre-write our null-termination )
         _c OVER !               ( a )
         1 _c +                  ( a+1 )
-        C<                      ( a c )
+        _c C<                   ( a c )
         _c DUP _c WS?
     UNTIL
     ( a this point, PS is: a WS )
@@ -147,6 +152,9 @@
 ;
 
 : BOOT
+    LIT< (c<) (find) NOT IF LIT< KEY (find) DROP THEN
+    ( JTBL+40 == CINPTR )
+    [ JTBL 40 + @ LITN ] !
     LIT< (c<$) (find) IF EXECUTE ELSE DROP THEN
     _c INTERPRET
 ;
