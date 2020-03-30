@@ -57,7 +57,7 @@
 
 : QUIT
     0 FLAGS ! _c (resRS)
-    LIT< INTERPRET (find) DROP EXECUTE
+    LIT< INTERPRET (find) _c DROP EXECUTE
 ;
 
 : ABORT _c (resSP) _c QUIT ;
@@ -101,7 +101,7 @@
 
 : TOWORD
     BEGIN
-    _c C< _c DUP _c WS? NOT IF EXIT THEN DROP
+    _c C< _c DUP _c WS? NOT IF EXIT THEN _c DROP
     AGAIN
 ;
 
@@ -155,10 +155,10 @@
 ;
 
 : BOOT
-    LIT< (c<) (find) NOT IF LIT< KEY (find) DROP THEN
+    LIT< (c<) (find) NOT IF LIT< KEY (find) _c DROP THEN
     ( JTBL+40 == CINPTR )
     [ JTBL 40 + @ LITN ] !
-    LIT< (c<$) (find) IF EXECUTE ELSE DROP THEN
+    LIT< (c<$) (find) IF EXECUTE ELSE _c DROP THEN
     _c INTERPRET
 ;
 
@@ -191,7 +191,7 @@
 
 : Y
     ['] EXIT ,
-    _c R> DROP     ( exit : )
+    _c R> _c DROP     ( exit : )
 ; IMMEDIATE
 
 ( Give ":" and ";" their real name )

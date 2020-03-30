@@ -39,6 +39,11 @@ CODE DUP
     HL PUSHqq,      ( A )
 ;CODE
 
+( a -- )
+CODE DROP
+    HL POPqq,
+;CODE
+
 ( a b -- b a )
 CODE SWAP
     HL POPqq,       ( B )

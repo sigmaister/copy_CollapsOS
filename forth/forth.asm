@@ -869,18 +869,10 @@ FETCH:
 	push	hl
 	jp	next
 
-; ( a -- )
-	.db "DROP"
-	.dw $-FETCH
-	.db 4
-; STABLE ABI
-DROP:
-	.dw nativeWord
-	pop	hl
-	jp	next
+.fill 13
 
 	.db	"_bend"
-	.dw	$-DROP
+	.dw	$-FETCH
 	.db	5
 ; Offset: 0647
 .out $
