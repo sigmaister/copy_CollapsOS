@@ -241,19 +241,19 @@
     SPLITB A, A,
 ;
 
-( JTBL+18 == next )
-: JPNEXT, [ JTBL 18 + LITN ] JPnn, ;
+( 26 == next )
+: JPNEXT, 26 JPnn, ;
 
 : CODE
     ( same as CREATE, but with native word )
     (entry)
-    ( JTBL+15 == next )
-    [ JTBL 15 + LITN ] ,
+    ( 23 == nativeWord )
+    23 ,
 ;
 
 : ;CODE JPNEXT, ;
 
 
 ( Routines )
-( JTBL+21 == next )
-: chkPS, [ JTBL 21 + LITN ] CALLnn, ;
+( 29 == chkPS )
+: chkPS, 29 CALLnn, ;

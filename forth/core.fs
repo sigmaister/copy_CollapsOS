@@ -2,7 +2,7 @@
 : -^ SWAP - ;
 : [ INTERPRET 1 FLAGS ! ; IMMEDIATE
 : ] R> DROP ;
-: LIT JTBL 26 + , ;
+: LIT 34 , ;
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
 : _err LIT< word-not-found (print) ABORT ;
@@ -22,6 +22,7 @@
   "_": words starting with "_" are meant to be "private",
   that is, only used by their immediate surrondings.
 
+  LIT: 34 == LIT
   COMPILE: Tough one. Get addr of caller word (example above
   (br)) and then call LITN on it. )
 
@@ -49,7 +50,7 @@
 
 : CREATE
     (entry)            ( empty header with name )
-    [ JTBL 3 + LITN ]  ( push cellWord addr )
+    11                 ( 11 == cellWord )
     ,                  ( write it )
 ;
 : VARIABLE CREATE 2 ALLOT ;
@@ -86,10 +87,10 @@
 
 : (sysv)
     (entry)
-    ( JTBL+0 == sysvarWord )
-    [ JTBL LITN ] ,
-    ( JTBL+42 == SYSVNXT )
-    [ JTBL 42 + @ LITN ] DUP    ( a a )
+    ( 8 == sysvarWord )
+    8 ,
+    ( 50 == SYSVNXT )
+    [ 50 @ LITN ] DUP    ( a a )
     ( Get new sysv addr )
     @ ,                         ( a )
     ( increase current sysv counter )

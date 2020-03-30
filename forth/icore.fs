@@ -55,26 +55,24 @@
     ,           ( write! )
 ; IMMEDIATE
 
-: JTBL 0x08 ;
-
 : FLAGS
-    ( JTBL+44 == FLAGS )
-    [ JTBL 44 + @ LITN ]
+    ( 52 == FLAGS )
+    [ 52 @ LITN ]
 ;
 
 : (parse*)
-    ( JTBL+46 == PARSEPTR )
-    [ JTBL 46 + @ LITN ]
+    ( 54 == PARSEPTR )
+    [ 54 @ LITN ]
 ;
 
 : HERE
-    ( JTBL+48 == HERE )
-    [ JTBL 48 + @ LITN ]
+    ( 56 == HERE )
+    [ 56 @ LITN ]
 ;
 
 : CURRENT
-    ( JTBL+50 == CURRENT )
-    [ JTBL 50 + @ LITN ]
+    ( 58 == CURRENT )
+    [ 58 @ LITN ]
 ;
 
 : QUIT
@@ -107,8 +105,8 @@
 ;
 
 : C<
-    ( JTBL+40 == CINPTR )
-    [ JTBL 40 + @ LITN ] _c @ EXECUTE
+    ( 48 == CINPTR )
+    [ 48 @ LITN ] _c @ EXECUTE
 ;
 
 : C,
@@ -130,8 +128,8 @@
 ( Read word from C<, copy to WORDBUF, null-terminate, and
   return, make HL point to WORDBUF. )
 : WORD
-    ( JTBL+30 == WORDBUF )
-    [ JTBL 30 + @ LITN ]        ( a )
+    ( 38 == WORDBUF )
+    [ 38 @ LITN ]        ( a )
     _c TOWORD                   ( a c )
     BEGIN
         ( We take advantage of the fact that char MSB is
@@ -144,7 +142,7 @@
     ( a this point, PS is: a WS )
     ( null-termination is already written )
     _c 2DROP
-    [ JTBL 30 + @ LITN ]
+    [ 38 @ LITN ]
 ;
 
 : (entry)
@@ -179,8 +177,8 @@
 : BOOT
     LIT< (parse) (find) _c DROP _c (parse*) _c !
     LIT< (c<) (find) NOT IF LIT< KEY (find) _c DROP THEN
-    ( JTBL+40 == CINPTR )
-    [ JTBL 40 + @ LITN ] _c !
+    ( 48 == CINPTR )
+    [ 48 @ LITN ] _c !
     LIT< (c<$) (find) IF EXECUTE ELSE _c DROP THEN
     _c INTERPRET
 ;
@@ -188,9 +186,8 @@
 ( LITN has to be defined after the last immediate usage of
   it to avoid bootstrapping issues )
 : LITN
-    ( JTBL+24 == NUMBER )
-    _c JTBL 24 _c + ,
-    ,
+    ( 32 == NUMBER )
+    32 , ,
 ;
 
 ( : and ; have to be defined last because it can't be
@@ -200,8 +197,8 @@
 : X
     _c (entry)
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
-      issues. JTBL+24 == NUMBER JTBL+6 == compiledWord )
-    [ JTBL 24 + , JTBL 6 + , ] ,
+      issues. 32 == NUMBER 14 == compiledWord )
+    [ 32 , 14 , ] ,
     BEGIN
     _c WORD
     (find)

@@ -283,13 +283,13 @@ CODE J
 CODE >R
     HL POPqq,
     chkPS,
-    ( JTBL+9 == pushRS )
-    JTBL 9 + CALLnn,
+    ( 17 == pushRS )
+    17 CALLnn,
 ;CODE
 
 CODE R>
-    ( JTBL+12 == popRS )
-    JTBL 12 + CALLnn,
+    ( 20 == popRS )
+    20 CALLnn,
     HL PUSHqq,
 ;CODE
 
@@ -316,23 +316,23 @@ CODE BYE
 ;CODE
 
 CODE (resSP)
-    ( INITIAL_SP == JTBL+28 )
-    SP JTBL 28 + @ LDdd(nn),
+    ( INITIAL_SP == 36 )
+    SP 36 @ LDdd(nn),
 ;CODE
 
 CODE (resRS)
-    ( RS_ADDR == JTBL+38 )
-    IX JTBL 38 + @ LDddnn,
+    ( RS_ADDR == 46 )
+    IX 46 @ LDddnn,
 ;CODE
 
 CODE SCMP
     DE  POPqq,
     HL  POPqq,
     chkPS,
-    ( JTBL+35 == strcmp )
-    JTBL 35 + CALLnn,
-    ( JTBL+32 == flagsToBC )
-    JTBL 32 + CALLnn,
+    ( 43 == strcmp )
+    43 CALLnn,
+    ( 40 == flagsToBC )
+    40 CALLnn,
     BC PUSHqq,
 ;CODE
 
@@ -342,8 +342,8 @@ CODE CMP
     chkPS,
     A ORr,      ( clear carry )
     DE SBCHLss,
-    ( JTBL+32 == flagsToBC )
-    JTBL 32 + CALLnn,
+    ( 40 == flagsToBC )
+    40 CALLnn,
     BC PUSHqq,
 ;CODE
 

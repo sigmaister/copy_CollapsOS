@@ -103,10 +103,11 @@
 ; *** Stable ABI ***
 ; Those jumps below are supposed to stay at these offsets, always. If they
 ; change bootstrap binaries have to be adjusted because they rely on them.
+; Those entries are referenced directly by their offset in Forth code with a
+; comment indicating what that number refers to.
 ; We're at 0 here
 	jp	forthMain
 .fill 0x08-$
-JUMPTBL:
 	jp	sysvarWord
 	jp	cellWord
 	jp	compiledWord
@@ -116,9 +117,7 @@ JUMPTBL:
 	jp	next
 	jp	chkPS
 ; 24
-NUMBER:
 	.dw	numberWord
-LIT:
 	.dw	litWord
 	.dw	INITIAL_SP
 	.dw	WORDBUF
