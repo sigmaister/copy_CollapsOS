@@ -17,6 +17,12 @@
      properly stabilized.
   4. Make sure that the words you compile are not overridden
      by the full interpreter.
+  5. When using words as immediates, make sure that they're
+     not defined in icore or, if they are, make sure that
+     they contain no "_c" references.
+
+  All these rules make this unit a bit messy, but this is the
+  price to pay for the awesomeness of self-bootstrapping.
 )
 
 ( When referencing words from native defs or this very unit,
@@ -49,7 +55,10 @@
     ,           ( write! )
 ; IMMEDIATE
 
-: QUIT 0 FLAGS ! _c (resRS) LIT< INTERPRET (find) DROP EXECUTE ;
+: QUIT
+    0 FLAGS ! _c (resRS)
+    LIT< INTERPRET (find) DROP EXECUTE
+;
 
 : ABORT _c (resSP) _c QUIT ;
 
@@ -116,12 +125,6 @@
     [ JTBL 30 + @ LITN ]
 ;
 
-: LITN
-    ( JTBL+24 == NUMBER )
-    JTBL 24 _c + ,
-    ,
-;
-
 : (entry)
     HERE @          ( h )
     _c WORD         ( h s )
@@ -157,6 +160,14 @@
     [ JTBL 40 + @ LITN ] !
     LIT< (c<$) (find) IF EXECUTE ELSE DROP THEN
     _c INTERPRET
+;
+
+( LITN has to be defined after the last immediate usage of
+  it to avoid bootstrapping issues )
+: LITN
+    ( JTBL+24 == NUMBER )
+    JTBL 24 _c + ,
+    ,
 ;
 
 ( : and ; have to be defined last because it can't be
