@@ -7,6 +7,7 @@ They all run on the same kind of virtual machine: A z80 CPU, 64K of RAM/ROM.
 #include "emul.h"
 
 static Machine m;
+static ushort traceval = 0;
 
 static uint8_t io_read(int unused, uint16_t addr)
 {
@@ -90,6 +91,15 @@ bool emul_steps(unsigned int steps)
 void emul_loop()
 {
     while (emul_step());
+}
+
+void emul_trace(ushort addr)
+{
+    ushort newval = m.mem[addr+1] << 8 | m.mem[addr];
+    if (newval != traceval) {
+        traceval = newval;
+        fprintf(stderr, "trace: %04x PC: %04x\n", traceval, m.cpu.PC);
+    }
 }
 
 void emul_printdebug()
