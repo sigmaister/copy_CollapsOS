@@ -743,30 +743,10 @@ FIND_:
 	push	de
 	jp	next
 
-.fill 41
-
-	.db	"NOT"
-	.dw	$-FIND_
-	.db	3
-NOT:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	ld	a, l
-	or	h
-	ld	hl, 0
-	jr	nz, .skip	; true, keep at 0
-	; false, make 1
-	inc	hl
-.skip:
-	push	hl
-	jp	next
-
-
-.fill 362
+.fill 427
 
 	.db	"_bend"
-	.dw	$-NOT
+	.dw	$-FIND_
 	.db	5
 ; Offset: 0647
 .out $

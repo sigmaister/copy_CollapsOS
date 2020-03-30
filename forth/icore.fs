@@ -85,7 +85,7 @@
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)
-    _c (parsed) NOT IF _c ABORT THEN
+    _c (parsed) _c NOT IF _c ABORT THEN
 ;
 
 ( a -- )
@@ -94,7 +94,7 @@
     _c DUP      ( a a )
     _c C@       ( a c )
     ( exit if null )
-    _c DUP NOT IF _c 2DROP EXIT THEN
+    _c DUP _c NOT IF _c 2DROP EXIT THEN
     _c EMIT     ( a )
     1 _c +         ( a+1 )
     AGAIN
@@ -117,11 +117,11 @@
 ( The NOT is to normalize the negative/positive numbers to 1
   or 0. Hadn't we wanted to normalize, we'd have written:
   32 CMP 1 - )
-: WS? 33 _c CMP 1 _c + NOT ;
+: WS? 33 _c CMP 1 _c + _c NOT ;
 
 : TOWORD
     BEGIN
-    _c C< _c DUP _c WS? NOT IF EXIT THEN _c DROP
+    _c C< _c DUP _c WS? _c NOT IF EXIT THEN _c DROP
     AGAIN
 ;
 
@@ -176,7 +176,7 @@
 
 : BOOT
     LIT< (parse) (find) _c DROP _c (parse*) _c !
-    LIT< (c<) (find) NOT IF LIT< KEY (find) _c DROP THEN
+    LIT< (c<) (find) _c NOT IF LIT< KEY (find) _c DROP THEN
     ( 48 == CINPTR )
     [ 48 @ LITN ] _c !
     LIT< (c<$) (find) IF EXECUTE ELSE _c DROP THEN

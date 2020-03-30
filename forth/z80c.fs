@@ -149,6 +149,19 @@ CODE XOR
     HL PUSHqq,
 ;CODE
 
+CODE NOT
+    HL POPqq,
+    chkPS,
+    A L LDrr,
+    H ORr,
+    HL 0 LDddnn,
+    3 JRNZe, ( skip)
+    ( false, make 1 )
+    HL INCss,
+( skip )
+    HL PUSHqq,
+;CODE
+
 CODE +
     HL POPqq,
     DE POPqq,
