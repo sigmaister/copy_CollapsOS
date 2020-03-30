@@ -940,22 +940,10 @@ SWAP:
 	push	hl
 	jp	next
 
-; ( a -- a a )
-	.db "DUP"
-	.dw $-SWAP
-	.db 3
-DUP:
-	.dw nativeWord
-	pop	hl
-	call	chkPS
-	push	hl
-	push	hl
-	jp	next
-
-.fill 132
+.fill 149
 
 	.db	"_bend"
-	.dw	$-DUP
+	.dw	$-SWAP
 	.db	5
 ; Offset: 06ee
 .out $

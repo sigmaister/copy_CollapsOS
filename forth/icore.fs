@@ -60,10 +60,10 @@
 ( a -- )
 : (print)
     BEGIN
-    DUP         ( a a )
+    _c DUP      ( a a )
     _c C@       ( a c )
     ( exit if null )
-    DUP NOT IF DROP DROP EXIT THEN
+    _c DUP NOT IF DROP DROP EXIT THEN
     _c EMIT     ( a )
     1 _c +         ( a+1 )
     AGAIN
@@ -85,7 +85,7 @@
 
 : TOWORD
     BEGIN
-    C< DUP _c WS? NOT IF EXIT THEN DROP
+    C< _c DUP _c WS? NOT IF EXIT THEN DROP
     AGAIN
 ;
 
@@ -101,7 +101,7 @@
         _c OVER !               ( a )
         1 _c +                  ( a+1 )
         C<                      ( a c )
-        DUP _c WS?
+        _c DUP _c WS?
     UNTIL
     ( a this point, PS is: a WS )
     ( null-termination is already written )
@@ -121,7 +121,7 @@
     SCPY            ( h )
     ( Adjust HERE -1 because SCPY copies the null )
     HERE @ 1 _c -   ( h h' )
-    DUP HERE !      ( h h' )
+    _c DUP HERE !   ( h h' )
     SWAP _c -       ( sz )
     ( write prev value )
     HERE @ CURRENT @ _c - ,
@@ -162,7 +162,7 @@
     _c WORD
     (find)
     ( is word )
-    IF DUP _c IMMED? IF EXECUTE ELSE , THEN
+    IF _c DUP _c IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )
     ELSE (parse*) @ EXECUTE _c LITN THEN
     AGAIN
