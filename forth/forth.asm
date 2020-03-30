@@ -841,26 +841,11 @@ SYSVNXT_:
 	.dw	sysvarWord
 	.dw	SYSVNXT
 
-; ( n a -- )
-	.db "!"
-	.dw $-SYSVNXT_
-	.db 1
-; STABLE ABI
-; Offset: 0610
-.out $
-STORE:
-	.dw nativeWord
-	pop	iy
-	pop	hl
-	call	chkPS
-	ld	(iy), l
-	ld	(iy+1), h
-	jp	next
 
-.fill 30
+.fill 51
 
 	.db	"_bend"
-	.dw	$-STORE
+	.dw	$-SYSVNXT_
 	.db	5
 ; Offset: 0647
 .out $

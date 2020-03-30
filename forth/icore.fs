@@ -56,7 +56,7 @@
 ; IMMEDIATE
 
 : QUIT
-    0 FLAGS ! _c (resRS)
+    0 FLAGS _c ! _c (resRS)
     LIT< INTERPRET (find) _c DROP EXECUTE
 ;
 
@@ -91,7 +91,7 @@
 
 : C,
     HERE _c @ _c C!
-    HERE _c @ 1 _c + HERE !
+    HERE _c @ 1 _c + HERE _c !
 ;
 
 ( The NOT is to normalize the negative/positive numbers to 1
@@ -114,7 +114,7 @@
     BEGIN
         ( We take advantage of the fact that char MSB is
           always zero to pre-write our null-termination )
-        _c OVER !               ( a )
+        _c OVER _c !            ( a )
         1 _c +                  ( a+1 )
         _c C<                   ( a c )
         _c DUP _c WS?
@@ -131,13 +131,13 @@
     SCPY            ( h )
     ( Adjust HERE -1 because SCPY copies the null )
     HERE _c @ 1 _c - ( h h' )
-    _c DUP HERE !   ( h h' )
+    _c DUP HERE _c ! ( h h' )
     _c SWAP _c -       ( sz )
     ( write prev value )
     HERE _c @ CURRENT _c @ _c - ,
     ( write size )
     _c C,
-    HERE _c @ CURRENT !
+    HERE _c @ CURRENT _c !
 ;
 
 : INTERPRET
@@ -145,9 +145,9 @@
     _c WORD
     (find)
     IF
-        1 FLAGS !
+        1 FLAGS _c !
         EXECUTE
-        0 FLAGS !
+        0 FLAGS _c !
     ELSE
         (parse*) _c @ EXECUTE
     THEN
@@ -157,7 +157,7 @@
 : BOOT
     LIT< (c<) (find) NOT IF LIT< KEY (find) _c DROP THEN
     ( JTBL+40 == CINPTR )
-    [ JTBL 40 + @ LITN ] !
+    [ JTBL 40 + @ LITN ] _c !
     LIT< (c<$) (find) IF EXECUTE ELSE _c DROP THEN
     _c INTERPRET
 ;
