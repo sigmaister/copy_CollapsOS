@@ -55,8 +55,13 @@
     ,           ( write! )
 ; IMMEDIATE
 
+: FLAGS
+    ( JTBL+44 == FLAGS )
+    [ JTBL 44 + @ LITN ]
+;
+
 : QUIT
-    0 FLAGS _c ! _c (resRS)
+    0 _c FLAGS _c ! _c (resRS)
     LIT< INTERPRET (find) _c DROP EXECUTE
 ;
 
@@ -145,9 +150,9 @@
     _c WORD
     (find)
     IF
-        1 FLAGS _c !
+        1 _c FLAGS _c !
         EXECUTE
-        0 FLAGS _c !
+        0 _c FLAGS _c !
     ELSE
         (parse*) _c @ EXECUTE
     THEN

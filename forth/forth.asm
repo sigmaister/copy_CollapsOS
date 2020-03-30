@@ -128,6 +128,7 @@ LIT:
 	.dw	RS_ADDR
 	.dw	CINPTR
 	.dw	SYSVNXT
+	.dw	FLAGS
 
 ; *** Code ***
 forthMain:
@@ -164,7 +165,7 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-.fill 91
+.fill 89
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -820,17 +821,10 @@ PARSEPTR_:
 	.dw sysvarWord
 	.dw PARSEPTR
 
-	.db	"FLAGS"
-	.dw	$-PARSEPTR_
-	.db	5
-FLAGS_:
-	.dw	sysvarWord
-	.dw	FLAGS
-
-.fill 65
+.fill 77
 
 	.db	"_bend"
-	.dw	$-FLAGS_
+	.dw	$-PARSEPTR_
 	.db	5
 ; Offset: 0647
 .out $
