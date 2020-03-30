@@ -77,7 +77,7 @@
 
 : QUIT
     0 _c FLAGS _c ! _c (resRS)
-    LIT< INTERPRET (find) _c DROP EXECUTE
+    LIT< INTERPRET _c (find) _c DROP EXECUTE
 ;
 
 : ABORT _c (resSP) _c QUIT ;
@@ -163,7 +163,7 @@
 : INTERPRET
     BEGIN
     _c WORD
-    (find)
+    _c (find)
     IF
         1 _c FLAGS _c !
         EXECUTE
@@ -175,11 +175,12 @@
 ;
 
 : BOOT
-    LIT< (parse) (find) _c DROP _c (parse*) _c !
-    LIT< (c<) (find) _c NOT IF LIT< KEY (find) _c DROP THEN
+    LIT< (parse) _c (find) _c DROP _c (parse*) _c !
+    LIT< (c<) _c (find) _c
+    NOT IF LIT< KEY _c (find) _c DROP THEN
     ( 48 == CINPTR )
     [ 48 @ LITN ] _c !
-    LIT< (c<$) (find) IF EXECUTE ELSE _c DROP THEN
+    LIT< (c<$) _c (find) IF EXECUTE ELSE _c DROP THEN
     _c INTERPRET
 ;
 
@@ -201,7 +202,7 @@
     [ 32 , 14 , ] ,
     BEGIN
     _c WORD
-    (find)
+    _c (find)
     ( is word )
     IF _c DUP _c IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )

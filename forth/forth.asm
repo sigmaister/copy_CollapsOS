@@ -107,7 +107,10 @@
 ; comment indicating what that number refers to.
 ; We're at 0 here
 	jp	forthMain
-.fill 0x08-$
+; 3
+	jp	find
+	.dw	0	; unused
+; 8
 	jp	sysvarWord
 	jp	cellWord
 	jp	compiledWord
@@ -721,32 +724,10 @@ SCPY:
 	jp	next
 
 
-	.db	"(find)"
-	.dw	$-SCPY
-	.db	6
-; STABLE ABI
-; Offset: 047c
-.out $
-FIND_:
-	.dw	nativeWord
-	pop	hl
-	call	find
-	jr	z, .found
-	; not found
-	push	hl
-	ld	de, 0
-	push	de
-	jp	next
-.found:
-	push	de
-	ld	de, 1
-	push	de
-	jp	next
-
-.fill 427
+.fill 460
 
 	.db	"_bend"
-	.dw	$-FIND_
+	.dw	$-SCPY
 	.db	5
 ; Offset: 0647
 .out $

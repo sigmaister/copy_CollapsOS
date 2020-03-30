@@ -376,3 +376,19 @@ CODE (parsed)
     DE 1 LDddnn,
     DE PUSHqq,
 ;CODE
+
+CODE (find)
+    HL POPqq,
+    ( 3 == find )
+    3 CALLnn,
+    10 JRZe, ( found )
+    ( not found )
+    HL PUSHqq,
+    DE 0 LDddnn,
+    DE PUSHqq,
+    JPNEXT,
+( found )
+    DE PUSHqq,
+    DE 1 LDddnn,
+    DE PUSHqq,
+;CODE
