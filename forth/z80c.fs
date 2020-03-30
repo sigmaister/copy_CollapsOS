@@ -69,6 +69,12 @@ CODE 2DUP
     HL PUSHqq,      ( B )
 ;CODE
 
+( a b -- )
+CODE 2DROP
+    HL POPqq,
+    HL POPqq,
+;CODE
+
 ( a b c d -- a b c d a b )
 
 CODE 2OVER

@@ -74,7 +74,7 @@
     _c DUP      ( a a )
     _c C@       ( a c )
     ( exit if null )
-    _c DUP NOT IF DROP DROP EXIT THEN
+    _c DUP NOT IF _c 2DROP EXIT THEN
     _c EMIT     ( a )
     1 _c +         ( a+1 )
     AGAIN
@@ -121,7 +121,7 @@
     UNTIL
     ( a this point, PS is: a WS )
     ( null-termination is already written )
-    DROP DROP
+    _c 2DROP
     [ JTBL 30 + @ LITN ]
 ;
 
