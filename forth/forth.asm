@@ -952,25 +952,10 @@ DUP:
 	push	hl
 	jp	next
 
-; ( a b -- a b a )
-	.db "OVER"
-	.dw $-DUP
-	.db 4
-OVER:
-	.dw nativeWord
-	pop	hl	; B
-	pop	de	; A
-	call	chkPS
-	push	de
-	push	hl
-	push	de
-	jp	next
-
-
-.fill 112
+.fill 132
 
 	.db	"_bend"
-	.dw	$-OVER
+	.dw	$-DUP
 	.db	5
 ; Offset: 06ee
 .out $

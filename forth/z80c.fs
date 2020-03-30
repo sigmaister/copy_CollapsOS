@@ -31,6 +31,16 @@ CODE ROT
     BC PUSHqq,      ( A )
 ;CODE
 
+( a b -- a b a )
+CODE OVER
+    HL POPqq,       ( B )
+    DE POPqq,       ( A )
+    chkPS,
+    DE PUSHqq,      ( A )
+    HL PUSHqq,      ( B )
+    DE PUSHqq,      ( A )
+;CODE
+
 ( a b -- a b a b )
 CODE 2DUP
     HL POPqq,       ( B )

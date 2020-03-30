@@ -98,7 +98,7 @@
     BEGIN
         ( We take advantage of the fact that char MSB is
           always zero to pre-write our null-termination )
-        OVER !                  ( a )
+        _c OVER !               ( a )
         1 _c +                  ( a+1 )
         C<                      ( a c )
         DUP _c WS?
