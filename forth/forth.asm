@@ -116,22 +116,23 @@
 	jp	nativeWord
 	jp	next
 	jp	chkPS
-; 24
+; 32
 	.dw	numberWord
 	.dw	litWord
 	.dw	INITIAL_SP
 	.dw	WORDBUF
 	jp	flagsToBC
-; 35
+; 43
 	jp	strcmp
 	.dw	RS_ADDR
 	.dw	CINPTR
 	.dw	SYSVNXT
 	.dw	FLAGS
-; 46
+; 54
 	.dw	PARSEPTR
 	.dw	HERE
 	.dw	CURRENT
+	jp	parseDecimal
 
 ; *** Code ***
 forthMain:
@@ -162,7 +163,7 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-.fill 101
+.fill 98
 
 ; STABLE ABI
 ; Offset: 00cd
@@ -762,33 +763,10 @@ NOT:
 	jp	next
 
 
-.fill 100
-
-	.db	"(parsed)"
-	.dw	$-NOT
-	.db	8
-PARSED:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	call	parseDecimal
-	jr	z, .success
-	; error
-	ld	de, 0
-	push	de	; dummy
-	push	de	; flag
-	jp	next
-.success:
-	push	de
-	ld	de, 1		; flag
-	push	de
-	jp	next
-
-
-.fill 224
+.fill 362
 
 	.db	"_bend"
-	.dw	$-PARSED
+	.dw	$-NOT
 	.db	5
 ; Offset: 0647
 .out $

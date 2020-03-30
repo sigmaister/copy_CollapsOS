@@ -347,3 +347,19 @@ CODE CMP
     BC PUSHqq,
 ;CODE
 
+CODE (parsed)
+    HL POPqq,
+    chkPS,
+    ( 60 == parseDecimal )
+    60 CALLnn,
+    10 JRZe, ( success )
+    ( error )
+    DE 0 LDddnn,
+    DE PUSHqq,  ( dummy )
+    DE PUSHqq,  ( flag )
+    JPNEXT,
+( success )
+    DE PUSHqq,
+    DE 1 LDddnn,
+    DE PUSHqq,
+;CODE
