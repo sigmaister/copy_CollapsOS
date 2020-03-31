@@ -53,9 +53,9 @@
 	jp	forthMain
 ; 3
 	jp	find
-	.dw	0	; unused
-; 8
-	jp	sysvarWord
+	nop \ nop	; unused
+	nop \ nop \ nop	; unused
+; 11
 	jp	cellWord
 	jp	compiledWord
 	jp	pushRS
@@ -512,13 +512,6 @@ cellWord:
 	push	iy
 	jp	next
 
-; Pushes the address in the first word of the PF
-sysvarWord:
-	ld	l, (iy)
-	ld	h, (iy+1)
-	push	hl
-	jp	next
-
 ; The word was spawned from a definition word that has a DOES>. PFA+2 (right
 ; after the actual cell) is a link to the slot right after that DOES>.
 ; Therefore, what we need to do push the cell addr like a regular cell, then
@@ -561,10 +554,9 @@ litWord:
 ;    entry, we always have a predictable prev offset for the grafter's first
 ;    entry.
 ; 2. Tell icore's "_c" routine where the boot binary ends. See comment there.
-
 	.db	"_bend"
 	.dw	$-EXECUTE
 	.db	5
 
-; Offset: 0253
+; Offset: 0249
 .out $

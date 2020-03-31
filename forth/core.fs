@@ -108,15 +108,12 @@
   in dictionary.txt )
 
 : (sysv)
-    (entry)
-    ( 8 == sysvarWord )
-    8 ,
-    ( 50 == SYSVNXT )
-    [ 50 @ LITN ] DUP    ( a a )
     ( Get new sysv addr )
-    @ ,                         ( a )
+    ( 50 == SYSVNXT )
+    50 @ @
+    CONSTANT
     ( increase current sysv counter )
-    2 SWAP +!
+    2 50 @ +!
 ;
 
 : ."
