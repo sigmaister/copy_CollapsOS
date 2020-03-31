@@ -29,7 +29,7 @@ trouble of compiling defs to binary.
 
 //#define DEBUG
 // in sync with glue.asm
-#define RAMSTART 0x850
+#define RAMSTART 0x840
 #define STDIO_PORT 0x00
 // To know which part of RAM to dump, we listen to port 2, which at the end of
 // its compilation process, spits its HERE addr to port 2 (MSB first)

@@ -190,17 +190,6 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions.
-; ld must be done little endian, so least significant byte first.
-intoHL:
-	push 	de
-	ld 	e, (hl)
-	inc 	hl
-	ld 	d, (hl)
-	ex 	de, hl
-	pop 	de
-	ret
-
 ; Compares strings pointed to by HL and DE until one of them hits its null char.
 ; If equal, Z is set. If not equal, Z is reset. C is set if HL > DE
 strcmp:
@@ -223,19 +212,6 @@ strcmp:
 	; Because we don't call anything else than CP that modify the Z flag,
 	; our Z value will be that of the last cp (reset if we broke the loop
 	; early, set otherwise)
-	ret
-
-; Given a string at (HL), move HL until it points to the end of that string.
-strskip:
-	push	bc
-	ex	af, af'
-	xor	a	; look for null char
-	ld	b, a
-	ld	c, a
-	cpir	; advances HL regardless of comparison, so goes one too far
-	dec	hl
-	ex	af, af'
-	pop	bc
 	ret
 
 ; Parse string at (HL) as a decimal value and return value in DE.
@@ -376,8 +352,10 @@ find:
 	dec	de \ dec de \ dec de	; prev field
 	push	de			; --> lvl 2
 	ex 	de, hl
-	call 	intoHL
-	ex 	de, hl			; DE contains prev offset
+	ld 	e, (hl)
+	inc 	hl
+	ld 	d, (hl)
+	; DE contains prev offset
 	pop	hl			; <-- lvl 2
 	; HL is prev field's addr
 	; Is offset zero?
@@ -543,8 +521,13 @@ numberWord:
 litWord:
 	ld	hl, (IP)
 	push	hl
-	call	strskip
-	inc	hl		; after null termination
+	; Skip to null char
+	xor	a	; look for null char
+	ld	b, a
+	ld	c, a
+	cpir
+	; CPIR advances HL regardless of comparison, so goes one char after
+	; NULL. This is good, because that's what we want...
 	ld	(IP), hl
 	jp	next
 
@@ -558,5 +541,5 @@ litWord:
 	.dw	$-EXECUTE
 	.db	5
 
-; Offset: 0249
+; Offset: 0237
 .out $
