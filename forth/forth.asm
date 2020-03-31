@@ -68,8 +68,8 @@
 	.dw	INITIAL_SP
 	.dw	WORDBUF
 	jp	flagsToBC
-; 43
-	jp	strcmp
+	nop \ nop \ nop	; unused
+; 46
 	.dw	RS_ADDR
 	.dw	CINPTR
 	.dw	SYSVNXT
@@ -185,30 +185,6 @@ forthMain:
 
 .bootName:
 	.db	"BOOT", 0
-
-; Compares strings pointed to by HL and DE until one of them hits its null char.
-; If equal, Z is set. If not equal, Z is reset. C is set if HL > DE
-strcmp:
-	push	hl
-	push	de
-
-.loop:
-	ld	a, (de)
-	cp	(hl)
-	jr	nz, .end	; not equal? break early. NZ is carried out
-				; to the caller
-	or	a		; If our chars are null, stop the cmp
-	inc	hl
-	inc	de
-	jr	nz, .loop	; Z is carried through
-
-.end:
-	pop	de
-	pop	hl
-	; Because we don't call anything else than CP that modify the Z flag,
-	; our Z value will be that of the last cp (reset if we broke the loop
-	; early, set otherwise)
-	ret
 
 ; Parse string at (HL) as a decimal value and return value in DE.
 ; Reads as many digits as it can and stop when:
@@ -527,7 +503,7 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
-.fill 6
+.fill 20
 ; *** Dict hook ***
 ; This dummy dictionary entry serves two purposes:
 ; 1. Allow binary grafting. Because each binary dict always end with a dummy

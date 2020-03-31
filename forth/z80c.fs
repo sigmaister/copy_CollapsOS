@@ -342,8 +342,15 @@ CODE SCMP
     DE  POPqq,
     HL  POPqq,
     chkPS,
-    ( 43 == strcmp )
-    43 CALLnn,
+( loop )
+    LDA(DE),
+    (HL) CPr,
+    7 JRNZe, ( not equal? break early to "end". NZ is set. )
+    A ORr,   ( if our char is null, stop )
+    HL INCss,
+    DE INCss,
+    -7 JRNZe, ( loop )
+( end )
     ( 40 == flagsToBC )
     40 CALLnn,
     BC PUSHqq,
