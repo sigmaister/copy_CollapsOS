@@ -36,8 +36,7 @@
 ; that we can't compile a regular variable in it. SYSVNXT points to the next
 ; free space in SYSVBUF. Then, at the word level, it's a regular sysvarWord.
 .equ	SYSVNXT		@+WORD_BUFSIZE
-.equ	SYSVBUF		@+2
-.equ	RAMEND		@+SYSV_BUFSIZE
+.equ	RAMEND		@+SYSV_BUFSIZE+2
 
 ; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
 ; (HERE) will begin at a strategic place.
@@ -179,9 +178,6 @@ forthMain:
 	ld	(CURRENT), hl
 	ld	hl, HERE_INITIAL
 	ld	(HERE), hl
-	; Set up SYSVNXT
-	ld	hl, SYSVBUF
-	ld	(SYSVNXT), hl
 	ld	hl, .bootName
 	call	find
 	push	de
@@ -531,6 +527,7 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
+.fill 6
 ; *** Dict hook ***
 ; This dummy dictionary entry serves two purposes:
 ; 1. Allow binary grafting. Because each binary dict always end with a dummy

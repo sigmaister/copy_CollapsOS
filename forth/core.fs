@@ -116,6 +116,10 @@
     2 50 @ +!
 ;
 
+( Set up initial SYSVNXT value, which is 2 bytes after its
+  own address )
+50 @ DUP 2 + SWAP !
+
 : ."
     LIT
     BEGIN
