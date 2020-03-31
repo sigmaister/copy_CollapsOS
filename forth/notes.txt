@@ -1,0 +1,68 @@
+Collapse OS' Forth implementation notes
+
+*** EXECUTION MODEL
+
+After having read a line through readln, we want to interpret it. As a general
+rule, we go like this:
+
+1. read single word from line
+2. Can we find the word in dict?
+3. If yes, execute that word, goto 1
+4. Is it a number?
+5. If yes, push that number to PS, goto 1
+6. Error: undefined word.
+
+*** EXECUTING A WORD
+
+At it's core, executing a word is pushing the wordref on PS and calling EXECUTE.
+Then, we let the word do its things. Some words are special, but most of them
+are of the compiledWord type, and that's their execution that we describe here.
+
+First of all, at all time during execution, the Interpreter Pointer (IP) points
+to the wordref we're executing next.
+
+When we execute a compiledWord, the first thing we do is push IP to the Return
+Stack (RS). Therefore, RS' top of stack will contain a wordref to execute next,
+after we EXIT.
+
+At the end of every compiledWord is an EXIT. This pops RS, sets IP to it, and
+continues.
+
+*** Stack management
+
+The Parameter stack (PS) is maintained by SP and the Return stack (RS) is
+maintained by IX. This allows us to generally use push and pop freely because PS
+is the most frequently used. However, this causes a problem with routine calls:
+because in Forth, the stack isn't balanced within each call, our return offset,
+when placed by a CALL, messes everything up. This is one of the reasons why we
+need stack management routines below. IX always points to RS' Top Of Stack (TOS)
+
+This return stack contain "Interpreter pointers", that is a pointer to the
+address of a word, as seen in a compiled list of words.
+
+*** Dictionary
+
+A dictionary entry has this structure:
+
+- Xb name. Arbitrary long number of character (but can't be bigger than
+  input buffer, of course). not null-terminated
+- 2b prev offset
+- 1b size + IMMEDIATE flag
+- 2b code pointer
+- Parameter field (PF)
+
+The prev offset is the number of bytes between the prev field and the previous
+word's code pointer.
+
+The size + flag indicate the size of the name field, with the 7th bit being the
+IMMEDIATE flag.
+
+The code pointer point to "word routines". These routines expect to be called
+with IY pointing to the PF. They themselves are expected to end by jumping to
+the address at (IP). They will usually do so with "jp next".
+
+That's for "regular" words (words that are part of the dict chain). There are
+also "special words", for example NUMBER, LIT, FBR, that have a slightly
+different structure. They're also a pointer to an executable, but as for the
+other fields, the only one they have is the "flags" field.
+

@@ -1,34 +1,5 @@
-; Collapse OS' Forth
-;
-; Unlike other assembler parts of Collapse OS, this unit is one huge file.
-;
-; I do this because as Forth takes a bigger place, assembler is bound to take
-; less and less place. I am thus consolidating that assembler code in one
-; place so that I have a better visibility of what to minimize.
-;
-; I also want to reduce the featureset of the assembler so that Collapse OS
-; self-hosts in a more compact manner. File include is a big part of the
-; complexity in zasm. If we can get rid of it, we'll be more compact.
+; Collapse OS Forth's boot binary
 
-; *** ABI STABILITY ***
-;
-; This unit needs to have some of its entry points stay at a stable offset.
-; These have a comment over them indicating the expected offset. These should
-; not move until the Grand Bootstrapping operation has been completed.
-;
-; When you see random ".fill" here and there, it's to ensure that stability.
-
-; *** Defines ***
-; GETC: address of a GetC routine
-; PUTC: address of a PutC routine
-;
-; Those GetC/PutC routines are hooked through defines and have this API:
-;
-; GetC: Blocks until a character is read from the device and return that
-;       character in A.
-;
-; PutC: Write character specified in A onto the device.
-;
 ; *** Const ***
 ; Base of the Return Stack
 .equ	RS_ADDR		0xf000
@@ -72,39 +43,12 @@
 ; (HERE) will begin at a strategic place.
 .equ	HERE_INITIAL	RAMEND
 
-; EXECUTION MODEL
-; After having read a line through readline, we want to interpret it. As
-; a general rule, we go like this:
-;
-; 1. read single word from line
-; 2. Can we find the word in dict?
-; 3. If yes, execute that word, goto 1
-; 4. Is it a number?
-; 5. If yes, push that number to PS, goto 1
-; 6. Error: undefined word.
-;
-; EXECUTING A WORD
-;
-; At it's core, executing a word is having the wordref in IY and call
-; EXECUTE. Then, we let the word do its things. Some words are special,
-; but most of them are of the compiledWord type, and that's their execution that
-; we describe here.
-;
-; First of all, at all time during execution, the Interpreter Pointer (IP)
-; points to the wordref we're executing next.
-;
-; When we execute a compiledWord, the first thing we do is push IP to the Return
-; Stack (RS). Therefore, RS' top of stack will contain a wordref to execute
-; next, after we EXIT.
-;
-; At the end of every compiledWord is an EXIT. This pops RS, sets IP to it, and
-; continues.
-
 ; *** Stable ABI ***
 ; Those jumps below are supposed to stay at these offsets, always. If they
 ; change bootstrap binaries have to be adjusted because they rely on them.
 ; Those entries are referenced directly by their offset in Forth code with a
 ; comment indicating what that number refers to.
+;
 ; We're at 0 here
 	jp	forthMain
 ; 3
@@ -138,7 +82,86 @@
 	jp	parseDecimal
 	jp	doesWord
 
-; *** Code ***
+; *** Boot dict ***
+; There are only 5 words in the boot dict, but these words' offset need to be
+; stable, so they're part of the "stable ABI"
+
+; Pop previous IP from Return stack and execute it.
+; ( R:I -- )
+	.db	"EXIT"
+	.dw	0
+	.db	4
+EXIT:
+	.dw nativeWord
+	call	popRSIP
+	jp	next
+
+	.db	"(br)"
+	.dw	$-EXIT
+	.db	4
+BR:
+	.dw	nativeWord
+	ld	hl, (IP)
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	add	hl, de
+	ld	(IP), hl
+	jp	next
+
+	.db	"(?br)"
+	.dw	$-BR
+	.db	5
+CBR:
+	.dw	nativeWord
+	pop	hl
+	call	chkPS
+	ld	a, h
+	or	l
+	jr	z, BR+2		; False, branch
+	; True, skip next 2 bytes and don't branch
+	ld	hl, (IP)
+	inc	hl
+	inc	hl
+	ld	(IP), hl
+	jp	next
+
+	.db	","
+	.dw	$-CBR
+	.db	1
+WR:
+	.dw	nativeWord
+	pop	de
+	call	chkPS
+	ld	hl, (HERE)
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	inc	hl
+	ld	(HERE), hl
+	jp	next
+
+; ( addr -- )
+	.db "EXECUTE"
+	.dw $-WR
+	.db 7
+EXECUTE:
+	.dw nativeWord
+	pop	iy	; is a wordref
+	call	chkPS
+	ld	l, (iy)
+	ld	h, (iy+1)
+	; HL points to code pointer
+	inc	iy
+	inc	iy
+	; IY points to PFA
+	jp	(hl)	; go!
+
+; Offset: 00b8
+.out $
+; *** End of stable ABI ***
+
 forthMain:
 	; STACK OVERFLOW PROTECTION:
 	; To avoid having to check for stack underflow after each pop operation
@@ -167,11 +190,6 @@ forthMain:
 .bootName:
 	.db	"BOOT", 0
 
-.fill 95
-
-; STABLE ABI
-; Offset: 00cd
-.out $
 ; copy (HL) into DE, then exchange the two, utilising the optimised HL instructions.
 ; ld must be done little endian, so least significant byte first.
 intoHL:
@@ -181,32 +199,6 @@ intoHL:
 	ld 	d, (hl)
 	ex 	de, hl
 	pop 	de
-	ret
-
-; add the value of A into HL
-; affects carry flag according to the 16-bit addition, Z, S and P untouched.
-addHL:
-	push	de
-	ld 	d, 0
-	ld	e, a
-	add	hl, de
-	pop	de
-	ret
-
-; Copy string from (HL) in (DE), that is, copy bytes until a null char is
-; encountered. The null char is also copied.
-; HL and DE point to the char right after the null char.
-; B indicates the length of the copied string, including null-termination.
-strcpy:
-	ld	b, 0
-.loop:
-	ld	a, (hl)
-	ld	(de), a
-	inc	hl
-	inc	de
-	inc	b
-	or	a
-	jr	nz, .loop
 	ret
 
 ; Compares strings pointed to by HL and DE until one of them hits its null char.
@@ -327,7 +319,6 @@ parseDecimal:
 	xor	a	; set Z
 	ret
 
-; *** Support routines ***
 ; Find the entry corresponding to word where (HL) points to and sets DE to
 ; point to that entry.
 ; Z if found, NZ if not.
@@ -420,26 +411,6 @@ flagsToBC:
 	dec	bc
 	ret
 
-; Write DE in (HL), advancing HL by 2.
-DEinHL:
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
-	ret
-
-; *** Stack management ***
-; The Parameter stack (PS) is maintained by SP and the Return stack (RS) is
-; maintained by IX. This allows us to generally use push and pop freely because
-; PS is the most frequently used. However, this causes a problem with routine
-; calls: because in Forth, the stack isn't balanced within each call, our return
-; offset, when placed by a CALL, messes everything up. This is one of the
-; reasons why we need stack management routines below. IX always points to RS'
-; Top Of Stack (TOS)
-;
-; This return stack contain "Interpreter pointers", that is a pointer to the
-; address of a word, as seen in a compiled list of words.
-
 ; Push value HL to RS
 pushRS:
 	inc	ix
@@ -485,30 +456,13 @@ chkPS:
 	ret	nc		; (INITIAL_SP) >= SP? good
 	jp	abortUnderflow
 
-; *** Dictionary ***
-; It's important that this part is at the end of the resulting binary.
-; A dictionary entry has this structure:
-; - Xb name. Arbitrary long number of character (but can't be bigger than
-;   input buffer, of course). not null-terminated
-; - 2b prev offset
-; - 1b size + IMMEDIATE flag
-; - 2b code pointer
-; - Parameter field (PF)
-;
-; The prev offset is the number of bytes between the prev field and the
-; previous word's code pointer.
-;
-; The size + flag indicate the size of the name field, with the 7th bit
-; being the IMMEDIATE flag.
-;
-; The code pointer point to "word routines". These routines expect to be called
-; with IY pointing to the PF. They themselves are expected to end by jumping
-; to the address at (IP). They will usually do so with "jp next".
-;
-; That's for "regular" words (words that are part of the dict chain). There are
-; also "special words", for example NUMBER, LIT, FBR, that have a slightly
-; different structure. They're also a pointer to an executable, but as for the
-; other fields, the only one they have is the "flags" field.
+abortUnderflow:
+	ld	hl, .name
+	call	find
+	push	de
+	jp	EXECUTE+2
+.name:
+	.db "(uflw)", 0
 
 ; This routine is jumped to at the end of every word. In it, we jump to current
 ; IP, but we also take care of increasing it my 2 before jumping
@@ -528,6 +482,8 @@ next:
 	push	de
 	jp	EXECUTE+2
 
+
+; *** Word routines ***
 
 ; Execute a word containing native code at its PF address (PFA)
 nativeWord:
@@ -599,99 +555,16 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
-; Pop previous IP from Return stack and execute it.
-; ( R:I -- )
-	.db	"EXIT"
-	.dw	0
-	.db	4
-EXIT:
-	.dw nativeWord
-	call	popRSIP
-	jp	next
-
-.fill 30
-
-abortUnderflow:
-	ld	hl, .name
-	call	find
-	push	de
-	jp	EXECUTE+2
-.name:
-	.db "(uflw)", 0
-
-	.db	"(br)"
-	.dw	$-EXIT
-	.db	4
-BR:
-	.dw	nativeWord
-	ld	hl, (IP)
-	ld	e, (hl)
-	inc	hl
-	ld	d, (hl)
-	dec	hl
-	add	hl, de
-	ld	(IP), hl
-	jp	next
-
-.fill 72
-
-	.db	"(?br)"
-	.dw	$-BR
-	.db	5
-CBR:
-	.dw	nativeWord
-	pop	hl
-	call	chkPS
-	ld	a, h
-	or	l
-	jp	z, BR+2		; False, branch
-	; True, skip next 2 bytes and don't branch
-	ld	hl, (IP)
-	inc	hl
-	inc	hl
-	ld	(IP), hl
-	jp	next
-
-.fill 15
-
-	.db	","
-	.dw	$-CBR
-	.db	1
-WR:
-	.dw	nativeWord
-	pop	de
-	call	chkPS
-	ld	hl, (HERE)
-	call	DEinHL
-	ld	(HERE), hl
-	jp	next
-
-.fill 100
-
-; ( addr -- )
-	.db "EXECUTE"
-	.dw $-WR
-	.db 7
-; STABLE ABI
-; Offset: 0388
-.out $
-EXECUTE:
-	.dw nativeWord
-	pop	iy	; is a wordref
-	call	chkPS
-	ld	l, (iy)
-	ld	h, (iy+1)
-	; HL points to code pointer
-	inc	iy
-	inc	iy
-	; IY points to PFA
-	jp	(hl)	; go!
-
-
-.fill 677
+; *** Dict hook ***
+; This dummy dictionary entry serves two purposes:
+; 1. Allow binary grafting. Because each binary dict always end with a dummy
+;    entry, we always have a predictable prev offset for the grafter's first
+;    entry.
+; 2. Tell icore's "_c" routine where the boot binary ends. See comment there.
 
 	.db	"_bend"
 	.dw	$-EXECUTE
 	.db	5
-; Offset: 0647
+
+; Offset: 0253
 .out $
