@@ -73,6 +73,16 @@
 3 CONSTANT AF
 3 CONSTANT SP
 
+( "cc" condition constants )
+0 CONSTANT CNZ
+1 CONSTANT CZ
+2 CONSTANT CNC
+3 CONSTANT CC
+4 CONSTANT CPO
+5 CONSTANT CPE
+6 CONSTANT CP
+7 CONSTANT CM
+
 ( As a general rule, IX and IY are equivalent to spitting an
   extra 0xdd / 0xfd and then spit the equivalent of HL )
 : IX 0xdd A, HL ;
@@ -126,6 +136,8 @@
 ;
 0x04 OP1r INCr,
 0x05 OP1r DECr,
+( also works for cc )
+0xc0 OP1r RETcc,
 
 ( r -- )
 : OP1r0
@@ -134,11 +146,14 @@
     C@              ( r op )
     OR A,
 ;
+0x80 OP1r0 ADDr,
+0x88 OP1r0 ADCr,
 0xa0 OP1r0 ANDr,
-0xb0 OP1r0 ORr,
-0xa8 OP1r0 XORr,
 0xb8 OP1r0 CPr,
-0x90 OP1r0 SUBr
+0xb0 OP1r0 ORr,
+0x90 OP1r0 SUBr,
+0x98 OP1r0 SBCr,
+0xa8 OP1r0 XORr,
 
 ( qq -- also works for ss )
 : OP1qq
@@ -192,6 +207,8 @@
 ;
 0xd3 OP2n OUTnA,
 0xdb OP2n INAn,
+0xc6 OP2n ADDn,
+0xd6 OP2n SUBn,
 
 ( r n -- )
 : OP2rn

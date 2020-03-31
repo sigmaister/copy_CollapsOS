@@ -78,7 +78,7 @@
 	.dw	PARSEPTR
 	.dw	HERE
 	.dw	CURRENT
-	jp	parseDecimal
+	nop \ nop \ nop	; unused
 	jp	doesWord
 
 ; *** Boot dict ***
@@ -185,87 +185,6 @@ forthMain:
 
 .bootName:
 	.db	"BOOT", 0
-
-; Parse string at (HL) as a decimal value and return value in DE.
-; Reads as many digits as it can and stop when:
-; 1 - A non-digit character is read
-; 2 - The number overflows from 16-bit
-; HL is advanced to the character following the last successfully read char.
-; Error conditions are:
-; 1 - There wasn't at least one character that could be read.
-; 2 - Overflow.
-; Sets Z on success, unset on error.
-
-parseDecimal:
-	; First char is special: it has to succeed.
-	ld	a, (hl)
-	cp	'-'
-	jr	z, .negative
-	; Parse the decimal char at A and extract it's 0-9 numerical value. Put the
-	; result in A.
-	; On success, the carry flag is reset. On error, it is set.
-	add	a, 0xff-'9'	; maps '0'-'9' onto 0xf6-0xff
-	sub	0xff-9		; maps to 0-9 and carries if not a digit
-	ret	c		; Error. If it's C, it's also going to be NZ
-	; During this routine, we switch between HL and its shadow. On one side,
-	; we have HL the string pointer, and on the other side, we have HL the
-	; numerical result. We also use EXX to preserve BC, saving us a push.
-	exx		; HL as a result
-	ld	h, 0
-	ld	l, a	; load first digit in without multiplying
-
-.loop:
-	exx		; HL as a string pointer
-	inc hl
-	ld a, (hl)
-	exx		; HL as a numerical result
-
-	; same as other above
-	add	a, 0xff-'9'
-	sub	0xff-9
-	jr	c, .end
-
-	ld	b, a	; we can now use a for overflow checking
-	add	hl, hl	; x2
-	sbc	a, a	; a=0 if no overflow, a=0xFF otherwise
-	ld	d, h
-	ld	e, l		; de is x2
-	add	hl, hl	; x4
-	rla
-	add	hl, hl	; x8
-	rla
-	add	hl, de	; x10
-	rla
-	ld	d, a	; a is zero unless there's an overflow
-	ld	e, b
-	add	hl, de
-	adc	a, a	; same as rla except affects Z
-	; Did we oveflow?
-	jr	z, .loop	; No? continue
-	; error, NZ already set
-	exx		; HL is now string pointer, restore BC
-	; HL points to the char following the last success.
-	ret
-
-.end:
-	push	hl	; --> lvl 1, result
-	exx		; HL as a string pointer, restore BC
-	pop	de	; <-- lvl 1, result
-	cp	a	; ensure Z
-	ret
-
-.negative:
-	inc	hl
-	call	parseDecimal
-	ret	nz
-	push	hl	; --> lvl 1
-	or	a	; clear carry
-	ld	hl, 0
-	sbc	hl, de
-	ex	de, hl
-	pop	hl	; <-- lvl 1
-	xor	a	; set Z
-	ret
 
 ; Find the entry corresponding to word where (HL) points to and sets DE to
 ; point to that entry.
@@ -503,7 +422,7 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
-.fill 20
+.fill 84
 ; *** Dict hook ***
 ; This dummy dictionary entry serves two purposes:
 ; 1. Allow binary grafting. Because each binary dict always end with a dummy

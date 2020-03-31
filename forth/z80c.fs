@@ -368,23 +368,6 @@ CODE CMP
     BC PUSHqq,
 ;CODE
 
-CODE (parsed)
-    HL POPqq,
-    chkPS,
-    ( 60 == parseDecimal )
-    60 CALLnn,
-    JRZ, L1 FWR ( success )
-    ( error )
-    DE 0 LDddnn,
-    DE PUSHqq,  ( dummy )
-    DE PUSHqq,  ( flag )
-    JPNEXT,
-L1 FSET ( success )
-    DE PUSHqq,
-    DE 1 LDddnn,
-    DE PUSHqq,
-;CODE
-
 CODE (find)
     HL POPqq,
     chkPS,

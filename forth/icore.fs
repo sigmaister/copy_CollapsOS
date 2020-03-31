@@ -82,6 +82,43 @@
 
 : ABORT _c (resSP) _c QUIT ;
 
+: = _c CMP _c NOT ;
+: < _c CMP -1 _c = ;
+: > _c CMP 1 _c = ;
+
+: (parsed)      ( a -- n f )
+    ( read first char outside of the loop. it *has* to be
+      nonzero. )
+    _c DUP _c C@                    ( a c )
+    _c DUP _c NOT IF EXIT THEN      ( a 0 )
+    ( special case: do we have a negative? )
+    _c DUP '-' _c = IF
+        ( Oh, a negative, let's recurse and reverse )
+        _c DROP 1 _c +                  ( a+1 )
+        _c (parsed)                     ( n f )
+        _c SWAP 0 _c SWAP               ( f 0 n )
+        _c - _c SWAP EXIT               ( 0-n f )
+    THEN
+    ( running result, staring at zero )
+    0 _c SWAP                               ( a r c )
+    ( Loop over chars )
+    BEGIN
+    ( parse char )
+    '0' _c -
+    ( if bad, return "a 0" )
+    _c DUP 0 _c < IF _c 2DROP 0 EXIT THEN   ( bad )
+    _c DUP 9 _c > IF _c 2DROP 0 EXIT THEN   ( bad )
+    ( good, add to running result )
+    _c SWAP 10 _c * _c +                    ( a r*10+n )
+    _c SWAP 1 _c + _c SWAP                  ( a+1 r )
+    ( read next char )
+    _c OVER _c C@
+    _c DUP _c NOT UNTIL
+    ( we're done and it's a success. We have "a r c", we want
+      "r 1". )
+    _c DROP _c SWAP _c DROP 1
+;
+
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)

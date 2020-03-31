@@ -77,9 +77,6 @@
 
 : VARIABLE CREATE 2 ALLOT ;
 : CONSTANT CREATE , DOES> @ ;
-: = CMP NOT ;
-: < CMP 0 1 - = ;
-: > CMP 1 = ;
 : / /MOD SWAP DROP ;
 : MOD /MOD DROP ;
 
