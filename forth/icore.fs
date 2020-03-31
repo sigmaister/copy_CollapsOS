@@ -146,6 +146,11 @@
     [ 48 @ LITN ] _c @ EXECUTE
 ;
 
+: ,
+    _c HERE _c @ _c !
+    _c HERE _c @ 2 _c + _c HERE _c !
+;
+
 : C,
     _c HERE _c @ _c C!
     _c HERE _c @ 1 _c + _c HERE _c !
@@ -191,7 +196,7 @@
     _c DUP _c HERE _c ! ( h h' )
     _c SWAP _c -       ( sz )
     ( write prev value )
-    _c HERE _c @ _c CURRENT _c @ _c - ,
+    _c HERE _c @ _c CURRENT _c @ _c - _c ,
     ( write size )
     _c C,
     _c HERE _c @ _c CURRENT _c !
@@ -225,7 +230,7 @@
   it to avoid bootstrapping issues )
 : LITN
     ( 32 == NUMBER )
-    32 , ,
+    32 _c , _c ,
 ;
 
 ( : and ; have to be defined last because it can't be
@@ -236,19 +241,19 @@
     _c (entry)
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
       issues. 32 == NUMBER 14 == compiledWord )
-    [ 32 , 14 , ] ,
+    [ 32 , 14 , ] _c ,
     BEGIN
     _c WORD
     _c (find)
     ( is word )
-    IF _c DUP _c IMMED? IF EXECUTE ELSE , THEN
+    IF _c DUP _c IMMED? IF EXECUTE ELSE _c , THEN
     ( maybe number )
     ELSE _c (parse*) _c @ EXECUTE _c LITN THEN
     AGAIN
 ; IMMEDIATE
 
 : Y
-    ['] EXIT ,
+    ['] EXIT _c ,
     _c R> _c DROP     ( exit : )
 ; IMMEDIATE
 

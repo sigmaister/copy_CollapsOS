@@ -126,24 +126,11 @@ CBR:
 	ld	(IP), hl
 	jp	next
 
-	.db	","
-	.dw	$-CBR
-	.db	1
-WR:
-	.dw	nativeWord
-	pop	de
-	call	chkPS
-	ld	hl, (HERE)
-	ld	(hl), e
-	inc	hl
-	ld	(hl), d
-	inc	hl
-	ld	(HERE), hl
-	jp	next
+.fill 23
 
 ; ( addr -- )
 	.db "EXECUTE"
-	.dw $-WR
+	.dw $-CBR
 	.db 7
 EXECUTE:
 	.dw nativeWord
