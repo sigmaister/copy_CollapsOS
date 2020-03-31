@@ -5,8 +5,58 @@
     256 /MOD SWAP
 ;
 
+( A, spits an assembled byte, A,, spits an assembled word )
 ( To debug, change C, to .X )
 : A, C, ;
+: A,, SPLITB A, A, ;
+
+( Labels are a convenient way of managing relative jump
+  calculations. Backward labels are easy. It is only a matter
+  or recording "HERE" and do subtractions. Forward labels
+  record the place where we should write the offset, and then
+  when we get to that point later on, the label records the
+  offset there.
+
+  To avoid using dict memory in compilation targets, we
+  pre-declare label variables here, which means we have a
+  limited number of it. For now, 4 ought to be enough. )
+
+(sysv) L1
+(sysv) L2
+(sysv) L3
+(sysv) L4
+
+( There are 2 label types: backward and forward. For each
+  type, there are two actions: set and write. Setting a label
+  is declaring where it is. It has to be performed at the
+  label's destination. Writing a label is writing its offset
+  difference to the binary result. It has to be done right
+  after a relative jump operation. Yes, labels are only for
+  relative jumps.
+
+  For backward labels, set happens before write. For forward
+  labels, write happen before set. The write operation writes
+  a dummy placeholder, and then the set operation writes the
+  offset at that placeholder's address.
+
+  Variable actions are expected to be called with labels in
+  front of them. Example, "L2 FSET"
+
+  About that "1 -": z80 relative jumps record "e-2", that is,
+  the offset that *counts the 2 bytes of the jump itself*.
+  Because we set the label *after* the jump OP1 itself, that's
+  1 byte that is taken care of. We still need to adjust by
+  another byte before writing the offset.
+)
+
+: BSET H@ SWAP ! ;
+: BWR @ H@ - 1 - A, ;
+( same as BSET, but we need to write a placeholder )
+: FWR BSET 0 A, ;
+: FSET @ DUP H@ -^ 1 - SWAP C! ;
+
+
+( "r" register constants )
 7 CONSTANT A
 0 CONSTANT B
 1 CONSTANT C
@@ -15,6 +65,8 @@
 4 CONSTANT H
 5 CONSTANT L
 6 CONSTANT (HL)
+
+( "ss" register constants )
 0 CONSTANT BC
 1 CONSTANT DE
 2 CONSTANT HL
@@ -38,6 +90,7 @@
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
 0xeb OP1 EXDEHL,
+0xd9 OP1 EXX,
 0x76 OP1 HALT,
 0xe9 OP1 JP(HL),
 0x12 OP1 LD(DE)A,
@@ -48,6 +101,19 @@
 0x1f OP1 RRA,
 0x0f OP1 RRCA,
 0x37 OP1 SCF,
+
+( Relative jumps are a bit special. They're supposed to take
+  an argument, but they don't take it so they can work with
+  the label system. Therefore, relative jumps are an OP1 but
+  when you use them, you're expected to write the offset
+  afterwards yourself. )
+
+0x18 OP1 JR,
+0x38 OP1 JRC,
+0x30 OP1 JRNC,
+0x28 OP1 JRZ,
+0x20 OP1 JRNZ,
+0x10 OP1 DJNZ,
 
 ( r -- )
 : OP1r
@@ -72,6 +138,7 @@
 0xb0 OP1r0 ORr,
 0xa8 OP1r0 XORr,
 0xb8 OP1r0 CPr,
+0x90 OP1r0 SUBr
 
 ( qq -- also works for ss )
 : OP1qq
@@ -200,7 +267,7 @@
     ROT             ( nn op dd )
     <<4             ( nn op dd<<4 )
     OR A,
-    SPLITB A, A,
+    A,,
 ;
 0x01 OP3ddnn LDddnn,
 
@@ -209,24 +276,12 @@
     CREATE C,
     DOES>
     C@ A,
-    SPLITB A, A,
+    A,,
 ;
 0xcd OP3nn CALLnn,
 0xc3 OP3nn JPnn,
 0x22 OP3nn LD(nn)HL,
 0x2a OP3nn LDHL(nn),
-
-: OPJR
-    CREATE C,
-    DOES>
-    C@ A, 2 - A,
-;
-0x18 OPJR JRe,
-0x38 OPJR JRCe,
-0x30 OPJR JRNCe,
-0x28 OPJR JRZe,
-0x20 OPJR JRNZe,
-0x10 OPJR DJNZe,
 
 ( Specials )
 
@@ -234,14 +289,14 @@
 : LDdd(nn),
     0xed A,
     SWAP <<4 0x4b OR A,
-    SPLITB A, A,
+    A,,
 ;
 
 ( nn dd -- )
 : LD(nn)dd,
     0xed A,
     <<4 0x43 OR A,
-    SPLITB A, A,
+    A,,
 ;
 
 ( 26 == next )

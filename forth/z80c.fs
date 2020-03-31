@@ -155,10 +155,10 @@ CODE NOT
     A L LDrr,
     H ORr,
     HL 0 LDddnn,
-    3 JRNZe, ( skip)
+    JRNZ, L1 FWR ( skip )
     ( false, make 1 )
     HL INCss,
-( skip )
+L1 FSET ( skip )
     HL PUSHqq,
 ;CODE
 
@@ -190,13 +190,13 @@ CODE *
     HL ADDHLss,
     E RLr,
     D RLr,
-    6 JRNCe, ( noinc )
+    JRNC, 4 A, ( noinc )
     BC ADDHLss,
-    3 JRNCe, ( noinc )
+    JRNC, 1 A, ( noinc )
     DE INCss,
 ( noinc )
     A DECr,
-    -12 JRNZe, ( loop )
+    JRNZ, -14 A, ( loop )
     HL PUSHqq,
 ;CODE
 
@@ -210,17 +210,17 @@ CODE /MOD
     A B LDrr,
     B 16 LDrn,
     HL 0 LDddnn,
-( loop )
+L1 BSET ( loop )
     SCF,
     C RLr,
     RLA,
     HL ADCHLss,
     DE SBCHLss,
-    4 JRNCe,  ( skip )
+    JRNC, L2 FWR ( skip )
     DE ADDHLss,
     C DECr,
-( skip )
-    -12 DJNZe, ( loop )
+L2 FSET ( skip )
+    DJNZ, L1 BWR ( loop )
     B A LDrr,
     HL PUSHqq,
     BC PUSHqq,
@@ -318,9 +318,9 @@ CODE IMMED?
     HL DECss,
     DE 0 LDddnn,
     7 (HL) BITbr,
-    3 JRZe, ( notset )
+    JRZ, L1 FWR ( notset )
     DE INCss,
-( notset )
+L1 FSET ( notset )
     DE PUSHqq,
 ;CODE
 
@@ -342,15 +342,16 @@ CODE SCMP
     DE  POPqq,
     HL  POPqq,
     chkPS,
-( loop )
+L1 BSET ( loop )
     LDA(DE),
     (HL) CPr,
-    7 JRNZe, ( not equal? break early to "end". NZ is set. )
+    JRNZ, L2 FWR ( not equal? break early to "end".
+                   NZ is set. )
     A ORr,   ( if our char is null, stop )
     HL INCss,
     DE INCss,
-    -7 JRNZe, ( loop )
-( end )
+    JRNZ, L1 BWR ( loop )
+L2 FSET ( end )
     ( 40 == flagsToBC )
     40 CALLnn,
     BC PUSHqq,
@@ -372,13 +373,13 @@ CODE (parsed)
     chkPS,
     ( 60 == parseDecimal )
     60 CALLnn,
-    10 JRZe, ( success )
+    JRZ, L1 FWR ( success )
     ( error )
     DE 0 LDddnn,
     DE PUSHqq,  ( dummy )
     DE PUSHqq,  ( flag )
     JPNEXT,
-( success )
+L1 FSET ( success )
     DE PUSHqq,
     DE 1 LDddnn,
     DE PUSHqq,
@@ -389,13 +390,13 @@ CODE (find)
     chkPS,
     ( 3 == find )
     3 CALLnn,
-    10 JRZe, ( found )
+    JRZ, L1 FWR ( found )
     ( not found )
     HL PUSHqq,
     DE 0 LDddnn,
     DE PUSHqq,
     JPNEXT,
-( found )
+L1 FSET ( found )
     DE PUSHqq,
     DE 1 LDddnn,
     DE PUSHqq,
@@ -406,14 +407,14 @@ CODE SCPY
     chkPS,
     DE HERE LDdd(nn),
     B 0 LDrn,
-( loop )
+L1 BSET ( loop )
     A (HL) LDrr,
     LD(DE)A,
     HL INCss,
     DE INCss,
     B INCr,
     A ORr,
-    -6 JRNZe, ( loop )
+    JRNZ, L1 BWR ( loop )
     DE A LD(dd)r
     HERE DE LD(nn)dd,
 ;CODE
