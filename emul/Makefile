@@ -30,7 +30,7 @@ shell/shell: shell/shell.c $(SHELLOBJS) shell/shell-bin.h
 # z80c.bin is not in the prerequisites because its a bootstrap binary that
 # should be updated manually through make fbootstrap.
 forth/forth0.bin: forth/stage0.asm $(ZASMBIN)
-	$(ZASMBIN) $(KERNEL) ../forth forth/z80c.bin forth/stagec.asm < forth/stage0.asm | tee $@ > /dev/null
+	$(ZASMBIN) $(KERNEL) ../forth < forth/stage0.asm | cat - forth/z80c.bin | tee $@ > /dev/null
 
 forth/forth0-bin.h: forth/forth0.bin
 	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
@@ -44,8 +44,8 @@ forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
 	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null
 
-forth/forth1.bin: forth/stage1.asm forth/forth0.bin forth/core.bin $(ZASMBIN)
-	$(ZASMBIN) $(KERNEL) ../forth forth/z80c.bin forth/core.bin forth/stagec.asm < forth/stage1.asm | tee $@ > /dev/null
+forth/forth1.bin: forth/forth0.bin forth/core.bin
+	cat forth/forth0.bin forth/core.bin > $@
 
 forth/forth1-bin.h: forth/forth1.bin
 	./bin2c.sh KERNEL < forth/forth1.bin | tee $@ > /dev/null

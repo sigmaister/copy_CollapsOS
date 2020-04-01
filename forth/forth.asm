@@ -38,10 +38,6 @@
 .equ	SYSVNXT		@+WORD_BUFSIZE
 .equ	RAMEND		@+SYSV_BUFSIZE+2
 
-; (HERE) usually starts at RAMEND, but in certain situations, such as in stage0,
-; (HERE) will begin at a strategic place.
-.equ	HERE_INITIAL	RAMEND
-
 ; *** Stable ABI ***
 ; Those jumps below are supposed to stay at these offsets, always. If they
 ; change bootstrap binaries have to be adjusted because they rely on them.
@@ -53,7 +49,9 @@
 ; 3
 	jp	find
 	nop \ nop	; unused
-	nop \ nop \ nop	; unused
+; 8
+	nop \ nop	; Placeholder for LATEST
+	nop		; unused
 ; 11
 	jp	cellWord
 	jp	compiledWord
@@ -158,12 +156,12 @@ forthMain:
 	ld	sp, 0xfffa
 	ld	(INITIAL_SP), sp
 	ld	ix, RS_ADDR
-	; LATEST is a label to the latest entry of the dict. This can be
-	; overridden if a binary dict has been grafted to the end of this
-	; binary
-	ld	hl, LATEST
+	; LATEST is a label to the latest entry of the dict. It is written at
+        ; offset 0x08 by the process or person building Forth.
+	ld	hl, (0x08)
 	ld	(CURRENT), hl
-	ld	hl, HERE_INITIAL
+	; For now, we'll always make HERE start right after LATEST. This will
+	; not work on ROM-based system, but I'll adjust later.
 	ld	(HERE), hl
 	ld	hl, .bootName
 	call	find
@@ -400,6 +398,7 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
+.fill 3
 ; *** Dict hook ***
 ; This dummy dictionary entry serves two purposes:
 ; 1. Allow binary grafting. Because each binary dict always end with a dummy
