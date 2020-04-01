@@ -240,8 +240,9 @@
 : X
     _c (entry)
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
-      issues. 32 == NUMBER 14 == compiledWord )
-    [ 32 , 14 , ] _c ,
+      issues. Same thing for ",".
+      32 == NUMBER 14 == compiledWord )
+    [ 32 H@ ! 2 ALLOT 14 H@ ! 2 ALLOT ] _c ,
     BEGIN
     _c WORD
     _c (find)

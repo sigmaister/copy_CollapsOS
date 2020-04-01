@@ -59,7 +59,9 @@
 	jp	compiledWord
 	jp	pushRS
 	jp	popRS
-	jp	nativeWord
+; 23
+	jp	(iy)	; nativeWord. why use a jump when the real deal is
+	nop		; more compact?
 	jp	next
 	jp	chkPS
 ; 32
@@ -68,7 +70,7 @@
 	.dw	INITIAL_SP
 	.dw	WORDBUF
 	jp	flagsToBC
-	nop \ nop \ nop	; unused
+	jp	doesWord
 ; 46
 	.dw	RS_ADDR
 	.dw	CINPTR
@@ -78,8 +80,6 @@
 	.dw	PARSEPTR
 	.dw	HERE
 	.dw	CURRENT
-	nop \ nop \ nop	; unused
-	jp	doesWord
 
 ; *** Boot dict ***
 ; There are only 5 words in the boot dict, but these words' offset need to be
@@ -91,15 +91,18 @@
 	.dw	0
 	.db	4
 EXIT:
-	.dw nativeWord
-	call	popRSIP
+	.dw	23
+	call	popRS
+	ld	(IP), hl
 	jp	next
+
+.fill 3
 
 	.db	"(br)"
 	.dw	$-EXIT
 	.db	4
 BR:
-	.dw	nativeWord
+	.dw	23
 	ld	hl, (IP)
 	ld	e, (hl)
 	inc	hl
@@ -113,7 +116,7 @@ BR:
 	.dw	$-BR
 	.db	5
 CBR:
-	.dw	nativeWord
+	.dw	23
 	pop	hl
 	call	chkPS
 	ld	a, h
@@ -126,14 +129,11 @@ CBR:
 	ld	(IP), hl
 	jp	next
 
-.fill 23
-
-; ( addr -- )
 	.db "EXECUTE"
 	.dw $-CBR
 	.db 7
 EXECUTE:
-	.dw nativeWord
+	.dw 23
 	pop	iy	; is a wordref
 	call	chkPS
 	ld	l, (iy)
@@ -144,7 +144,7 @@ EXECUTE:
 	; IY points to PFA
 	jp	(hl)	; go!
 
-; Offset: 00b8
+; Offset: 00a1
 .out $
 ; *** End of stable ABI ***
 
@@ -283,11 +283,6 @@ popRS:
 	dec ix
 	ret
 
-popRSIP:
-	call	popRS
-	ld	(IP), hl
-	ret
-
 ; Verifies that SP and RS are within bounds. If it's not, call ABORT
 chkRS:
 	push	ix \ pop hl
@@ -340,10 +335,6 @@ next:
 
 
 ; *** Word routines ***
-
-; Execute a word containing native code at its PF address (PFA)
-nativeWord:
-	jp	(iy)
 
 ; Execute a list of atoms, which always end with EXIT.
 ; IY points to that list. What do we do:
@@ -409,16 +400,16 @@ litWord:
 	ld	(IP), hl
 	jp	next
 
-.fill 84
 ; *** Dict hook ***
 ; This dummy dictionary entry serves two purposes:
 ; 1. Allow binary grafting. Because each binary dict always end with a dummy
 ;    entry, we always have a predictable prev offset for the grafter's first
 ;    entry.
 ; 2. Tell icore's "_c" routine where the boot binary ends. See comment there.
+
 	.db	"_bend"
 	.dw	$-EXECUTE
 	.db	5
 
-; Offset: 0237
+; Offset: 01c3
 .out $
