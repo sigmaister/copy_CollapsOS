@@ -66,7 +66,7 @@
 
 : QUIT
     0 _c FLAGS _c ! _c (resRS)
-    LIT< INTERPRET _c (find) _c DROP EXECUTE
+    LIT< INTERPRET _c FIND _c DROP EXECUTE
 ;
 
 : ABORT _c (resSP) _c QUIT ;
@@ -130,7 +130,9 @@
     LIT< stack-underflow _c (print) _c ABORT
 ;
 
+( w -- a f )
 : FIND
+    _c CURRENT _c @ ( l )
     ( 0e == FINDPTR )
     0x0e _c RAM+ _c @ EXECUTE
 ;
@@ -214,7 +216,8 @@
     ( write (find) in PARSEPTR, RAM+0e )
     ( a bit wasteful, but otherwise I have bootstrap
       issues with "," )
-    LIT< (find) _c (find) _c DROP 0x0e _c RAM+ _c !
+    LIT< (find) _c CURRENT _c @
+        _c (find) _c DROP 0x0e _c RAM+ _c !
     LIT< (parse) _c FIND _c DROP _c (parse*) _c !
     LIT< (c<) _c FIND _c
     NOT IF LIT< KEY _c FIND _c DROP THEN

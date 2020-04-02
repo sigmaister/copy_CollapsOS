@@ -373,8 +373,12 @@ CODE CMP
     BC PUSHqq,
 ;CODE
 
+( Takes Word and Latest and spits Address and Flag.
+  Latest is the tip of the dictionary to seek. )
+( w l -- a f )
 CODE (find)
-    HL POPqq,
+    DE POPqq,   ( l )
+    HL POPqq,   ( w )
     chkPS,
     ( 3 == find )
     3 CALLnn,
