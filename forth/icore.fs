@@ -56,8 +56,7 @@
 ; IMMEDIATE
 
 : RAM+
-    ( 0x24 == RAMSTART )
-    [ 0x24 @ LITN ] _c +
+    [ RAMSTART LITN ] _c +
 ;
 
 : FLAGS 0x08 _c RAM+ ;
