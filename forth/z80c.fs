@@ -18,6 +18,8 @@
 
   Oh, also: KEY and EMIT are not defined here. There're
   expected to be defined in platform-specific code.
+
+  This unit expects the same conf as boot.fs.
 )
 
 ( dummy entry for dict hook )
@@ -333,13 +335,12 @@ CODE BYE
 ;CODE
 
 CODE (resSP)
-    ( INITIAL_SP == 36 )
-    SP 36 @ LDdd(nn),
+    ( INITIAL_SP == RAM+0 )
+    SP RAMSTART LDdd(nn),
 ;CODE
 
 CODE (resRS)
-    ( RS_ADDR == 46 )
-    IX 46 @ LDddnn,
+    IX RS_ADDR LDddnn,
 ;CODE
 
 CODE SCMP
