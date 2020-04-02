@@ -24,6 +24,9 @@
     H@ IN( !
     INBUFSZ ALLOT
     H@ IN) !
+    ( We need two extra bytes. 1 for the last typed 0x0a and
+      one for the following NULL. )
+    2 ALLOT
     (infl)
 ;
 
@@ -39,24 +42,22 @@
 ( read one char into input buffer and returns whether we
   should continue, that is, whether newline was not met. )
 : (rdlnc)                   ( -- f )
-    ( buffer overflow? stop now )
-    IN> @ IN) @ = IF 0 EXIT THEN
-    ( get and echo back )
-    KEY DUP                     ( c c )
+    ( buffer overflow? same as if we typed a newline )
+    IN> @ IN) @ = IF 0x0a ELSE KEY THEN     ( c )
     ( del? same as backspace )
-    DUP 0x7f = IF DROP DROP 0x8 DUP THEN
-    EMIT                        ( c )
+    DUP 0x7f = IF DROP 0x8 THEN
+    ( echo back )
+    DUP EMIT                    ( c )
     ( bacspace? handle and exit )
     DUP 0x8 = IF (inbs) EXIT THEN
     ( write and advance )
     DUP     ( keep as result )  ( c c )
+    ( Here, we take advantage of the fact that c's MSB is
+      always zero and thus ! automatically null-terminates
+      our string )
     IN> @ ! 1 IN> +!            ( c )
-    ( not newline? exit now )
-    DUP 0xa = NOT IF EXIT THEN  ( c )
-    ( newline? make our result 0 and write it to indicate
-      EOL )
-    DROP 0
-    DUP IN> @ !                 ( c )
+    ( if newline, replace with zero to indicate EOL )
+    DUP 0xa = IF DROP 0 THEN
 ;
 
 ( Read one line in input buffer and make IN> point to it )
@@ -75,5 +76,5 @@
     ( not EOL? good, inc and return )
     DUP IF 1 IN> +! EXIT THEN   ( c )
     ( EOL ? readline. we still return typed char though )
-    (rdln)                      ( c )
+    (rdln) (<c)                 ( c )
 ;
