@@ -7,7 +7,7 @@ AVRABIN = zasm/avra
 SHELLAPPS = zasm ed
 SHELLTGTS = ${SHELLAPPS:%=cfsin/%}
 # Those Forth source files are in a particular order
-FORTHSRCS = core.fs str.fs parse.fs readln.fs fmt.fs z80a.fs dummy.fs
+FORTHSRCS = core.fs str.fs parse.fs readln.fs fmt.fs z80a.fs
 FORTHSRC_PATHS = ${FORTHSRCS:%=../forth/%}
 CFSIN_CONTENTS = $(SHELLTGTS) cfsin/user.h
 OBJS = emul.o libz80/libz80.o
@@ -42,7 +42,7 @@ forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h
 	$(CC) -DDEBUG -DBOOT forth/stage.c $(OBJS) -o $@
 
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
-	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null
+	cat $(FORTHSRC_PATHS) ./forth/stop.fs | ./forth/stage1 | tee $@ > /dev/null
 
 forth/forth1.bin: forth/forth0.bin forth/core.bin
 	cat forth/forth0.bin forth/core.bin > $@
@@ -104,7 +104,7 @@ updatebootstrap: $(ZASMBIN)
 .PHONY: fbootstrap
 fbootstrap: forth/stage2
 	cat ./forth/conf.fs ../forth/boot.fs | ./forth/stage2 > forth/boot.bin
-	cat ../forth/dummy.fs ../forth/z80c.fs forth/emul.fs ../forth/icore.fs ../forth/dummy.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
+	cat ../forth/z80c.fs forth/emul.fs ../forth/icore.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
 
 .PHONY: clean
 clean:

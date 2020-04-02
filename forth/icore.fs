@@ -252,3 +252,8 @@
 ':' ' X 4 - C!
 ';' ' Y 4 - C!
 
+( Add dummy entry. we use CREATE because (entry) is, at this
+  point, broken. Adjust H@ durint port 2 ping. )
+CREATE _
+H@ 2 - 256 /MOD 2 PC! 2 PC!
+

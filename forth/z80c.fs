@@ -20,6 +20,10 @@
   expected to be defined in platform-specific code.
 )
 
+( dummy entry for dict hook )
+(entry) _
+H@ 256 /MOD 2 PC! 2 PC!
+
 ( a b c -- b c a )
 CODE ROT
     HL POPqq,       ( C )
