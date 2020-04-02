@@ -6,7 +6,7 @@
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
 : _err LIT< word-not-found (print) ABORT ;
-: ' WORD (find) NOT (?br) [ 4 , ] _err ;
+: ' WORD FIND NOT (?br) [ 4 , ] _err ;
 : ['] ' LITN ; IMMEDIATE
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
@@ -106,16 +106,16 @@
 
 : (sysv)
     ( Get new sysv addr )
-    ( RAM+46 (2e) == SYSVNXT )
-    46 RAM+ @
+    ( RAM+48 (30) == SYSVNXT )
+    48 RAM+ @
     CONSTANT
     ( increase current sysv counter )
-    2 46 RAM+ +!
+    2 48 RAM+ +!
 ;
 
 ( Set up initial SYSVNXT value, which is 2 bytes after its
   own address )
-46 RAM+ DUP 2 + SWAP !
+48 RAM+ DUP 2 + SWAP !
 
 : ."
     LIT

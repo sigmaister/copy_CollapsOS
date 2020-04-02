@@ -130,6 +130,11 @@
     LIT< stack-underflow _c (print) _c ABORT
 ;
 
+: FIND
+    ( 0e == FINDPTR )
+    0x0e _c RAM+ _c @ EXECUTE
+;
+
 : C<
     ( 0c == CINPTR )
     0x0c _c RAM+ _c @ EXECUTE
@@ -159,8 +164,8 @@
 ( Read word from C<, copy to WORDBUF, null-terminate, and
   return, make HL point to WORDBUF. )
 : WORD
-    ( 0e == WORDBUF )
-    0x0e _c RAM+        ( a )
+    ( 10 == WORDBUF )
+    0x10 _c RAM+        ( a )
     _c TOWORD                   ( a c )
     BEGIN
         ( We take advantage of the fact that char MSB is
@@ -173,7 +178,7 @@
     ( a this point, PS is: a WS )
     ( null-termination is already written )
     _c 2DROP
-    0x0e _c RAM+
+    0x10 _c RAM+
 ;
 
 : (entry)
@@ -194,7 +199,7 @@
 : INTERPRET
     BEGIN
     _c WORD
-    _c (find)
+    _c FIND
     IF
         1 _c FLAGS _c !
         EXECUTE
@@ -206,12 +211,16 @@
 ;
 
 : BOOT
-    LIT< (parse) _c (find) _c DROP _c (parse*) _c !
-    LIT< (c<) _c (find) _c
-    NOT IF LIT< KEY _c (find) _c DROP THEN
+    ( write (find) in PARSEPTR, RAM+0e )
+    ( a bit wasteful, but otherwise I have bootstrap
+      issues with "," )
+    LIT< (find) _c (find) _c DROP 0x0e _c RAM+ _c !
+    LIT< (parse) _c FIND _c DROP _c (parse*) _c !
+    LIT< (c<) _c FIND _c
+    NOT IF LIT< KEY _c FIND _c DROP THEN
     ( 0c == CINPTR )
     0x0c _c RAM+ _c !
-    LIT< (c<$) _c (find) IF EXECUTE ELSE _c DROP THEN
+    LIT< (c<$) _c FIND IF EXECUTE ELSE _c DROP THEN
     _c INTERPRET
 ;
 
@@ -234,7 +243,7 @@
     [ 32 H@ ! 2 ALLOT 14 H@ ! 2 ALLOT ] _c ,
     BEGIN
     _c WORD
-    _c (find)
+    _c FIND
     ( is word )
     IF _c DUP _c IMMED? IF EXECUTE ELSE _c , THEN
     ( maybe number )

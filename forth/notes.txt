@@ -85,9 +85,10 @@ RAMSTART   INITIAL_SP
 +08        FLAGS
 +0a        PARSEPTR
 +0c        CINPTR
-+0e        WORDBUF
-+2e        SYSVNXT
-+4e        RAMEND
++0e        FINDPTR
++10        WORDBUF
++30        SYSVNXT
++50        RAMEND
 
 INITIAL_SP holds the initial Stack Pointer value so that we know where to reset
 it on ABORT
@@ -103,6 +104,8 @@ FLAGS holds global flags. Only used for prompt output control for now.
 PARSEPTR holds routine address called on (parse)
 
 CINPTR holds routine address called on C<
+
+FINDPTR holds routine address called on FIND
 
 WORDBUF is the buffer used by WORD
 
