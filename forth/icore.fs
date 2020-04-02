@@ -55,25 +55,15 @@
     ,           ( write! )
 ; IMMEDIATE
 
-: FLAGS
-    ( 52 == FLAGS )
-    [ 52 @ LITN ]
+: RAM+
+    ( 0x24 == RAMSTART )
+    [ 0x24 @ LITN ] _c +
 ;
 
-: (parse*)
-    ( 54 == PARSEPTR )
-    [ 54 @ LITN ]
-;
-
-: HERE
-    ( 56 == HERE )
-    [ 56 @ LITN ]
-;
-
-: CURRENT
-    ( 58 == CURRENT )
-    [ 58 @ LITN ]
-;
+: FLAGS 0x08 _c RAM+ ;
+: (parse*) 0x0a _c RAM+ ;
+: HERE 0x04 _c RAM+ ;
+: CURRENT 0x02 _c RAM+ ;
 
 : QUIT
     0 _c FLAGS _c ! _c (resRS)
@@ -142,8 +132,8 @@
 ;
 
 : C<
-    ( 48 == CINPTR )
-    [ 48 @ LITN ] _c @ EXECUTE
+    ( 0c == CINPTR )
+    0x0c _c RAM+ _c @ EXECUTE
 ;
 
 : ,
@@ -170,8 +160,8 @@
 ( Read word from C<, copy to WORDBUF, null-terminate, and
   return, make HL point to WORDBUF. )
 : WORD
-    ( 38 == WORDBUF )
-    [ 38 @ LITN ]        ( a )
+    ( 0e == WORDBUF )
+    0x0e _c RAM+        ( a )
     _c TOWORD                   ( a c )
     BEGIN
         ( We take advantage of the fact that char MSB is
@@ -184,7 +174,7 @@
     ( a this point, PS is: a WS )
     ( null-termination is already written )
     _c 2DROP
-    [ 38 @ LITN ]
+    0x0e _c RAM+
 ;
 
 : (entry)
@@ -220,8 +210,8 @@
     LIT< (parse) _c (find) _c DROP _c (parse*) _c !
     LIT< (c<) _c (find) _c
     NOT IF LIT< KEY _c (find) _c DROP THEN
-    ( 48 == CINPTR )
-    [ 48 @ LITN ] _c !
+    ( 0c == CINPTR )
+    0x0c _c RAM+ _c !
     LIT< (c<$) _c (find) IF EXECUTE ELSE _c DROP THEN
     _c INTERPRET
 ;

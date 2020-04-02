@@ -106,16 +106,16 @@
 
 : (sysv)
     ( Get new sysv addr )
-    ( 50 == SYSVNXT )
-    50 @ @
+    ( RAM+46 (2e) == SYSVNXT )
+    46 RAM+ @
     CONSTANT
     ( increase current sysv counter )
-    2 50 @ +!
+    2 46 RAM+ +!
 ;
 
 ( Set up initial SYSVNXT value, which is 2 bytes after its
   own address )
-50 @ DUP 2 + SWAP !
+46 RAM+ DUP 2 + SWAP !
 
 : ."
     LIT

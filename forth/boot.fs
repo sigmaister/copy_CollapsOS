@@ -25,17 +25,17 @@ JP(IY), NOP,      ( 17, nativeWord )
 0 JPnn,           ( 1d, chkPS )
 NOP, NOP,         ( 20, numberWord )
 NOP, NOP,         ( 22, litWord )
-RAMSTART ,        ( 24, INITIAL_SP )
-RAMSTART 0x0e + , ( 26, WORDBUF )
+RAMSTART ,        ( 24, RAMSTART )
+NOP, NOP,         ( 26, unused )
 0 JPnn,           ( 28, flagsToBC )
 0 JPnn,           ( 2b, doesWord )
 RS_ADDR ,         ( 2e, RS_ADDR )
-RAMSTART 0x0c + , ( 30, CINPTR )
-RAMSTART 0x2e + , ( 32, SYSVNXT )
-RAMSTART 0x08 + , ( 34, FLAGS )
-RAMSTART 0x0a + , ( 36, PARSEPTR )
-RAMSTART 0x04 + , ( 38, HERE )
-RAMSTART 0x02 + , ( 3a, CURRENT )
+NOP, NOP,         ( 30, unused )
+NOP, NOP,         ( 32, unused )
+NOP, NOP,         ( 34, unused )
+NOP, NOP,         ( 36, unused )
+NOP, NOP,         ( 38, unused )
+NOP, NOP,         ( 3a, unused )
 
 ( BOOT DICT
   There are only 5 words in the boot dict, but these words'
@@ -116,14 +116,14 @@ PC ORG @ 1 + ! ( main )
   stack underflow.
 )
     SP 0xfffa LDddnn,
-    0x24 @ SP LD(nn)dd, ( 24 == INITIAL_SP )
+    RAMSTART SP LD(nn)dd, ( RAM+00 == INITIAL_SP )
     IX RS_ADDR LDddnn,
 ( LATEST is a label to the latest entry of the dict. It is
   written at offset 0x08 by the process or person building
   Forth. )
     0x08 LDHL(nn),
-    0x3a @ LD(nn)HL,    ( 3a == CURRENT )
-    0x38 @ LD(nn)HL,    ( 38 == HERE )
+    RAMSTART 0x02 + LD(nn)HL, ( RAM+02 == CURRENT )
+    RAMSTART 0x04 + LD(nn)HL, ( RAM+04 == HERE )
     HL L1 @ LDddnn,
     0x03 CALLnn,        ( 03 == find )
     DE PUSHqq,
@@ -155,7 +155,7 @@ PC ORG @ 4 + ! ( find )
   adjust. Because the compare loop pre-decrements, instead
   of DECing HL twice, we DEC it once. )
     HL DECss,
-    DE 0x3a @ LDdd(nn),   ( 3a == CURRENT )
+    DE RAMSTART 0x02 + LDdd(nn),   ( RAM+02 == CURRENT )
 L3 BSET ( inner )
     ( DE is a wordref, first step, do our len correspond? )
     HL PUSHqq,          ( --> lvl 1 )
@@ -249,7 +249,7 @@ L1 BSET ( abortUnderflow )
 
 PC ORG @ 0x1e + ! ( chkPS )
     HL PUSHqq,
-    0x24 @ LDHL(nn), ( 24 == INITIAL_SP )
+    RAMSTART LDHL(nn), ( RAM+00 == INITIAL_SP )
 ( We have the return address for this very call on the stack
   and protected registers. Let's compensate )
     HL DECss,
