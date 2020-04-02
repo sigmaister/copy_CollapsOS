@@ -5,8 +5,15 @@
     256 /MOD SWAP
 ;
 
-( A, spits an assembled byte, A,, spits an assembled word )
-( To debug, change C, to .X )
+
+( H@ offset at which we consider our PC 0. Used to compute
+  PC. To have a proper PC, call  "H@ ORG !" at the beginning
+  of your assembly process. )
+(sysv) ORG
+: PC H@ ORG @ - ;
+
+( A, spits an assembled byte, A,, spits an assembled word
+  Both increase PC. To debug, change C, to .X )
 : A, C, ;
 : A,, SPLITB A, A, ;
 
@@ -19,12 +26,14 @@
 
   To avoid using dict memory in compilation targets, we
   pre-declare label variables here, which means we have a
-  limited number of it. For now, 4 ought to be enough. )
+  limited number of it. For now, 6 ought to be enough. )
 
 (sysv) L1
 (sysv) L2
 (sysv) L3
 (sysv) L4
+(sysv) L5
+(sysv) L6
 
 ( There are 2 label types: backward and forward. For each
   type, there are two actions: set and write. Setting a label
@@ -49,11 +58,17 @@
   another byte before writing the offset.
 )
 
-: BSET H@ SWAP ! ;
-: BWR @ H@ - 1 - A, ;
+: BSET PC SWAP ! ;
+: BWR @ PC - 1 - A, ;
 ( same as BSET, but we need to write a placeholder )
 : FWR BSET 0 A, ;
-: FSET @ DUP H@ -^ 1 - SWAP C! ;
+: FSET
+    @ DUP PC        ( l l pc )
+    -^ 1 -          ( l off )
+    ( warning: l is a PC offset, not a mem addr! )
+    SWAP ORG @ +    ( off addr )
+    C!
+;
 
 
 ( "r" register constants )
@@ -105,6 +120,7 @@
 0xe9 OP1 JP(HL),
 0x12 OP1 LD(DE)A,
 0x1a OP1 LDA(DE),
+0x00 OP1 NOP,
 0xc9 OP1 RET,
 0x17 OP1 RLA,
 0x07 OP1 RLCA,
@@ -199,6 +215,10 @@
     LDIXYr,
 ;
 
+: OP2 CREATE , DOES> @ 256 /MOD A, A, ;
+0xedb1 OP2 CPIR,
+0xed44 OP2 NEG,
+
 ( n -- )
 : OP2n
     CREATE C,
@@ -208,6 +228,8 @@
 0xd3 OP2n OUTnA,
 0xdb OP2n INAn,
 0xc6 OP2n ADDn,
+0xe6 OP2n ANDn,
+0xf6 OP2n Orn,
 0xd6 OP2n SUBn,
 
 ( r n -- )
@@ -315,6 +337,9 @@
     <<4 0x43 OR A,
     A,,
 ;
+
+: JP(IX), IX DROP JP(HL), ;
+: JP(IY), IY DROP JP(HL), ;
 
 ( 26 == next )
 : JPNEXT, 26 JPnn, ;

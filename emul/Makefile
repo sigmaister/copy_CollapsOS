@@ -29,8 +29,8 @@ shell/shell: shell/shell.c $(SHELLOBJS) shell/shell-bin.h
 
 # z80c.bin is not in the prerequisites because its a bootstrap binary that
 # should be updated manually through make fbootstrap.
-forth/forth0.bin: forth/stage0.asm $(ZASMBIN)
-	$(ZASMBIN) $(KERNEL) ../forth < forth/stage0.asm | cat - forth/z80c.bin | tee $@ > /dev/null
+forth/forth0.bin:
+	cat forth/boot.bin forth/z80c.bin > $@
 
 forth/forth0-bin.h: forth/forth0.bin
 	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
@@ -39,7 +39,7 @@ forth/stage1: forth/stage.c $(OBJS) forth/forth0-bin.h
 	$(CC) forth/stage.c $(OBJS) -o $@
 
 forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h 
-	$(CC) -DDEBUG forth/stage.c $(OBJS) -o $@
+	$(CC) -DDEBUG -DBOOT forth/stage.c $(OBJS) -o $@
 
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
 	cat $(FORTHSRC_PATHS) | ./forth/stage1 | tee $@ > /dev/null
@@ -103,6 +103,7 @@ updatebootstrap: $(ZASMBIN)
 # words and they write to HERE at initialization.
 .PHONY: fbootstrap
 fbootstrap: forth/stage2
+	cat ./forth/conf.fs ../forth/boot.fs | ./forth/stage2 > forth/boot.bin
 	cat ../forth/dummy.fs ../forth/z80c.fs forth/emul.fs ../forth/icore.fs ../forth/dummy.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
 
 .PHONY: clean
