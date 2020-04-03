@@ -406,3 +406,8 @@ L1 BSET ( loop )
     DE A LD(dd)r
     HERE DE LD(nn)dd,
 ;CODE
+
+CODE (im1)
+    IM1,
+    EI,
+;CODE

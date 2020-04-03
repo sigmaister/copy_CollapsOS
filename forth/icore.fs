@@ -212,7 +212,9 @@
     ( 0c == CINPTR )
     0x0c _c RAM+ _c !
     LIT< (c<$) _c (find) IF EXECUTE ELSE _c DROP THEN
-    _c INTERPRET
+    LIT< INIT _c (find)
+    IF EXECUTE
+    ELSE _c DROP _c INTERPRET THEN
 ;
 
 ( LITN has to be defined after the last immediate usage of

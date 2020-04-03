@@ -30,12 +30,11 @@ NOP, NOP,         ( 26, unused )
 0 JPnn,           ( 28, flagsToBC )
 0 JPnn,           ( 2b, doesWord )
 NOP, NOP,         ( 2e, unused )
-NOP, NOP,         ( 30, unused )
-NOP, NOP,         ( 32, unused )
-NOP, NOP,         ( 34, unused )
-NOP, NOP,         ( 36, unused )
-NOP, NOP,         ( 38, unused )
-NOP, NOP,         ( 3a, unused )
+RAMSTART 0x51 + JPnn, ( RST 30 )
+NOP, NOP, NOP,    ( unused )
+NOP, NOP,         ( unused )
+RAMSTART 0x51 + JPnn, ( RST 38 )
+NOP,              ( unused )
 
 ( BOOT DICT
   There are only 5 words in the boot dict, but these words'

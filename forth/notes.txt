@@ -87,7 +87,8 @@ RAMSTART   INITIAL_SP
 +0c        CINPTR
 +0e        WORDBUF
 +2e        SYSVNXT
-+4e        RAMEND
++4e        INTJUMP
++51        RAMEND
 
 INITIAL_SP holds the initial Stack Pointer value so that we know where to reset
 it on ABORT
@@ -107,3 +108,8 @@ CINPTR holds routine address called on C<
 WORDBUF is the buffer used by WORD
 
 SYSVNXT is the buffer+tracker used by (sysv)
+
+INTJUMP All RST offsets (well, not *all* at this moment, I still have to free
+those slots...) in boot binaries are made to jump to this address. If you use
+one of those slots for an interrupt, write a jump to the appropriate offset in
+that RAM location.

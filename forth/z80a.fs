@@ -114,6 +114,8 @@
 
 ( -- )
 : OP1 CREATE C, DOES> C@ A, ;
+0xf3 OP1 DI,
+0xfb OP1 EI,
 0xeb OP1 EXDEHL,
 0xd9 OP1 EXX,
 0x76 OP1 HALT,
@@ -217,7 +219,11 @@
 
 : OP2 CREATE , DOES> @ 256 /MOD A, A, ;
 0xedb1 OP2 CPIR,
+0xed46 OP2 IM0,
+0xed56 OP2 IM1,
+0xed5e OP2 IM2,
 0xed44 OP2 NEG,
+0xed4d OP2 RETI,
 
 ( n -- )
 : OP2n
@@ -353,6 +359,10 @@
 
 : ;CODE JPNEXT, ;
 
+
+( Macros )
+( clear carry + SBC )
+: SUBHLss, A ORr, SBCHLss, ;
 
 ( Routines )
 ( 29 == chkPS )
