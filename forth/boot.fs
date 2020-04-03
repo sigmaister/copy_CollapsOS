@@ -30,10 +30,10 @@ NOP, NOP,         ( 26, unused )
 0 JPnn,           ( 28, flagsToBC )
 0 JPnn,           ( 2b, doesWord )
 NOP, NOP,         ( 2e, unused )
-RAMSTART 0x51 + JPnn, ( RST 30 )
+RAMSTART 0x4e + JPnn, ( RST 30 )
 NOP, NOP, NOP,    ( unused )
 NOP, NOP,         ( unused )
-RAMSTART 0x51 + JPnn, ( RST 38 )
+RAMSTART 0x4e + JPnn, ( RST 38 )
 NOP,              ( unused )
 
 ( BOOT DICT

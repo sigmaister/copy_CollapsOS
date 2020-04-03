@@ -5,8 +5,10 @@
 : LIT 34 , ;
 : LITS LIT SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
-: _err LIT< word-not-found (print) ABORT ;
-: ' WORD (find) NOT (?br) [ 4 , ] _err ;
+: '
+    WORD (find) (?br) [ 4 , ] EXIT
+    LIT< (wnf) (find) DROP EXECUTE
+;
 : ['] ' LITN ; IMMEDIATE
 : COMPILE ' LITN ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
@@ -117,6 +119,16 @@
   own address )
 46 RAM+ DUP 2 + SWAP !
 
+: (print)
+    BEGIN
+    DUP C@   ( a c )
+    ( exit if null )
+    DUP NOT IF 2DROP EXIT THEN
+    EMIT     ( a )
+    1 +      ( a+1 )
+    AGAIN
+;
+
 : ."
     LIT
     BEGIN
@@ -129,3 +141,6 @@
 ; IMMEDIATE
 
 : ABORT" [COMPILE] ." COMPILE ABORT ; IMMEDIATE
+
+: (uflw) ABORT" stack underflow" ;
+: (wnf) ABORT" word not found" ;

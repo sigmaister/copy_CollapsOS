@@ -114,22 +114,6 @@
     _c (parsed) _c NOT IF _c ABORT THEN
 ;
 
-( a -- )
-: (print)
-    BEGIN
-    _c DUP      ( a a )
-    _c C@       ( a c )
-    ( exit if null )
-    _c DUP _c NOT IF _c 2DROP EXIT THEN
-    _c EMIT     ( a )
-    1 _c +         ( a+1 )
-    AGAIN
-;
-
-: (uflw)
-    LIT< stack-underflow _c (print) _c ABORT
-;
-
 : C<
     ( 0c == CINPTR )
     0x0c _c RAM+ _c @ EXECUTE
