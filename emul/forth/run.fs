@@ -1,0 +1,1 @@
+: INIT (c<$) INTERPRET ;

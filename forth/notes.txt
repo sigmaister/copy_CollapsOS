@@ -88,7 +88,8 @@ RAMSTART   INITIAL_SP
 +0e        WORDBUF
 +2e        SYSVNXT
 +4e        INTJUMP
-+51        RAMEND
++51        SYSTEM SCRATCHPAD
++60        RAMEND
 
 INITIAL_SP holds the initial Stack Pointer value so that we know where to reset
 it on ABORT
@@ -113,3 +114,37 @@ INTJUMP All RST offsets (well, not *all* at this moment, I still have to free
 those slots...) in boot binaries are made to jump to this address. If you use
 one of those slots for an interrupt, write a jump to the appropriate offset in
 that RAM location.
+
+SYSTEM SCRATCHPAD is reserved for temporary system storage.
+
+*** Initialization sequence
+
+On boot, we jump to the "main" routine in boot.fs which does very few things.
+It sets up the SP register, CURRENT and HERE to LATEST (saved in stable ABI),
+then look for the BOOT word and calls it.
+
+In a normal system, BOOT is in icore and does a few things:
+
+1. Find "(parse)" and set "(parse*)" to it.
+2. Find "(c<)" a set CINPTR to it (what C< calls).
+3. Write LATEST in SYSTEM SCRATCHPAD ( see below )
+4. Find "INIT". If found, execute. Otherwise, execute "INTERPRET"
+
+On a bare system (only boot+icore), this sequence will result in "(parse)"
+reading only decimals and (c<) reading characters from memory starting from
+CURRENT (this is why we put CURRENT in SYSTEM SCRATCHPAD, it tracks current
+pos ).
+
+This means that you can put initialization code in source form right into your
+binary, right after your last compiled dict entry and it's going to be executed
+as such until you set a new (c<).
+
+Note that there is no EMIT in a bare system. You have to take care of supplying
+one before your load core.fs and its higher levels.
+
+Also note that this initialization code is fighting for space with HERE: New
+entries to the dict will overwrite that code! Also, because we're barebone, we
+can't have comments. This leads to peculiar code in this area. If you see weird
+whitespace usage, it's probably because not using those whitespace would result
+in dict entry creation overwriting the code before it has the chance to be
+interpreted.

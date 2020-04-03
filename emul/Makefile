@@ -1,7 +1,7 @@
 TARGETS = runbin/runbin forth/forth
 # Those Forth source files are in a particular order
 FORTHSRCS = core.fs str.fs parse.fs readln.fs fmt.fs z80a.fs
-FORTHSRC_PATHS = ${FORTHSRCS:%=../forth/%}
+FORTHSRC_PATHS = ${FORTHSRCS:%=../forth/%} forth/run.fs
 OBJS = emul.o libz80/libz80.o
 SLATEST = ../tools/slatest
 
@@ -16,6 +16,7 @@ $(SLATEST):
 forth/forth0.bin: $(SLATEST)
 	cat forth/boot.bin forth/z80c.bin > $@
 	$(SLATEST) $@
+	cat forth/emul.fs >> $@
 
 forth/forth0-bin.h: forth/forth0.bin
 	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
@@ -24,13 +25,13 @@ forth/stage1: forth/stage.c $(OBJS) forth/forth0-bin.h
 	$(CC) forth/stage.c $(OBJS) -o $@
 
 forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h 
-	$(CC) -DDEBUG -DBOOT forth/stage.c $(OBJS) -o $@
+	$(CC) -DDEBUG forth/stage.c $(OBJS) -o $@
 
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
 	cat $(FORTHSRC_PATHS) ./forth/stop.fs | ./forth/stage1 | tee $@ > /dev/null
 
-forth/forth1.bin: forth/forth0.bin forth/core.bin $(SLATEST)
-	cat forth/forth0.bin forth/core.bin > $@
+forth/forth1.bin: forth/core.bin $(SLATEST)
+	cat forth/boot.bin forth/z80c.bin forth/core.bin > $@
 	$(SLATEST) $@
 
 forth/forth1-bin.h: forth/forth1.bin
@@ -56,7 +57,7 @@ emul.o: emul.c
 .PHONY: updatebootstrap
 updatebootstrap: forth/stage2
 	cat ./forth/conf.fs ../forth/boot.fs | ./forth/stage2 | tee forth/boot.bin > /dev/null
-	cat ./forth/conf.fs ../forth/z80c.fs forth/emul.fs ../forth/icore.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
+	cat ./forth/conf.fs ../forth/z80c.fs ../forth/icore.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
 
 .PHONY: clean
 clean:
