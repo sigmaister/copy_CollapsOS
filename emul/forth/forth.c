@@ -77,11 +77,6 @@ int main(int argc, char *argv[])
         m->mem[i] = KERNEL[i];
     }
 
-    // Our binaries don't have their LATEST offset set yet. We do this
-    // on the fly, which is the simplest way to proceed ( bash script to update
-    // LATEST after compilation is too simplicated )
-    m->mem[0x08] = sizeof(KERNEL) & 0xff;
-    m->mem[0x09] = sizeof(KERNEL) >> 8;
     // Run!
     running = 1;
 

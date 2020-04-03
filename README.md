@@ -19,6 +19,14 @@ manage to build and install Collapse OS without external resources (i.e.
 internet) on a machine of her design, built from scavenged parts with low-tech
 tools.
 
+## Forth reboot in process
+
+You are currently looking at the `forth` branch of the project, which is a
+Forth reboot of Collapse OS. You can see why I'm doing this in the [related
+github issue][forth-issue].
+
+Documentation is lacking, it's not ready yet, this is a WIP branch.
+
 ## See it in action
 
 Michael Schierl has put together [a set of emulators running in the browser that
@@ -29,8 +37,8 @@ path to giving Collapse OS a try.
 
 ## Organisation of this repository
 
-* `kernel`: Pieces of code to be assembled by the user into a kernel.
-* `apps`: Pieces of code to be assembled into "userspace" application.
+* `forth`: Forth is slowly taking over this project (see issue #4). It comes
+           from this folder.
 * `recipes`: collection of recipes that assemble parts together on a specific
              machine.
 * `doc`: User guide for when you've successfully installed Collapse OS.
@@ -39,8 +47,6 @@ path to giving Collapse OS a try.
            through a serial port.
 * `emul`: Emulated applications, such as zasm and the shell.
 * `tests`: Automated test suite for the whole project.
-* `forth`: Forth is slowly taking over this project (see issue #4). It comes
-           from this folder.
 
 ## Status
 
@@ -58,4 +64,5 @@ A more traditional [mailing list][listserv] and IRC (#collapseos on freenode) ch
 [jsemul]: https://schierlm.github.io/CollapseOS-Web-Emulator/
 [discussion]: https://www.reddit.com/r/collapseos
 [listserv]: http://lists.sonic.net/mailman/listinfo/collapseos
+[forth-issue]: https://github.com/hsoft/collapseos/issues/4  
 
