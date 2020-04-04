@@ -10,6 +10,8 @@ PATHS = pre.fs \
 	$(FDIR)/parse.fs \
 	$(BASEDIR)/drv/acia.fs \
 	$(FDIR)/print.fs \
+	$(FDIR)/readln.fs \
+	$(FDIR)/fmt.fs \
 	run.fs
 SLATEST = $(BASEDIR)/tools/slatest
 STRIPFC = $(BASEDIR)/tools/stripfc

@@ -56,6 +56,6 @@ ACIA_IO: IO port for the ACIA's data registers
     ( As long at CTL bit 1 is low, we are transmitting. wait )
     BEGIN ACIA_CTL PC@ 0x02 AND UNTIL
     ( The way is clear, go! )
-    ACIA_IO SWAP PC!
+    ACIA_IO PC!
 ;
 
