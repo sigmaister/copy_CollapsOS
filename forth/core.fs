@@ -118,29 +118,3 @@
 ( Set up initial SYSVNXT value, which is 2 bytes after its
   own address )
 46 RAM+ DUP 2 + SWAP !
-
-: (print)
-    BEGIN
-    DUP C@   ( a c )
-    ( exit if null )
-    DUP NOT IF 2DROP EXIT THEN
-    EMIT     ( a )
-    1 +      ( a+1 )
-    AGAIN
-;
-
-: ."
-    LIT
-    BEGIN
-        C< DUP          ( c c )
-        ( 34 is ASCII for " )
-        DUP 34 = IF DROP DROP 0 0 THEN
-        C,
-    0 = UNTIL
-    COMPILE (print)
-; IMMEDIATE
-
-: ABORT" [COMPILE] ." COMPILE ABORT ; IMMEDIATE
-
-: (uflw) ABORT" stack underflow" ;
-: (wnf) ABORT" word not found" ;
