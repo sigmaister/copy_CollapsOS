@@ -31,7 +31,6 @@ are other recipes related to the RC2014:
 ## Recipe
 
 The goal is to have the shell running and accessible through the Serial I/O.
-To make things fun, we play with I/Os using RC2014's Digital I/O module.
 
 You'll need specialized tools to write data to the AT28 EEPROM. There seems to
 be many devices around made to write in flash and EEPROM modules, but being in
@@ -40,46 +39,35 @@ device I use in this recipe.
 
 ### Gathering parts
 
-* [zasm][zasm]
+* [Forth's stage 2 binary][stage2]
 * [romwrite][romwrite] and its specified dependencies
 * [GNU screen][screen]
 * A FTDI-to-TTL cable to connect to the Serial I/O module of the RC2014
 * (Optional) RC2014's Digital I/O module
 
-### Write glue.asm
+### Configure your build
 
-[This is what your glue code would look like.](glue.asm)
+Modules used in this build are configured through the `conf.fs` file in this
+folder. There isn't much to configure, but it's there.
 
-The `platform.inc` include is there to load all platform-specific constants
-(such as `RAMSTART` and `RAMEND`).
+### Build stage 1
 
-Then come the reset vectors. If course, we have our first jump to our main init
-routine, and then we have a jump to the interrupt handler defined in `acia.asm`.
+Self-bootstrapping is in Forth's DNA, which is really nice, but it makes
+cross-compiling a bit tricky. It's usually much easier to bootstrap a Forth
+from itself than trying to compile it from a foreign host.
 
-We need to plug this one in so that we can receive characters from the ACIA.
+This makes us adopt a 2 stages strategy. A tiny core is built from a foreign
+host, and then we run that tiny core on the target machine and let it bootstrap
+itself, then write our full interpreter binary.
 
-Then comes the usual `di` to aoid interrupts during init, and stack setup.
+We could have this recipe automate that 2 stage build process all automatically,
+but that would rob you of all your fun, right? Instead, we'll run that 2nd
+stage on the RC2014 itself!
 
-We set interrupt mode to 1 because that's what `acia.asm` is written around.
-
-Then, we init ACIA, shell, enable interrupt and give control of the main loop
-to the BASIC shell.
-
-What comes below is actual code include from parts we want to include in our
-OS. As you can see, we need to tell each module where to put their variables.
-See `apps/README.md` for details.
-
-You can also see from the `STDIO_GETC` and `STDIO_PUTC` macros that the shell
-is decoupled from the ACIA and can get its IO from anything. See comments in
-`kernel/stdio.asm` for details.
-
-### Build the image
-
-We only have the shell to build, so it's rather straightforward:
-
-    ../../emul/zasm/zasm ../../kernel < glue.asm > os.bin
-
-Running `make` will also work.
+To build your stage 1, run `make` in this folder, this will yield `os.bin`.
+This will contain that tiny core and, appended to it, the Forth source code it
+needs to run to bootstrap itself. When it's finished bootstrapping, you will
+get a prompt to a full Forth interpreter.
 
 ### Emulate
 
@@ -105,23 +93,22 @@ identify the tty bound to it (in my case, `/dev/ttyUSB0`). Then:
 
     screen /dev/ttyUSB0 115200
 
-Press the reset button on the RC2014 and you should see the Collapse OS prompt!
-See documentation in `apps/basic/README.md` for details.
+Press the reset button on the RC2014 to have Forth begin its bootstrap process.
+Note that it has to build more than half of itself from source. It takes a
+while (TODO: indicate how many minutes).
 
-For now, let's have some fun with the Digital I/O module. Type this:
+Once bootstrapping is done, you'll get a and you should see the Collapse OS
+prompt. That's a full Forth interpreter. You can have fun right now.
 
-```
-> a=0
-> 10 out 0 a
-> 20 sleep 0xffff
-> 30 a=a+1
-> 40 goto 10
-> run
-```
+However, that multi-minutes boot is kinda annoying. Moreover, that bootstrap
+code being in source form takes precious space from our 8K ROM. We already have
+our compiled dictionary in memory. All we need to have a instant-booting Forth
+is to combine our stage1 with our compiled dict in memory, after some
+relinking.
 
-You now have your Digital I/O lights doing a pretty dance, forever.
+TODO: write this.
 
 [rc2014]: https://rc2014.co.uk
 [romwrite]: https://github.com/hsoft/romwrite
-[zasm]: ../../tools/emul
+[stage2]: ../../emul
 [screen]: https://www.gnu.org/software/screen/
