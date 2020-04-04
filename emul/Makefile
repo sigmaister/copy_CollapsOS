@@ -4,10 +4,12 @@ FORTHSRCS = core.fs print.fs str.fs parse.fs readln.fs fmt.fs z80a.fs
 FORTHSRC_PATHS = ${FORTHSRCS:%=../forth/%} forth/run.fs
 OBJS = emul.o libz80/libz80.o
 SLATEST = ../tools/slatest
+STRIPFC = ../tools/stripfc
 
 .PHONY: all
 all: $(TARGETS)
 
+$(STRIPFC):
 $(SLATEST):
 	$(MAKE) -C ../tools
 
@@ -27,8 +29,10 @@ forth/stage1: forth/stage.c $(OBJS) forth/forth0-bin.h
 forth/stage1dbg: forth/stage.c $(OBJS) forth/forth0-bin.h 
 	$(CC) -DDEBUG forth/stage.c $(OBJS) -o $@
 
+# We don't really need to use stripfc, but we do it anyway to test that we
+# don't mistakenly break our code with that tool. It's easier to debug here.
 forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
-	cat $(FORTHSRC_PATHS) ./forth/stop.fs | ./forth/stage1 | tee $@ > /dev/null
+	cat $(FORTHSRC_PATHS) ./forth/stop.fs | $(STRIPFC) | ./forth/stage1 | tee $@ > /dev/null
 
 forth/forth1.bin: forth/core.bin $(SLATEST)
 	cat forth/boot.bin forth/z80c.bin forth/core.bin > $@
