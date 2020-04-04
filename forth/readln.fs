@@ -76,5 +76,5 @@
     ( not EOL? good, inc and return )
     DUP IF 1 IN> +! EXIT THEN   ( c )
     ( EOL ? readline. we still return typed char though )
-    (rdln) (c<)                 ( c )
+    (rdln)                      ( c )
 ;
