@@ -115,7 +115,12 @@ those slots...) in boot binaries are made to jump to this address. If you use
 one of those slots for an interrupt, write a jump to the appropriate offset in
 that RAM location.
 
-SYSTEM SCRATCHPAD is reserved for temporary system storage.
+SYSTEM SCRATCHPAD is reserved for temporary system storage or can be reserved
+by low-level drivers. These are the current usages of this space throughout the
+project:
+
+* 0x51-0x53: (c<) pointer during in-memory initialization (see below)
+* 0x53-0x5b: ACIA buffer pointers in RC2014 recipes.
 
 *** Initialization sequence
 

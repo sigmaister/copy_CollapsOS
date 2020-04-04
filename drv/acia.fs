@@ -9,20 +9,11 @@ CONFIGURATION
 
 ACIA_CTL: IO port for the ACIA's control registers
 ACIA_IO: IO port for the ACIA's data registers
+ACIA_MEM: Address in memory that can be used variables shared
+          with ACIA's native words. 8 bytes used.
 )
 
 0x20 CONSTANT ACIABUFSZ
-
-( Points to ACIA buf )
-(sysv) ACIA(
-( Points to ACIA buf end )
-(sysv) ACIA)
-( Read buf pointer. Pre-inc )
-(sysv) ACIAR>
-( Write buf pointer. Post-inc )
-(sysv) ACIAW>
-( This means that if W> == R>, buffer is full.
-  If R>+1 == W>, buffer is empty. )
 
 : ACIA$
     H@ DUP DUP ACIA( ! ACIAR> !
@@ -48,8 +39,9 @@ ACIA_IO: IO port for the ACIA's data registers
     ( As long as R> == W>-1, it means that buffer is empty )
     BEGIN ACIAR> @ 1 + ACIAW> @ = NOT UNTIL
 
-    ACIAR> @ C@
+    ( inc then fetch )
     1 ACIAR> +!
+    ACIAR> @ C@
 ;
 
 : EMIT
