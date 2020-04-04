@@ -53,7 +53,11 @@
     '           ( get word )
     -^          ( apply offset )
     ,           ( write! )
-; IMMEDIATE
+;
+( We can't use IMMEDIATE because the one we've just compiled
+  in z80c target's the *target*'s RAM addr, not the host's.
+  manually set namelen field. )
+0x82 CURRENT @ 1 - C!
 
 : RAM+
     [ RAMSTART LITN ] _c +
@@ -219,7 +223,10 @@
 
 ( : and ; have to be defined last because it can't be
   executed now also, they can't have their real name
-  right away )
+  right away. We also can't use IMMEDIATE because the offset
+  used for CURRENT is the *target*'s RAM offset. we're still
+  on the host.
+)
 
 : X
     _c (entry)
@@ -235,15 +242,17 @@
     ( maybe number )
     ELSE _c (parse*) _c @ EXECUTE _c LITN THEN
     AGAIN
-; IMMEDIATE
+;
 
 : Y
     ['] EXIT _c ,
     _c R> _c DROP     ( exit : )
-; IMMEDIATE
+;
 
-( Give ":" and ";" their real name )
+( Give ":" and ";" their real name and make them IMMEDIATE )
+0x81 ' X 1 - C!
 ':' ' X 4 - C!
+0x81 ' Y 1 - C!
 ';' ' Y 4 - C!
 
 ( Add dummy entry. we use CREATE because (entry) is, at this
