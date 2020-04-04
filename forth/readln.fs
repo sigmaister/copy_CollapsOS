@@ -1,4 +1,4 @@
-( requires core, parse )
+( requires core, parse, print )
 
 ( Managing variables in a core module is tricky. Sure, we
   have (sysv), but here we need to allocate a big buffer, and

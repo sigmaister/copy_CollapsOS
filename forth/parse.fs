@@ -80,7 +80,7 @@
     (parseb) IF EXIT THEN
     (parsed) IF EXIT THEN
     ( nothing works )
-    ABORT" unknown word! "
+    LIT< (wnf) (find) DROP EXECUTE
 ;
 
 ' (parse) (parse*) !

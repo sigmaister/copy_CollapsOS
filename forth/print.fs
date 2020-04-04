@@ -28,3 +28,8 @@
 
 : (uflw) ABORT" stack underflow" ;
 : (wnf) ABORT" word not found" ;
+
+: BS 8 EMIT ;
+: LF 10 EMIT ;
+: CR 13 EMIT ;
+: SPC 32 EMIT ;
