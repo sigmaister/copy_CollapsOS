@@ -313,7 +313,8 @@ CODE R>
 ;CODE
 
 CODE IMMEDIATE
-    CURRENT LDHL(nn),
+    ( CURRENT == RAM+2 )
+    RAMSTART 0x02 + LDHL(nn),
     HL DECss,
     7 (HL) SETbr,
 ;CODE
