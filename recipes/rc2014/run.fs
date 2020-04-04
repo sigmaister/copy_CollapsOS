@@ -1,1 +1,1 @@
-: INIT 5 5 PC! BYE ACIA$ INTERPRET ;
+ACIA$ LIT< hello (print) BYE

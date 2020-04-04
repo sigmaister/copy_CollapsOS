@@ -24,44 +24,6 @@ ACIA_IO: IO port for the ACIA's data registers
 ( This means that if W> == R>, buffer is full.
   If R>+1 == W>, buffer is empty. )
 
-(entry) ~ACIA
-    AF PUSHqq,
-    HL PUSHqq,
-    DE PUSHqq,
-
-	( Read our character from ACIA into our BUFIDX )
-    ACIA_CTL INAn,
-    0x01 ANDn,   ( is ACIA rcv buf full? )
-    JRZ, L2 FWR ( end, no, wrong interrupt cause. )
-
-    ACIAW> @ LDHL(nn),
-    ( is it == to ACIAR>? )
-    DE ACIAR> @ LDdd(nn),
-    ( carry cleared from ANDn above )
-    DE SBCHLss,
-    JRZ, L3 FWR ( end, buffer full )
-
-    ( buffer not full, let's write )
-    ACIA_IO INAn,
-    (HL) A LDrr,
-
-    ( advance W> )
-    HL INCss,
-    DE ACIAR) @ LDdd(nn),
-    DE SUBHLss,
-    JRNZ, L4 FWR ( skip )
-    ( end of buffer reached )
-    ACIA( @ LDHL(nn),
-L4 FSET ( skip )
-    ACIAW> @ LD(nn)HL,
-L3 FSET L2 FSET ( end )
-
-    DE POPqq,
-    HL POPqq,
-    AF POPqq,
-    EI,
-    RETI,
-
 : ACIA$
     H@ DUP DUP ACIA( ! ACIAR> !
     1 + ACIAW> ! ( write index starts one position later )
@@ -76,9 +38,9 @@ L3 FSET L2 FSET ( end )
     0b10010110 ACIA_CTL PC!
 
 ( setup interrupt )
-    ( 51 == INTJUMP )
-    0xc3 0x51 RAM+ C! ( JP upcode )
-    ['] ~ACIA 0x52 RAM+ !
+    ( 4e == INTJUMP )
+    0xc3 0x4e RAM+ C! ( JP upcode )
+    ['] ~ACIA 0x4f RAM+ !
     (im1)
 ;
 

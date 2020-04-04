@@ -1,25 +1,31 @@
 TARGET = os.bin
 BASEDIR = ../..
-FDIR = $(BASEDIR)/emul/forth
-STAGE1 = $(FDIR)/stage1
-FORTH0 = $(FDIR)/forth0.bin
+FDIR = $(BASEDIR)/forth
+EDIR = $(BASEDIR)/emul/forth
+STAGE2 = $(EDIR)/stage2
 EMUL = $(BASEDIR)/emul/hw/rc2014/classic
-SRCS = core.fs str.fs parse.fs readln.fs fmt.fs
-PATHS = conf.fs \
-	${SRCS:%=$(BASEDIR)/forth/%} \
+PATHS = pre.fs \
+	$(FDIR)/core.fs \
+	$(FDIR)/str.fs \
+	$(FDIR)/parse.fs \
 	$(BASEDIR)/drv/acia.fs \
-	run.fs \
-	$(FDIR)/stop.fs
+	$(FDIR)/print.fs \
+	run.fs
 SLATEST = $(BASEDIR)/tools/slatest
+STRIPFC = $(BASEDIR)/tools/stripfc
 
 .PHONY: all
 all: $(TARGET) 
-$(TARGET): dict.bin $(FORTH0) $(SLATEST)
-	cat $(FORTH0) dict.bin > $@
+$(TARGET): boot.bin z80c.bin $(SLATEST) $(PATHS)
+	cat boot.bin z80c.bin > $@
 	$(SLATEST) $@
+	cat $(PATHS) | $(STRIPFC) >> $@
 
-dict.bin: conf.fs
-	cat $(PATHS) | $(STAGE1) > $@
+z80c.bin: boot.bin
+	cat conf.fs $(FDIR)/z80c.fs $(BASEDIR)/drv/acia.z80 $(FDIR)/icore.fs | $(STAGE2) | tee $@ > /dev/null
+
+boot.bin: conf.fs
+	cat conf.fs $(FDIR)/boot.fs | $(STAGE2) | tee $@ > /dev/null
 
 $(SLATEST):
 	$(MAKE) -C $(BASEDIR)/tools
