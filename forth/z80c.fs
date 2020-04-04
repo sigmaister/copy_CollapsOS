@@ -393,7 +393,8 @@ L1 FSET ( found )
 CODE SCPY
     HL POPqq,
     chkPS,
-    DE HERE LDdd(nn),
+    ( HERE == RAM+4 )
+    DE RAMSTART 0x04 + LDdd(nn),
     B 0 LDrn,
 L1 BSET ( loop )
     A (HL) LDrr,
@@ -404,7 +405,7 @@ L1 BSET ( loop )
     A ORr,
     JRNZ, L1 BWR ( loop )
     DE A LD(dd)r
-    HERE DE LD(nn)dd,
+    RAMSTART 0x04 + DE LD(nn)dd,
 ;CODE
 
 CODE (im1)
