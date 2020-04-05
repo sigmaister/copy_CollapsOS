@@ -6,25 +6,33 @@
 ( n1 f -- f )
 : <>} SWAP DROP ;
 
-( n1 f n2 -- n1 cmp )
-: |CMP
-    SWAP IF DROP 1 EXIT THEN ( n1 true )
-    OVER SWAP                ( n1 n1 n2 )
-    CMP
+
+: _|&
+    ( n1 n2 cell )
+    >R >R DUP R> R>          ( n1 n1 n2 cell )
+    @ EXECUTE                ( n1 f )
 ;
 
-: &CMP
-    SWAP NOT IF DROP 0 EXIT THEN ( n1 false )
-    OVER SWAP                    ( n1 n1 n2 )
-    CMP
+( n1 f n2 -- n1 f )
+: _|
+    CREATE , DOES>
+    ( n1 f n2 cell )
+    ROT IF 2DROP 1 EXIT THEN ( n1 true )
+    _|&
+;
+
+: _&
+    CREATE , DOES>
+    ( n1 f n2 cell )
+    ROT NOT IF 2DROP 0 EXIT THEN ( n1 true )
+    _|&
 ;
 
 ( All words below have this signature:
   n1 f n2 -- n1 f )
-: |= |CMP NOT ;
-: &= &CMP NOT ;
-: |< |CMP -1 = ;
-: &< &CMP -1 = ;
-: |> |CMP 1 = ;
-: &> &CMP 1 = ;
-
+' = _| |=
+' = _& &=
+' > _| |>
+' > _& &>
+' < _| |<
+' < _& &<
