@@ -1,7 +1,6 @@
 ( requires core, parse )
 
-( TODO FORGET this word )
-: PUSHDGTS
+: _
     999 SWAP        ( stop indicator )
     DUP 0 = IF '0' EXIT THEN    ( 0 is a special case )
     BEGIN
@@ -16,7 +15,7 @@
     ( that "0 1 -" thing is because we don't parse negative
       number correctly yet. )
     DUP 0 < IF '-' EMIT 0 1 - * THEN
-    PUSHDGTS
+    _
     BEGIN
     DUP '9' > IF DROP EXIT THEN ( stop indicator, we're done )
     EMIT
@@ -25,24 +24,21 @@
 
 : ? @ . ;
 
-: PUSHDGTS
-    999 SWAP        ( stop indicator )
-    DUP 0 = IF '0' EXIT THEN    ( 0 is a special case )
-    BEGIN
-    DUP 0 = IF DROP EXIT THEN
-    16 /MOD         ( r q )
-    SWAP            ( r q )
+: _
     DUP 9 > IF 10 - 'a' +
-    ELSE '0' + THEN ( q d )
-    SWAP ( d q )
-    AGAIN
+    ELSE '0' + THEN
 ;
 
-: .X              ( n -- )
-    ( For hex display, there are no negatives )
-    PUSHDGTS
-    BEGIN
-    DUP 'f' > IF DROP EXIT THEN ( stop indicator, we're done )
-    EMIT
-    AGAIN
+( For hex display, there are no negatives )
+
+: .x
+    256 MOD     ( ensure < 0x100 )
+    16 /MOD     ( l h )
+    _ EMIT ( l )
+    _ EMIT
+;
+
+: .X
+    256 /MOD    ( l h )
+    .x .x
 ;

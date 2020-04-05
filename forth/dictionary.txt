@@ -193,10 +193,11 @@ core.
                             number parsing. By default, (parse).
 (print)     a --            Print string at addr a.
 .           n --            Print n in its decimal form
-.X          n --            Print n in its hexadecimal form. In hex, numbers
+.x          n --            Print n's LSB in hex form. Always 2 characters.
+.X          n --            Print n in hex form. Always 4 characters. Numbers
+                            are never considered negative. "-1 .X" --> ffff
 ." xxx"     --              *I* Compiles string literal xxx followed by a call
                             to (print)
-                            are never considered negative. "-1 .X -> ffff"
 C<          -- c            Read one char from buffered input.
 EMIT        c --            Spit char c to output stream
 IN>         -- a            Address of variable containing current pos in input
