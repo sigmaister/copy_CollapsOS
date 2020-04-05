@@ -40,12 +40,14 @@
 ;
 
 ( read one char into input buffer and returns whether we
-  should continue, that is, whether newline was not met. )
+  should continue, that is, whether CR was not met. )
 : (rdlnc)                   ( -- f )
     ( buffer overflow? same as if we typed a newline )
     IN> @ IN) @ = IF 0x0a ELSE KEY THEN     ( c )
     ( del? same as backspace )
     DUP 0x7f = IF DROP 0x8 THEN
+    ( lf? same as cr )
+    DUP 0x0a = IF DROP 0xd THEN
     ( echo back )
     DUP EMIT                    ( c )
     ( bacspace? handle and exit )
@@ -57,17 +59,17 @@
       our string )
     IN> @ ! 1 IN> +!            ( c )
     ( if newline, replace with zero to indicate EOL )
-    DUP 0xa = IF DROP 0 THEN
+    DUP 0xd = IF DROP 0 THEN
 ;
 
 ( Read one line in input buffer and make IN> point to it )
 : (rdln)
     ( Should we prompt? if we're executing a word, FLAGS bit
       0, then we shouldn't. )
-    FLAGS @ 0x1 AND NOT IF LF '>' EMIT SPC THEN
+    FLAGS @ 0x1 AND NOT IF '>' EMIT SPC THEN
     (infl)
     BEGIN (rdlnc) NOT UNTIL
-    IN( @ IN> !
+    LF IN( @ IN> !
 ;
 
 ( And finally, implement a replacement for the (c<) routine )

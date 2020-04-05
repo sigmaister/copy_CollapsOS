@@ -95,18 +95,17 @@ identify the tty bound to it (in my case, `/dev/ttyUSB0`). Then:
 
 Press the reset button on the RC2014 to have Forth begin its bootstrap process.
 Note that it has to build more than half of itself from source. It takes a
-while (TODO: indicate how many minutes).
+while about 30 seconds to complete.
 
 Once bootstrapping is done, you'll get a and you should see the Collapse OS
 prompt. That's a full Forth interpreter. You can have fun right now.
 
-However, that multi-minutes boot is kinda annoying. Moreover, that bootstrap
-code being in source form takes precious space from our 8K ROM. We already have
-our compiled dictionary in memory. All we need to have a instant-booting Forth
-is to combine our stage1 with our compiled dict in memory, after some
-relinking.
+However, that long boot time is kinda annoying. Moreover, that bootstrap code
+being in source form takes precious space from our 8K ROM. We already have our
+compiled dictionary in memory. All we need to have a instant-booting Forth is
+to combine our stage1 with our compiled dict in memory, after some relinking.
 
-TODO: write this.
+TODO: write this, do this.
 
 [rc2014]: https://rc2014.co.uk
 [romwrite]: https://github.com/hsoft/romwrite
