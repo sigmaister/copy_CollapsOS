@@ -1,20 +1,10 @@
+Be sure to read "usage.txt" for a guide to Collapse OS' Forth.
+
+*** Glossary ***
 Stack notation: "<stack before> -- <stack after>". Rightmost is top of stack
 (TOS). For example, in "a b -- c d", b is TOS before, d is TOS after. "R:" means
 that the Return Stack is modified. "I:" prefix means "IMMEDIATE", that is, that
 this stack transformation is made at compile time.
-
-DOES>: Used inside a colon definition that itself uses CREATE, DOES> transforms
-that newly created word into a "does cell", that is, a regular cell ( when
-called, puts the cell's addr on PS), but right after that, it executes words
-that appear after the DOES>.
-
-"does cells" always allocate 4 bytes (2 for the cell, 2 for the DOES> link) and
-there is no need for ALLOT in colon definition.
-
-At compile time, colon definition stops processing words when reaching the
-DOES>.
-
-Example: ": CONSTANT CREATE HERE @ ! DOES> @ ;"
 
 Word references (wordref): When we say we have a "word reference", it's a
 pointer to a words *code link*. For example, the label "PLUS:" in this unit is a
@@ -53,20 +43,6 @@ IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
 LITN        n --            Write number n as a literal.
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
-
-Compilation vs meta-compilation. When you compile a word with "[COMPILE] foo",
-its straightforward: It writes down to HERE wither the address of the word or
-a number literal.
-
-When you *meta* compile, it's a bit more mind blowing. It fetches the address
-of the word specified by the caller, then writes that number as a literal,
-followed by a reference to ",".
-
-Example: ": foo [COMPILE] bar;" is the equivalent of ": foo bar ;" if bar is
-not an immediate. However, ": foo COMPILE bar ;" is the equivalent of
-": foo ['] bar , ;". Got it?
-
-Meta-compile only works with real words, not number literals.
 
 *** Flow ***
 Note about flow words: flow words can only be used in definitions. In the
@@ -155,32 +131,6 @@ SCPY        a --            Copy string at addr a into HERE.
 SLEN        a -- n          Push length of str at a.
 
 *** I/O ***
-
-A little word about inputs. There are two kind of inputs: direct and buffered.
-As a general rule, we read line in a buffer, then feed words in it to the
-interpreter. That's what "WORD" does. If it's at the End Of Line, it blocks and
-wait until another line is entered.
-
-KEY input, however, is direct. Regardless of the input buffer's state, KEY will
-return the next typed key.
-
-PARSING AND BOOTSTRAP: Parsing number literal is a very "core" activity of
-Forth, and therefore generally seen as having to be implemented in native code.
-However, Collapse OS' Forth supports many kinds of literals: decimal, hex, char,
-binary. This incurs a significant complexity penalty.
-
-What if we could implement those parsing routines in Forth? "But it's a core
-routine!" you say. Yes, but here's the deal: at its native core, only decimal
-parsing is supported. It lives in the "(parsed)" word. The interpreter's main
-loop is initially set to simply call that word.
-
-However, in core.fs, "(parsex)", "(parsec)" and "(parseb)" are implemented, in
-Forth, then "(parse)", which goes through them all is defined. Then, "(parsef)",
-which is the variable in which the interpreter's word pointer is set, is
-updated to that new "(parse)" word.
-
-This way, we have a full-featured (and extensible) parsing with a tiny native
-core.
 
 (parse)     a -- n          Parses string at a as a number and push the result
                             in n as well as whether parsing was a success in f

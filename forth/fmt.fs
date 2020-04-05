@@ -57,13 +57,14 @@
     DROP
     8 0 DO
         DUP C@
-        DUP 0x20 < IF DROP '.' THEN
-        DUP 0x7e > IF DROP '.' THEN
+        DUP <>{ 0x20 &< 0x7e |> <>}
+        IF DROP '.' THEN
         EMIT
         1 +
     LOOP
     LF
 ;
+
 ( n a -- )
 : DUMP
     LF
