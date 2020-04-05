@@ -39,11 +39,11 @@ device I use in this recipe.
 
 ### Gathering parts
 
+* A "classic" RC2014 with Serial I/O
 * [Forth's stage 2 binary][stage2]
 * [romwrite][romwrite] and its specified dependencies
 * [GNU screen][screen]
-* A FTDI-to-TTL cable to connect to the Serial I/O module of the RC2014
-* (Optional) RC2014's Digital I/O module
+* A FTDI-to-TTL cable to connect to the Serial I/O module
 
 ### Configure your build
 
@@ -85,6 +85,13 @@ In my case (arduino uno), it's `/dev/ttyACM0`. Then:
 
 See romwrite's README for details about these commands.
 
+Note that this method is slow and clunky, but before long, you won't be using
+it anymore. Writing to an EEPROM is much easier and faster from a RC2014
+running Collapse OS, so once you have that first Collapse OS ROM, you'll be
+much better equipped for further toying around (unless, of course, you already
+had tools to write to EEPROM. In which case, you'll be ignoring this section
+altogether).
+
 ### Running
 
 Put the AT28 in the ROM module, don't forget to set the A14 jumper high, then
@@ -94,11 +101,11 @@ identify the tty bound to it (in my case, `/dev/ttyUSB0`). Then:
     screen /dev/ttyUSB0 115200
 
 Press the reset button on the RC2014 to have Forth begin its bootstrap process.
-Note that it has to build more than half of itself from source. It takes a
-while about 30 seconds to complete.
+Note that it has to build more than half of itself from source. It takes about
+30 seconds to complete.
 
-Once bootstrapping is done, you'll get a and you should see the Collapse OS
-prompt. That's a full Forth interpreter. You can have fun right now.
+Once bootstrapping is done you should see the Collapse OS prompt. That's a full
+Forth interpreter. You can have fun right now.
 
 However, that long boot time is kinda annoying. Moreover, that bootstrap code
 being in source form takes precious space from our 8K ROM. We already have our
