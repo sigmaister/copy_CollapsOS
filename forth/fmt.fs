@@ -42,3 +42,34 @@
     256 /MOD    ( l h )
     .x .x
 ;
+
+( a -- a+8 )
+: _
+    DUP         ( save for 2nd loop )
+    ':' EMIT DUP .x SPC
+    4 0 DO
+        DUP @
+        256 /MOD SWAP
+        .x .x
+        SPC
+        2 +
+    LOOP
+    DROP
+    8 0 DO
+        DUP C@
+        DUP 0x20 < IF DROP '.' THEN
+        DUP 0x7e > IF DROP '.' THEN
+        EMIT
+        1 +
+    LOOP
+    LF
+;
+( n a -- )
+: DUMP
+    LF
+    BEGIN
+        OVER 1 < IF DROP EXIT THEN
+        _
+        SWAP 8 - SWAP
+    AGAIN
+;
