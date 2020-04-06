@@ -122,8 +122,8 @@
 ( a1 a2 u -- )
 : MOVE
     ( u ) 0 DO
-        SWAP DUP I + @    ( a2 a1 x )
+        SWAP DUP I + C@   ( a2 a1 x )
         ROT SWAP OVER I + ( a1 a2 x a2 )
-        !                 ( a1 a2 )
+        C!                ( a1 a2 )
     LOOP
 ;
