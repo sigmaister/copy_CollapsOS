@@ -69,7 +69,7 @@
 : DUMP
     LF
     BEGIN
-        OVER 1 < IF DROP EXIT THEN
+        OVER 1 < IF 2DROP EXIT THEN
         _
         SWAP 8 - SWAP
     AGAIN
