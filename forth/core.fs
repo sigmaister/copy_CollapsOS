@@ -126,4 +126,5 @@
         ROT SWAP OVER I + ( a1 a2 x a2 )
         C!                ( a1 a2 )
     LOOP
+    2DROP
 ;
