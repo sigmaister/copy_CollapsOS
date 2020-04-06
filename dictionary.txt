@@ -98,6 +98,8 @@ C!          c a --          Store byte c in address a
 CURRENT     -- a            Set a to wordref of last added entry.
 HERE        -- a            Push HERE's address
 H@          -- a            HERE @
+MOVE        a1 a2 u --      Copy u bytes from a1 to a2, starting with a1, going
+                            up.
 
 *** Arithmetic / Bits ***
 

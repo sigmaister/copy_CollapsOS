@@ -118,3 +118,12 @@
 ( Set up initial SYSVNXT value, which is 2 bytes after its
   own address )
 46 RAM+ DUP 2 + SWAP !
+
+( a1 a2 u -- )
+: MOVE
+    ( u ) 0 DO
+        SWAP DUP I + @    ( a2 a1 x )
+        ROT SWAP OVER I + ( a1 a2 x a2 )
+        !                 ( a1 a2 )
+    LOOP
+;
