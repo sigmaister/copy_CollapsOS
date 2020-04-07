@@ -88,8 +88,9 @@ RAMSTART   INITIAL_SP
 +0e        WORDBUF
 +2e        SYSVNXT
 +4e        INTJUMP
-+51        SYSTEM SCRATCHPAD
-+60        RAMEND
++51        RESERVED
++60        SYSTEM SCRATCHPAD
++80        RAMEND
 
 INITIAL_SP holds the initial Stack Pointer value so that we know where to reset
 it on ABORT
@@ -119,8 +120,8 @@ SYSTEM SCRATCHPAD is reserved for temporary system storage or can be reserved
 by low-level drivers. These are the current usages of this space throughout the
 project:
 
-* 0x51-0x53: (c<) pointer during in-memory initialization (see below)
-* 0x53-0x5b: ACIA buffer pointers in RC2014 recipes.
+* 0x60-0x62: (c<) pointer during in-memory initialization (see below)
+* 0x62-0x6a: ACIA buffer pointers in RC2014 recipes.
 
 *** Initialization sequence
 

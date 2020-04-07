@@ -196,17 +196,17 @@
 ( system c< simply reads source from binary, starting at
   LATEST. Convenient way to bootstrap a new system. )
 : (c<)
-    ( 51 == SYSTEM SCRATCHPAD )
-    0x51 _c RAM+ _c @   ( a )
+    ( 60 == SYSTEM SCRATCHPAD )
+    0x60 _c RAM+ _c @   ( a )
     _c DUP _c C@        ( a c )
     _c SWAP 1 _c +      ( c a+1 )
-    0x51 _c RAM+ _c !   ( c )
+    0x60 _c RAM+ _c !   ( c )
 ;
 
 : BOOT
     LIT< (parse) _c (find) _c DROP _c (parse*) _c !
-    ( 51 == SYSTEM SCRATCHPAD )
-    _c CURRENT _c @ 0x51 _c RAM+ _c !
+    ( 60 == SYSTEM SCRATCHPAD )
+    _c CURRENT _c @ 0x60 _c RAM+ _c !
     ( 0c == CINPTR )
     LIT< (c<) _c (find) _c DROP 0x0c _c RAM+ _c !
     LIT< INIT _c (find)

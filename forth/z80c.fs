@@ -247,8 +247,7 @@ CODE @
     E (HL) LDrr,
     HL INCss,
     D (HL) LDrr,
-    EXDEHL,
-    HL PUSHqq,
+    DE PUSHqq,
 ;CODE
 
 CODE C!
