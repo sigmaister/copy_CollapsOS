@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define BUFSZ 32
 
@@ -25,7 +26,7 @@ int main(int argc, char **argv) {
   int n;
   int col = 0;
   uint8_t buf[BUFSZ];
-  
+
   if (argc < 2) {
     fprintf(stderr, "Specify a name for the data structure...\n");
     return 1;
