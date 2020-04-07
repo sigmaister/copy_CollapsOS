@@ -1,4 +1,5 @@
 TARGETS = runbin/runbin forth/forth
+BIN2C = ../tools/bin2c
 # Those Forth source files are in a particular order
 FORTHSRCS = core.fs cmp.fs print.fs str.fs parse.fs readln.fs fmt.fs z80a.fs \
 	link.fs
@@ -12,6 +13,7 @@ all: $(TARGETS)
 
 $(STRIPFC):
 $(SLATEST):
+$(BIN2C):
 	$(MAKE) -C ../tools
 
 # z80c.bin and boot.bin are not in the prerequisites because they're bootstrap
@@ -21,8 +23,8 @@ forth/forth0.bin: $(SLATEST)
 	$(SLATEST) $@
 	cat forth/emul.fs >> $@
 
-forth/forth0-bin.h: forth/forth0.bin
-	./bin2c.sh KERNEL < forth/forth0.bin | tee $@ > /dev/null
+forth/forth0-bin.h: forth/forth0.bin $(BIN2C)
+	$(BIN2C) KERNEL < forth/forth0.bin | tee $@ > /dev/null
 
 forth/stage1: forth/stage.c $(OBJS) forth/forth0-bin.h 
 	$(CC) forth/stage.c $(OBJS) -o $@
@@ -39,8 +41,8 @@ forth/forth1.bin: forth/core.bin $(SLATEST)
 	cat forth/boot.bin forth/z80c.bin forth/core.bin > $@
 	$(SLATEST) $@
 
-forth/forth1-bin.h: forth/forth1.bin
-	./bin2c.sh KERNEL < forth/forth1.bin | tee $@ > /dev/null
+forth/forth1-bin.h: forth/forth1.bin $(BIN2C)
+	$(BIN2C) KERNEL < forth/forth1.bin | tee $@ > /dev/null
 
 forth/stage2: forth/stage.c $(OBJS) forth/forth1-bin.h 
 	$(CC) -DSTAGE2 forth/stage.c $(OBJS) -o $@
@@ -67,3 +69,4 @@ updatebootstrap: forth/stage2
 .PHONY: clean
 clean:
 	rm -f $(TARGETS) emul.o forth/*-bin.h forth/forth?.bin
+	$(MAKE) -C ../tools clean
