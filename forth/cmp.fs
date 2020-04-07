@@ -1,5 +1,8 @@
 ( Words useful for complex comparison operations )
 
+: >= < NOT ;
+: <= > NOT ;
+
 ( n1 -- n1 true )
 : <>{ 1 ;
 
