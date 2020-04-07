@@ -218,7 +218,7 @@ PC ORG @ 0x29 + ! ( flagsToBC )
     BC 0 LDddnn,
     CZ RETcc, ( equal )
     BC INCss,
-    CM RETcc, ( > )
+    CC RETcc, ( > )
     ( < )
     BC DECss,
     BC DECss,
