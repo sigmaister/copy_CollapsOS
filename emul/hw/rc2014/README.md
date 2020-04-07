@@ -9,3 +9,7 @@ Run `make` to build.
 
 Run `./classic /path/to/rom` (for example, `os.bin` from RC2014's recipe).
 Serial I/O is hooked to stdin/stdout. `CTRL+D` to quit.
+
+## Memory dump
+
+You can press `CTRL+E` to dump the whole 64K of memory into `memdump`.

@@ -101,6 +101,13 @@ int main(int argc, char *argv[])
         if (!tosend) {
             char c;
             if (read(fileno(stdin), &c, 1) == 1) {
+                if (c == 5) {
+                    fprintf(stderr, "Dumping memory to memdump\n");
+                    FILE *fp = fopen("memdump", "w");
+                    fwrite(m->mem, 0x10000, 1, fp);
+                    fclose(fp);
+                    c = 0; // don't send to RC2014
+                }
                 if (c == 4) {   // CTRL+D
                     // Stop here
                     break;
