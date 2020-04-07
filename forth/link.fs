@@ -1,11 +1,13 @@
-( depends: cmp
+( depends: cmp, parse
   Relink a dictionary by applying offsets to all word
   references in words of the "compiled" type.
 
   A typical usage of this unit would be to, right after a
-  bootstrap-from-icore-from-source operation, to copy the
-  dictionary from '< H@ to CURRENT, and then call RLDICT on
-  that new range, with "ol" set to ' H@.
+  bootstrap-from-icore-from-source operation, identify the
+  root word of the source part, probably "H@", and run
+  " ' thatword COMPACT ". Then, take the resulting relinked
+  binary, concatenate it to the boot binary, and write to
+  boot media.
 )
 
 ( Skip atom, considering special atom types. )
@@ -21,7 +23,8 @@
     ( a )
     1 + ( we skip by 2, but the loop below is pre-inc... )
     BEGIN 1 + DUP C@ NOT UNTIL
-    ( a+1 )
+    ( skip null char )
+    1 +
 ;
 
 ( Get word header length from wordref. That is, name length
@@ -78,6 +81,7 @@
         2OVER                   ( ol o a2 a1 ol o )
         SWAP                    ( ol o a2 a1 o ol )
         RLATOM                  ( ol o a2 a+n )
+        2DUP < IF ABORT THEN    ( Something is very wrong )
         2DUP =                  ( ol o a2 a+n f )
         IF
             ( unwind )
