@@ -108,11 +108,135 @@ Once bootstrapping is done you should see the Collapse OS prompt. That's a full
 Forth interpreter. You can have fun right now.
 
 However, that long boot time is kinda annoying. Moreover, that bootstrap code
-being in source form takes precious space from our 8K ROM. We already have our
-compiled dictionary in memory. All we need to have a instant-booting Forth is
-to combine our stage1 with our compiled dict in memory, after some relinking.
+being in source form takes precious space from our 8K ROM. That brings us to
+building stage 2.
 
-TODO: write this, do this.
+### Building stage 2
+
+You're about to learn a lot about this platform and its self-bootstrapping
+nature, but its a bumpy ride. Grab something. Why not a beer?
+
+Our stage 1 prompt is the result of Forth's inner core interpreting the source
+code of the Full Forth, which was appended to the binary inner core in ROM.
+This results in a compiled dictionary, in RAM, at address 0x8000+system RAM.
+
+Unfortunately, this compiled dictionary isn't usable as-is. Offsets compiled in
+there are compiled based on a 0x8000-or-so base offset. What we need is a
+0xa00-or-so base offset, that is, something suitable to be appended to the boot
+binary, in ROM, in binary form.
+
+We can't simply adjust offsets. For complicated reasons, that can't be reliably
+done. We have to re-interpret that same source code, but from a ROM offset. But
+how are we going to do that? After all, ROM is called ROM for a reason.
+
+Memory maps.
+
+What we're going to do is to set up a memory map targeting our ROM and point it
+to our RAM. Then we can recompile the source as if we were in ROM, right after
+our boot binary. Forth won't ever notice it's actually in RAM.
+
+Alright, let's do this. First, let's have a look around. Where is the end of
+our boot binary? To know, find the word ";", which is the last word of icore:
+
+    > ' ; .X
+    097d>
+    > 64 0x0970 DUMP
+    :70 0035 0958 00da ff43 .5.X...C
+    :78 003b 3500 810e 0020 .;5....
+    :80 0043 0093 07f4 03ef .C......
+    :88 0143 005f 0f00 0131 .C._...1
+    :90 3132 2052 414d 2b20 12 RAM+
+    :98 4845 5245 2021 0a20 HERE !.
+    :a0 3a20 4840 2048 4552 : H@ HER
+    :a8 4520 4020 3b0a 203a E @ ;. :
+
+See that `_` at 0x98b? That's the name of our hook word. 4 bytes later is its
+wordref. That's the end of our boot binary. 0x98f, that's an address to write
+down.
+
+Right after that is our appended source code. The first part is `pre.fs` and
+can be ignored. What we want starts at the definition of the `H@` word, which
+is at 0x9a0. Another address to write down.
+
+So our memory map will target 0x98f. Where will we place it? It doesn't matter
+much, we have plenty of RAM. Where's `HERE`?
+
+    > H@ .X
+    8c3f>
+
+Alright, let's go wide and use 0xa000 as our map destination. But before we do,
+let's copy the content of our ROM into RAM because there's our source code
+there and if we don't copy it before setting up the memory map, we'll shadow it.
+
+Let's be lazy and don't even check where the source stop. Let's assume it stops
+at 0x1fff, the end of the ROM.
+
+    > 0x98f 0xa000 0x2000 0x98f - MOVE
+    > 64 0xa000 DUMP
+    :00 3131 3220 5241 4d2b 112 RAM+
+    :08 2048 4552 4520 210a  HERE !.
+    :10 203a 2048 4020 4845  : H@ HE
+    :18 5245 2040 203b 0a20 RE @ ;.
+    :20 3a20 2d5e 2053 5741 : -^ SWA
+    :28 5020 2d20 3b0a 203a P - ;. :
+    :30 205b 2049 4e54 4552  [ INTER
+    :38 5052 4554 2031 2046 PRET 1 F
+
+Looks fine. Now, let's create a memory map. A memory map word is rather simple.
+It is called before each `@/C@/!/C!` operation and is given the opportunity to
+tweak the address on PSP's TOS. Let's go with our map:
+
+    > : MMAP
+    DUP 0x98f < IF EXIT THEN
+    DUP 0x1fff > IF EXIT THEN
+    [ 0xa000 0x98f - LITN ] +
+    ;
+    > 0x98e MMAP .X
+    098e> 0x98f MMAP .X
+    a000> 0xabc MMAP .X
+    a12b> 0x1fff MMAP .X
+    b66e> 0x2000 MMAP .X
+    2000>
+
+This looks good. Let's apply it for real:
+
+    > ' MMAP (mmap*) !
+    > 64 0x980 DUMP
+
+    :80 0043 0093 07f4 03ef .C......
+    :88 0143 005f 0f00 0131 .C._...1
+    :90 3132 2052 414d 2b20 12 RAM+
+    :98 4845 5245 2021 0a20 HERE !.
+    :a0 3a20 4840 2048 4552 : H@ HER
+    :a8 4520 4020 3b0a 203a E @ ;. :
+    :b0 202d 5e20 5357 4150  -^ SWAP
+    :b8 202d 203b 0a20 3a20  - ;. :
+
+But how do we know that it really works? Because we can write in ROM!
+
+    > 'X' 0x98f !
+    > 64 0x980 DUMP
+
+    :80 0043 0093 07f4 03ef .C......
+    :88 0143 005f 0f00 0131 .C._...X
+    :90 0032 2052 414d 2b20 .2 RAM+
+    :98 4845 5245 2021 0a20 HERE !.
+    :a0 3a20 4840 2048 4552 : H@ HER
+    :a8 4520 4020 3b0a 203a E @ ;. :
+    :b0 202d 5e20 5357 4150  -^ SWAP
+    :b8 202d 203b 0a20 3a20  - ;. :
+    > 64 0xa000 DUMP
+
+    :00 5800 3220 5241 4d2b X.2 RAM+
+    :08 2048 4552 4520 210a  HERE !.
+    :10 203a 2048 4020 4845  : H@ HE
+    :18 5245 2040 203b 0a20 RE @ ;.
+    :20 3a20 2d5e 2053 5741 : -^ SWA
+    :28 5020 2d20 3b0a 203a P - ;. :
+    :30 205b 2049 4e54 4552  [ INTER
+    :38 5052 4554 2031 2046 PRET 1 F
+
+TODO: continue
 
 [rc2014]: https://rc2014.co.uk
 [romwrite]: https://github.com/hsoft/romwrite
