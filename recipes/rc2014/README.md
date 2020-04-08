@@ -236,7 +236,46 @@ But how do we know that it really works? Because we can write in ROM!
     :30 205b 2049 4e54 4552  [ INTER
     :38 5052 4554 2031 2046 PRET 1 F
 
-TODO: continue
+We're now ready for a re-bootstrap. Here's what we're gonna do:
+
+1. Bring `CURRENT` and `HERE` back to `0x98f`.
+2. Set `CINPTR` to `icore`'s `(c<)`.
+
+`(c<)` word is the main input of the interpreter. Right now, your `(c<)` comes
+from the `readln` unit, which makes the main `INTERPRET` loop wait for your
+keystrokes before interpreting your words.
+
+But this can be changed. At the moment where we change `CINPTR`, the interpret
+loop will start reading from it, so we'll lose control. That is why we must
+prepare things carefully before that. We'll re-gain control at the end of the
+bootstrap source, in `run.fs`, where `(c<)` is set to `readln`'s `(c<)`
+
+`(c<)` word is the main input of the interpreter. Right now, your `(c<)` comes
+from the `readln` unit, which makes the main `INTERPRET` loop wait for your
+keystrokes before interpreting your words.
+
+But this can be changed. At the moment where we change `CINPTR`, the interpret
+loop will start reading from it, so we'll lose control. That is why we must
+prepare things carefully before that. We'll re-gain control at the end of the
+bootstrap source, in `run.fs`, where `(c<)` is set to `readln`'s `(c<)`.
+
+At this moment, `icore`'s `(c<)` is shadowed by `readln`, but at the moment
+`CURRENT` changes, it will be accessible again. However, this all has to change
+in one shot, so we need to prepare a compiled word for it if we don't want to
+lose access to our interpret loop in the middle of our operation.
+
+    > : KAWABUNGA!
+    ( 60 == (c<) pointer )
+    0x9a0 0x60 RAM+ !
+    0x98f CURRENT !
+    0x98f HERE !
+    ( 0c == CINPTR )
+    (find) (c<) DROP 0x0c RAM+ !
+    ;
+
+Ready? Set? KAWABUNGA!
+
+TODO: make this work...
 
 [rc2014]: https://rc2014.co.uk
 [romwrite]: https://github.com/hsoft/romwrite
