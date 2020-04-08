@@ -181,6 +181,15 @@
     0x0e _c RAM+
 ;
 
+: SCPY
+    BEGIN               ( a )
+        _c DUP _c C@    ( a c )
+        _c DUP _c C,    ( a c )
+        _c NOT IF _c DROP EXIT THEN
+        1 _c +          ( a+1 )
+    AGAIN
+;
+
 : (entry)
     _c HERE _c @    ( h )
     _c WORD         ( h s )

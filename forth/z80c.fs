@@ -390,24 +390,6 @@ L1 FSET ( found )
     DE PUSHqq,
 ;CODE
 
-CODE SCPY
-    HL POPqq,
-    chkPS,
-    ( HERE == RAM+4 )
-    DE RAMSTART 0x04 + LDdd(nn),
-    B 0 LDrn,
-L1 BSET ( loop )
-    A (HL) LDrr,
-    LD(DE)A,
-    HL INCss,
-    DE INCss,
-    B INCr,
-    A ORr,
-    JRNZ, L1 BWR ( loop )
-    DE A LD(dd)r
-    RAMSTART 0x04 + DE LD(nn)dd,
-;CODE
-
 CODE (im1)
     IM1,
     EI,
