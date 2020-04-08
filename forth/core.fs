@@ -1,5 +1,8 @@
 : H@ HERE @ ;
-: -^ SWAP - ;
+: IMMEDIATE
+    CURRENT @ 1 -
+    DUP C@ 128 OR SWAP C!
+;
 : [ INTERPRET 1 FLAGS ! ; IMMEDIATE
 : ] R> DROP ;
 : LIT 34 , ;
@@ -29,6 +32,7 @@
   (br)) and then call LITN on it. )
 
 : +! SWAP OVER @ + SWAP ! ;
+: -^ SWAP - ;
 : ALLOT HERE +! ;
 
 : IF                ( -- a | a: br cell addr )

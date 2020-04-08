@@ -311,13 +311,6 @@ CODE R>
     HL PUSHqq,
 ;CODE
 
-CODE IMMEDIATE
-    ( CURRENT == RAM+2 )
-    RAMSTART 0x02 + LDHL(nn),
-    HL DECss,
-    7 (HL) SETbr,
-;CODE
-
 CODE IMMED?
     HL POPqq,
     chkPS,
