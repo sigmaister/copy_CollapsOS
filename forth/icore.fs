@@ -67,6 +67,23 @@
 : (parse*) 0x0a _c RAM+ ;
 : HERE 0x04 _c RAM+ ;
 : CURRENT 0x02 _c RAM+ ;
+: (mmap*) 0x51 _c RAM+ ;
+
+( The goal here is to be as fast as possible *when there is
+  no mmap*, which is the most frequent situation. That is why
+  we don't DUP and we rather refetch. That is also why we
+  use direct literal instead of RAM+ or (mmap*). )
+: (mmap)
+    [ RAMSTART 0x51 + LITN ] _c _@
+    IF
+        [ RAMSTART 0x51 + LITN ] _c _@ EXECUTE
+    THEN
+;
+
+: @ _c (mmap) _c _@ ;
+: C@ _c (mmap) _c _C@ ;
+: ! _c (mmap) _c _! ;
+: C! _c (mmap) _c _C! ;
 
 : QUIT
     0 _c FLAGS _c ! _c (resRS)
@@ -204,6 +221,7 @@
 ;
 
 : BOOT
+    0 0x51 _c RAM+ _c _!
     LIT< (parse) _c (find) _c DROP _c (parse*) _c !
     ( 60 == SYSTEM SCRATCHPAD )
     _c CURRENT _c @ 0x60 _c RAM+ _c !
@@ -233,7 +251,7 @@
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
       issues. Same thing for ",".
       32 == NUMBER 14 == compiledWord )
-    [ 32 H@ ! 2 ALLOT 14 H@ ! 2 ALLOT ] _c ,
+    [ 32 H@ _! 2 ALLOT 14 H@ _! 2 ALLOT ] _c ,
     BEGIN
     _c WORD
     _c (find)
@@ -250,10 +268,10 @@
 ;
 
 ( Give ":" and ";" their real name and make them IMMEDIATE )
-0x81 ' X 1 - C!
-':' ' X 4 - C!
-0x81 ' Y 1 - C!
-';' ' Y 4 - C!
+0x81 ' X 1 - _C!
+':' ' X 4 - _C!
+0x81 ' Y 1 - _C!
+';' ' Y 4 - _C!
 
 ( Add dummy entry. we use CREATE because (entry) is, at this
   point, broken. Adjust H@ durint port 2 ping. )

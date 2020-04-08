@@ -232,7 +232,7 @@ L2 FSET ( skip )
     BC PUSHqq,
 ;CODE
 
-CODE !
+CODE _!
     HL POPqq,
     DE POPqq,
     chkPS,
@@ -241,7 +241,7 @@ CODE !
     (HL) D LDrr,
 ;CODE
 
-CODE @
+CODE _@
     HL POPqq,
     chkPS,
     E (HL) LDrr,
@@ -250,14 +250,14 @@ CODE @
     DE PUSHqq,
 ;CODE
 
-CODE C!
+CODE _C!
     HL POPqq,
     DE POPqq,
     chkPS,
     (HL) E LDrr,
 ;CODE
 
-CODE C@
+CODE _C@
     HL POPqq,
     chkPS,
     L (HL) LDrr,
