@@ -1,8 +1,7 @@
 TARGETS = runbin/runbin forth/forth
 BIN2C = ../tools/bin2c
 # Those Forth source files are in a particular order
-FORTHSRCS = core.fs cmp.fs print.fs str.fs parse.fs readln.fs fmt.fs z80a.fs \
-	link.fs
+FORTHSRCS = core.fs cmp.fs print.fs str.fs parse.fs readln.fs fmt.fs z80a.fs
 FORTHSRC_PATHS = ${FORTHSRCS:%=../forth/%} forth/run.fs
 OBJS = emul.o libz80/libz80.o
 SLATEST = ../tools/slatest
