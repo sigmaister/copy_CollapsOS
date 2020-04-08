@@ -39,11 +39,11 @@ ACIA_IO
     ( advance W> )
     HL INCss,
     ACIAW> LD(nn)HL,
-    DE ACIA) @ LDdd(nn),
+    DE ACIA) LDdd(nn),
     DE SUBHLss,
     JRNZ, L4 FWR ( skip )
     ( end of buffer reached )
-    ACIA( @ LDHL(nn),
+    ACIA( LDHL(nn),
     ACIAW> LD(nn)HL,
 L4 FSET ( skip )
 L3 FSET L2 FSET ( end )

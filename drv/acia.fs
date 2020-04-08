@@ -36,11 +36,15 @@ ACIA_MEM: Address in memory that can be used variables shared
 ;
 
 : KEY
-    ( As long as R> == W>-1, it means that buffer is empty )
-    BEGIN ACIAR> @ 1 + ACIAW> @ = NOT UNTIL
-
     ( inc then fetch )
-    1 ACIAR> +!
+    ACIAR> @ 1 + DUP ACIA) @ = IF
+        DROP ACIA( @
+    THEN
+
+    ( As long as R> == W>-1, it means that buffer is empty )
+    BEGIN DUP ACIAW> @ = NOT UNTIL
+
+    ACIAR> !
     ACIAR> @ C@
 ;
 
