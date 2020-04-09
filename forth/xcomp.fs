@@ -53,8 +53,6 @@ VARIABLE XOFF
     (xentry) 23 ,
 ;
 
-: _IMM IMMEDIATE ;
-
 : IMMEDIATE
     XCURRENT @ 1 -
     DUP C@ 128 OR SWAP C!
@@ -88,4 +86,4 @@ VARIABLE XOFF
         (parse*) @ EXECUTE LITN
     THEN
     AGAIN
-; _IMM
+;

@@ -220,7 +220,7 @@
     ( maybe number )
     ELSE (parse*) @ EXECUTE LITN THEN
     AGAIN
-; IMMEDIATE
+;
 
 XCURRENT @      ( to PSP )
 
