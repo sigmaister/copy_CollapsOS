@@ -88,8 +88,7 @@ RAMSTART   INITIAL_SP
 +0e        WORDBUF
 +2e        SYSVNXT
 +4e        INTJUMP
-+51        MMAPPTR
-+53        RESERVED
++51        RESERVED
 +60        SYSTEM SCRATCHPAD
 +80        RAMEND
 
@@ -116,9 +115,6 @@ INTJUMP All RST offsets (well, not *all* at this moment, I still have to free
 those slots...) in boot binaries are made to jump to this address. If you use
 one of those slots for an interrupt, write a jump to the appropriate offset in
 that RAM location.
-
-MMAPPTR: Address behind (mmap), which is called before every !/C!/@/C@ world
-to give the opportunity to change the address of the call.
 
 SYSTEM SCRATCHPAD is reserved for temporary system storage or can be reserved
 by low-level drivers. These are the current usages of this space throughout the
@@ -158,29 +154,3 @@ can't have comments. This leads to peculiar code in this area. If you see weird
 whitespace usage, it's probably because not using those whitespace would result
 in dict entry creation overwriting the code before it has the chance to be
 interpreted.
-
-*** Memory maps
-
-We have a mechanism to map memory ranges to something else. We call this memory
-maps. There is a reserved address in memory for a memory mapping routine. The
-word (mmap*) returns that address. By default, it's zero which means no mapping.
-
-Each call to @, C@, ! or C! call that word, if nonzero, before executing. This
-allows you to do pretty much anything. Try to be efficient in your programming,
-however, because those words are called *very* often.
-
-Here's a toy example of memory map usage:
-
-> 8 0x8000 DUMP
-:00 0000 0000 0000 0000 ........
-> : foo DUP 0x8000 = IF 2 + THEN ;
-> ' foo (mmap*) !
-> 8 0x8000 DUMP
-:00 0000 0000 0000 0000 ........
-> 0x1234 0x8000 !
-> 8 0x8000 DUMP
-:00 3412 3412 0000 0000 4.4.....
-> 0 (mmap*) !
-> 8 0x8000 DUMP
-:00 0000 3412 0000 0000 ..4.....
->

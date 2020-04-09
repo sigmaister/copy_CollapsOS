@@ -36,23 +36,6 @@
 : (parse*) 0x0a RAM+ ;
 : HERE 0x04 RAM+ ;
 : CURRENT 0x02 RAM+ ;
-: (mmap*) 0x51 RAM+ ;
-
-( The goal here is to be as fast as possible *when there is
-  no mmap*, which is the most frequent situation. That is why
-  we don't DUP and we rather refetch. That is also why we
-  use direct literal instead of RAM+ or (mmap*). )
-: (mmap)
-    [ RAMSTART 0x51 + LITN ] _@
-    IF
-        [ RAMSTART 0x51 + LITN ] _@ EXECUTE
-    THEN
-;
-
-: @ (mmap) _@ ;
-: C@ (mmap) _C@ ;
-: ! (mmap) _! ;
-: C! (mmap) _C! ;
 
 : QUIT
     0 FLAGS ! (resRS)
@@ -199,7 +182,6 @@
 ;
 
 : BOOT
-    0 0x51 RAM+ _!
     LIT< (parse) (find) DROP (parse*) !
     ( 60 == SYSTEM SCRATCHPAD )
     CURRENT @ 0x60 RAM+ !
@@ -229,7 +211,7 @@
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
       issues. Same thing for ",".
       32 == NUMBER 14 == compiledWord )
-    [ 32 H@ _! 2 ALLOT 14 H@ _! 2 ALLOT ] ,
+    [ 32 H@ ! 2 ALLOT 14 H@ ! 2 ALLOT ] ,
     BEGIN
     WORD
     (find)
@@ -248,8 +230,8 @@ XCURRENT @      ( to PSP )
 ; IMMEDIATE
 
 ( Give ":" and ";" their real name )
-';' XCURRENT @ 4 - _C!
-':' SWAP ( from PSP ) 4 - _C!
+';' XCURRENT @ 4 - C!
+':' SWAP ( from PSP ) 4 - C!
 
 (xentry) _
 H@ 256 /MOD 2 PC! 2 PC!

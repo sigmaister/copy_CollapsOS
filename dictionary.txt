@@ -91,8 +91,6 @@ I'          -- n            Copy RS second item to PS
 J           -- n            Copy RS third item to PS
 
 *** Memory ***
-(mmap*)     -- a            Address of active memory mapper. 0 for none. See
-                            "Memory maps" in notes.txt.
 @           a -- n          Set n to value at address a
 !           n a --          Store n in address a
 ?           a --            Print value of addr a
