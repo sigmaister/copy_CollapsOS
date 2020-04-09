@@ -31,4 +31,5 @@ bool emul_step();
 bool emul_steps(unsigned int steps);
 void emul_loop();
 void emul_trace(ushort addr);
+void emul_memdump();
 void emul_printdebug();

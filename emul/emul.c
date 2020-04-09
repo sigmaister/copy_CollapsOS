@@ -41,6 +41,9 @@ static void mem_write(int unused, uint16_t addr, uint8_t val)
 {
     if (addr < m.ramstart) {
         fprintf(stderr, "Writing to ROM (%d)!\n", addr);
+        emul_memdump();
+        fprintf(stderr, "Press any key to continue...\n");
+        while (getchar() > 0x100);
     }
     m.mem[addr] = val;
 }
@@ -100,6 +103,14 @@ void emul_trace(ushort addr)
         traceval = newval;
         fprintf(stderr, "trace: %04x PC: %04x\n", traceval, m.cpu.PC);
     }
+}
+
+void emul_memdump()
+{
+    fprintf(stderr, "Dumping memory to memdump. PC %04x\n", m.cpu.PC);
+    FILE *fp = fopen("memdump", "w");
+    fwrite(m.mem, 0x10000, 1, fp);
+    fclose(fp);
 }
 
 void emul_printdebug()
