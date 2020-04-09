@@ -134,5 +134,5 @@
 ;
 
 : DELW
-    ' 1 - 0 SWAP C!
+    1 - 0 SWAP C!
 ;
