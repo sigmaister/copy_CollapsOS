@@ -354,8 +354,10 @@ CODE CMP
     BC PUSHqq,
 ;CODE
 
-CODE (find)
-    HL POPqq,
+( cur w -- a f )
+CODE _find
+    HL POPqq,       ( w )
+    DE POPqq,       ( cur )
     chkPS,
     ( 3 == find )
     3 CALLnn,

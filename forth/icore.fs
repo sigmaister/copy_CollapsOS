@@ -37,6 +37,9 @@
 : HERE 0x04 RAM+ ;
 : CURRENT 0x02 RAM+ ;
 
+( w -- a f )
+: (find) CURRENT @ SWAP _find ;
+
 : QUIT
     0 FLAGS ! (resRS)
     LIT< INTERPRET (find) DROP EXECUTE

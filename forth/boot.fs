@@ -123,14 +123,16 @@ PC ORG @ 1 + ! ( main )
     0x08 LDHL(nn),
     RAMSTART 0x02 + LD(nn)HL, ( RAM+02 == CURRENT )
     RAMSTART 0x04 + LD(nn)HL, ( RAM+04 == HERE )
+    EXDEHL,
     HL L1 @ LDddnn,
     0x03 CALLnn,        ( 03 == find )
     DE PUSHqq,
     L2 @ 2 + JPnn,
 
 PC ORG @ 4 + ! ( find )
-( Find the entry corresponding to word where (HL) points to
-  and sets DE to point to that entry. Z if found, NZ if not.
+( Find the entry corresponding to word name where (HL) points
+  to in dictionary having its tip at DE and sets DE to point
+  to that entry. Z if found, NZ if not.
 )
 
     BC PUSHqq,
@@ -154,7 +156,6 @@ PC ORG @ 4 + ! ( find )
   adjust. Because the compare loop pre-decrements, instead
   of DECing HL twice, we DEC it once. )
     HL DECss,
-    DE RAMSTART 0x02 + LDdd(nn),   ( RAM+02 == CURRENT )
 L3 BSET ( inner )
     ( DE is a wordref, first step, do our len correspond? )
     HL PUSHqq,          ( --> lvl 1 )
@@ -241,6 +242,7 @@ PC ORG @ 0x15 + ! ( popRS )
 '(' A, 'u' A, 'f' A, 'l' A, 'w' A, ')' A, 0 A,
 L1 BSET ( abortUnderflow )
     HL PC 7 - LDddnn,
+    DE RAMSTART 0x02 + LDdd(nn),   ( RAM+02 == CURRENT )
     0x03 CALLnn, ( find )
     DE PUSHqq,
     L2 @ 2 + JPnn, ( EXECUTE, skip nativeWord )
@@ -366,7 +368,7 @@ PC ORG @ 0x22 + ! ( litWord )
     JPNEXT,
 
 ( filler )
-NOP, NOP, NOP, NOP, NOP, NOP,
+NOP, NOP, NOP, NOP, NOP,
 
 ( DICT HOOK )
 ( This dummy dictionary entry serves two purposes:
