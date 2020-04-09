@@ -22,10 +22,6 @@
   This unit expects the same conf as boot.fs.
 )
 
-( dummy entry for dict hook )
-(xentry) _
-H@ 256 /MOD 2 PC! 2 PC!
-
 ( a b c -- b c a )
 CODE ROT
     HL POPqq,       ( C )

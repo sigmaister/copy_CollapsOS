@@ -24,40 +24,26 @@
 VARIABLE XCURRENT
 VARIABLE XOFF
 
-: (xentry)
-    H@           ( h )
-    WORD         ( h s )
-    SCPY         ( h )
-    ( Adjust HERE -1 because SCPY copies the null )
-    H@ 1 -       ( h h' )
-    DUP HERE !   ( h h' )
-    -^           ( sz )
-    ( write prev value )
-    H@ XCURRENT @ - ,
-    ( write size )
-    C,
-    H@ XCURRENT !
-;
+: XCON XCURRENT CURRENT* ! ;
+: XCOFF CURRENT CURRENT* ! ;
+
+: (xentry) XCON (entry) XCOFF ;
 
 ( Finds in *both* CURRENT and XCURRENT )
 ( w -- a f xa xf )
 : (xfind)
     DUP                     ( w w )
-    CURRENT @ SWAP          ( w cur w )
+    ( hardcoded system CURRENT )
+    0x02 RAM+ @ SWAP        ( w cur w )
     _find                   ( w a f )
     ROT                     ( a f w )
     XCURRENT @ SWAP         ( a f xcur w )
     _find                   ( a f xa xf )
 ;
 
-: XCODE
-    (xentry) 23 ,
-;
+: XCODE XCON CODE XCOFF ;
 
-: XIMM
-    XCURRENT @ 1 -
-    DUP C@ 128 OR SWAP C!
-;
+: XIMM XCON IMMEDIATE XCOFF ;
 
 : X:
     (xentry)

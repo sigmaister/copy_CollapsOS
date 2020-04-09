@@ -35,7 +35,8 @@
 : FLAGS 0x08 RAM+ ;
 : (parse*) 0x0a RAM+ ;
 : HERE 0x04 RAM+ ;
-: CURRENT 0x02 RAM+ ;
+: CURRENT* 0x51 RAM+ ;
+: CURRENT CURRENT* @ ;
 
 ( w -- a f )
 : (find) CURRENT @ SWAP _find ;
@@ -185,6 +186,7 @@
 ;
 
 : BOOT
+    0x02 RAM+ CURRENT* !
     LIT< (parse) (find) DROP (parse*) !
     ( 60 == SYSTEM SCRATCHPAD )
     CURRENT @ 0x60 RAM+ !

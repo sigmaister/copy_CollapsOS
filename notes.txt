@@ -88,7 +88,8 @@ RAMSTART   INITIAL_SP
 +0e        WORDBUF
 +2e        SYSVNXT
 +4e        INTJUMP
-+51        RESERVED
++51        CURRENTPTR
++53        RESERVED
 +60        SYSTEM SCRATCHPAD
 +80        RAMEND
 
@@ -115,6 +116,11 @@ INTJUMP All RST offsets (well, not *all* at this moment, I still have to free
 those slots...) in boot binaries are made to jump to this address. If you use
 one of those slots for an interrupt, write a jump to the appropriate offset in
 that RAM location.
+
+CURRENTPTR points to current CURRENT. The Forth CURRENT word doesn't return
+RAM+2 directly, but rather the value at this address. Most of the time, it
+points to RAM+2, but sometimes, when maintaining alternative dicts (during
+cross compilation for example), it can point elsewhere.
 
 SYSTEM SCRATCHPAD is reserved for temporary system storage or can be reserved
 by low-level drivers. These are the current usages of this space throughout the
