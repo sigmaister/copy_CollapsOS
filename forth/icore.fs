@@ -244,6 +244,8 @@
     32 _c , _c ,
 ;
 
+: IMMED? 1 _c - _c C@ 0x80 _c AND ;
+
 ( : and ; have to be defined last because it can't be
   executed now also, they can't have their real name
   right away.

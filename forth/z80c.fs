@@ -311,18 +311,6 @@ CODE R>
     HL PUSHqq,
 ;CODE
 
-CODE IMMED?
-    HL POPqq,
-    chkPS,
-    HL DECss,
-    DE 0 LDddnn,
-    7 (HL) BITbr,
-    JRZ, L1 FWR ( notset )
-    DE INCss,
-L1 FSET ( notset )
-    DE PUSHqq,
-;CODE
-
 CODE BYE
     HALT,
 ;CODE
