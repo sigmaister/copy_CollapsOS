@@ -80,7 +80,7 @@
     (parseb) IF EXIT THEN
     (parsed) IF EXIT THEN
     ( nothing works )
-    LIT< (wnf) (find) DROP EXECUTE
+    LIT< (wnf) (find) IF EXECUTE ELSE ABORT THEN
 ;
 
 ' (parse) (parse*) !
