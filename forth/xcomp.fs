@@ -43,14 +43,11 @@ VARIABLE XOFF
 ( w -- a f xa xf )
 : (xfind)
     DUP                     ( w w )
-    (find)                  ( w a f )
+    CURRENT @ SWAP          ( w cur w )
+    _find                   ( w a f )
     ROT                     ( a f w )
-    CURRENT @               ( a f w cur )
-    XCURRENT @ CURRENT !
-    SWAP                    ( a f cur w )
-    (find)                  ( a f cur xa xf )
-    ROT                     ( a f xa xf cur )
-    CURRENT !               ( a f xa xf )
+    XCURRENT @ SWAP         ( a f xcur w )
+    _find                   ( a f xa xf )
 ;
 
 : XCODE
