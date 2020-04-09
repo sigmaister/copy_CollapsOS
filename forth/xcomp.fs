@@ -14,6 +14,10 @@
   "'" and friends will *not* find words you're about to
   define. Only (xfind) will.
 
+  Words ":", "IMMEDIATE" and ":" are not automatically
+  shadowed to allow the harmless inclusion of this unit. This
+  shadowing has to take place in your xcomp configuration.
+
   See example in /emul/forth/xcomp.fs
 )
 
@@ -49,16 +53,16 @@ VARIABLE XOFF
     CURRENT !               ( a f xa xf )
 ;
 
-: CODE
+: XCODE
     (xentry) 23 ,
 ;
 
-: IMMEDIATE
+: XIMM
     XCURRENT @ 1 -
     DUP C@ 128 OR SWAP C!
 ;
 
-: :
+: X:
     (xentry)
     ( 0e == compiledWord )
     [ 0x0e LITN ] ,
