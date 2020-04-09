@@ -19,141 +19,114 @@
      by the full interpreter.
   5. When using words as immediates, make sure that they're
      not defined in icore or, if they are, make sure that
-     they contain no "_c" references.
+     they are *not* offsetted
 
-  All these rules make this unit a bit messy, but this is the
-  price to pay for the awesomeness of self-bootstrapping.
+  Those rules are mostly met by the "xcomp" unit, which is
+  expected to have been loaded prior to icore and redefines
+  ":" and other defining words. So, in other words, when
+  compiling icore, ":" doesn't means what you think it means,
+  go look in xcomp.
 )
-
-( When referencing words from native defs or this very unit,
-  use this compiling word, which subtract the proper offset
-  from the compiled word. That proper offset is:
-  1. Take ROT-header addr, the first native def.
-  2. Subtract _bend, boot's last word.
-  3. That will give us the offset to subtract to get the addr
-     of our word at runtime.
-
-  This means, of course, that any word compiling a _c word
-  can't be executed immediately.
-
-  Also note that because of that "_c" mechanism, it might
-  take two rounds of bootstrapping before the compiled
-  z80c.bin file is "stabilized". That's because the 2nd time
-  around, the recorded offset will have changed.
-)
-
-: _c
-    [
-    ' ROT
-    6 -         ( header )
-    ' _bend
-    -           ( our offset )
-    LITN
-    ]
-    '           ( get word )
-    -^          ( apply offset )
-    ,           ( write! )
-; IMMEDIATE
 
 : RAM+
-    [ RAMSTART LITN ] _c +
+    [ RAMSTART LITN ] +
 ;
 
-: FLAGS 0x08 _c RAM+ ;
-: (parse*) 0x0a _c RAM+ ;
-: HERE 0x04 _c RAM+ ;
-: CURRENT 0x02 _c RAM+ ;
-: (mmap*) 0x51 _c RAM+ ;
+: FLAGS 0x08 RAM+ ;
+: (parse*) 0x0a RAM+ ;
+: HERE 0x04 RAM+ ;
+: CURRENT 0x02 RAM+ ;
+: (mmap*) 0x51 RAM+ ;
 
 ( The goal here is to be as fast as possible *when there is
   no mmap*, which is the most frequent situation. That is why
   we don't DUP and we rather refetch. That is also why we
   use direct literal instead of RAM+ or (mmap*). )
 : (mmap)
-    [ RAMSTART 0x51 + LITN ] _c _@
+    [ RAMSTART 0x51 + LITN ] _@
     IF
-        [ RAMSTART 0x51 + LITN ] _c _@ EXECUTE
+        [ RAMSTART 0x51 + LITN ] _@ EXECUTE
     THEN
 ;
 
-: @ _c (mmap) _c _@ ;
-: C@ _c (mmap) _c _C@ ;
-: ! _c (mmap) _c _! ;
-: C! _c (mmap) _c _C! ;
+: @ (mmap) _@ ;
+: C@ (mmap) _C@ ;
+: ! (mmap) _! ;
+: C! (mmap) _C! ;
 
 : QUIT
-    0 _c FLAGS _c ! _c (resRS)
-    LIT< INTERPRET _c (find) _c DROP EXECUTE
+    0 FLAGS ! (resRS)
+    LIT< INTERPRET (find) DROP EXECUTE
 ;
 
-: ABORT _c (resSP) _c QUIT ;
+: ABORT (resSP) QUIT ;
 
-: = _c CMP _c NOT ;
-: < _c CMP -1 _c = ;
-: > _c CMP 1 _c = ;
+: = CMP NOT ;
+: < CMP -1 = ;
+: > CMP 1 = ;
 
 : (parsed)      ( a -- n f )
     ( read first char outside of the loop. it *has* to be
       nonzero. )
-    _c DUP _c C@                    ( a c )
-    _c DUP _c NOT IF EXIT THEN      ( a 0 )
+    DUP C@                    ( a c )
+    DUP NOT IF EXIT THEN      ( a 0 )
     ( special case: do we have a negative? )
-    _c DUP '-' _c = IF
+    DUP '-' = IF
         ( Oh, a negative, let's recurse and reverse )
-        _c DROP 1 _c +                  ( a+1 )
-        _c (parsed)                     ( n f )
-        _c SWAP 0 _c SWAP               ( f 0 n )
-        _c - _c SWAP EXIT               ( 0-n f )
+        DROP 1 +                  ( a+1 )
+        (parsed)                     ( n f )
+        SWAP 0 SWAP               ( f 0 n )
+        - SWAP EXIT               ( 0-n f )
     THEN
     ( running result, staring at zero )
-    0 _c SWAP                               ( a r c )
+    0 SWAP                               ( a r c )
     ( Loop over chars )
     BEGIN
     ( parse char )
-    '0' _c -
+    '0' -
     ( if bad, return "a 0" )
-    _c DUP 0 _c < IF _c 2DROP 0 EXIT THEN   ( bad )
-    _c DUP 9 _c > IF _c 2DROP 0 EXIT THEN   ( bad )
+    DUP 0 < IF 2DROP 0 EXIT THEN   ( bad )
+    DUP 9 > IF 2DROP 0 EXIT THEN   ( bad )
     ( good, add to running result )
-    _c SWAP 10 _c * _c +                    ( a r*10+n )
-    _c SWAP 1 _c + _c SWAP                  ( a+1 r )
+    SWAP 10 * +                    ( a r*10+n )
+    SWAP 1 + SWAP                  ( a+1 r )
     ( read next char )
-    _c OVER _c C@
-    _c DUP _c NOT UNTIL
+    OVER C@
+    DUP NOT UNTIL
     ( we're done and it's a success. We have "a r c", we want
       "r 1". )
-    _c DROP _c SWAP _c DROP 1
+    DROP SWAP DROP 1
 ;
 
 ( This is only the "early parser" in earlier stages. No need
   for an abort message )
 : (parse)
-    _c (parsed) _c NOT IF _c ABORT THEN
+    (parsed) NOT IF ABORT THEN
 ;
 
 : C<
     ( 0c == CINPTR )
-    0x0c _c RAM+ _c @ EXECUTE
+    0x0c RAM+ @ EXECUTE
 ;
 
 : ,
-    _c HERE _c @ _c !
-    _c HERE _c @ 2 _c + _c HERE _c !
+    HERE @ !
+    HERE @ 2 + HERE !
 ;
 
 : C,
-    _c HERE _c @ _c C!
-    _c HERE _c @ 1 _c + _c HERE _c !
+    HERE @ C!
+    HERE @ 1 + HERE !
 ;
 
 ( The NOT is to normalize the negative/positive numbers to 1
   or 0. Hadn't we wanted to normalize, we'd have written:
   32 CMP 1 - )
-: WS? 33 _c CMP 1 _c + _c NOT ;
+: WS? 33 CMP 1 + NOT ;
 
 : TOWORD
     BEGIN
-    _c C< _c DUP _c WS? _c NOT IF EXIT THEN _c DROP
+        C< DUP WS? NOT IF EXIT THEN DROP
     AGAIN
 ;
 
@@ -161,56 +134,56 @@
   return, make HL point to WORDBUF. )
 : WORD
     ( 0e == WORDBUF )
-    0x0e _c RAM+        ( a )
-    _c TOWORD                   ( a c )
+    0x0e RAM+        ( a )
+    TOWORD                   ( a c )
     BEGIN
         ( We take advantage of the fact that char MSB is
           always zero to pre-write our null-termination )
-        _c OVER _c !            ( a )
-        1 _c +                  ( a+1 )
-        _c C<                   ( a c )
-        _c DUP _c WS?
+        OVER !            ( a )
+        1 +                  ( a+1 )
+        C<                   ( a c )
+        DUP WS?
     UNTIL
     ( a this point, PS is: a WS )
     ( null-termination is already written )
-    _c 2DROP
-    0x0e _c RAM+
+    2DROP
+    0x0e RAM+
 ;
 
 : SCPY
     BEGIN               ( a )
-        _c DUP _c C@    ( a c )
-        _c DUP _c C,    ( a c )
-        _c NOT IF _c DROP EXIT THEN
-        1 _c +          ( a+1 )
+        DUP C@    ( a c )
+        DUP C,    ( a c )
+        NOT IF DROP EXIT THEN
+        1 +          ( a+1 )
     AGAIN
 ;
 
 : (entry)
-    _c HERE _c @    ( h )
-    _c WORD         ( h s )
-    _c SCPY         ( h )
+    HERE @    ( h )
+    WORD         ( h s )
+    SCPY         ( h )
     ( Adjust HERE -1 because SCPY copies the null )
-    _c HERE _c @ 1 _c - ( h h' )
-    _c DUP _c HERE _c ! ( h h' )
-    _c SWAP _c -       ( sz )
+    HERE @ 1 - ( h h' )
+    DUP HERE ! ( h h' )
+    SWAP -       ( sz )
     ( write prev value )
-    _c HERE _c @ _c CURRENT _c @ _c - _c ,
+    HERE @ CURRENT @ - ,
     ( write size )
-    _c C,
-    _c HERE _c @ _c CURRENT _c !
+    C,
+    HERE @ CURRENT !
 ;
 
 : INTERPRET
     BEGIN
-    _c WORD
-    _c (find)
+    WORD
+    (find)
     IF
-        1 _c FLAGS _c !
+        1 FLAGS !
         EXECUTE
-        0 _c FLAGS _c !
+        0 FLAGS !
     ELSE
-        _c (parse*) _c @ EXECUTE
+        (parse*) @ EXECUTE
     THEN
     AGAIN
 ;
@@ -219,32 +192,32 @@
   LATEST. Convenient way to bootstrap a new system. )
 : (c<)
     ( 60 == SYSTEM SCRATCHPAD )
-    0x60 _c RAM+ _c @   ( a )
-    _c DUP _c C@        ( a c )
-    _c SWAP 1 _c +      ( c a+1 )
-    0x60 _c RAM+ _c !   ( c )
+    0x60 RAM+ @   ( a )
+    DUP C@        ( a c )
+    SWAP 1 +      ( c a+1 )
+    0x60 RAM+ !   ( c )
 ;
 
 : BOOT
-    0 0x51 _c RAM+ _c _!
-    LIT< (parse) _c (find) _c DROP _c (parse*) _c !
+    0 0x51 RAM+ _!
+    LIT< (parse) (find) DROP (parse*) !
     ( 60 == SYSTEM SCRATCHPAD )
-    _c CURRENT _c @ 0x60 _c RAM+ _c !
+    CURRENT @ 0x60 RAM+ !
     ( 0c == CINPTR )
-    LIT< (c<) _c (find) _c DROP 0x0c _c RAM+ _c !
-    LIT< INIT _c (find)
+    LIT< (c<) (find) DROP 0x0c RAM+ !
+    LIT< INIT (find)
     IF EXECUTE
-    ELSE _c DROP _c INTERPRET THEN
+    ELSE DROP INTERPRET THEN
 ;
 
 ( LITN has to be defined after the last immediate usage of
   it to avoid bootstrapping issues )
 : LITN
     ( 32 == NUMBER )
-    32 _c , _c ,
+    32 , ,
 ;
 
-: IMMED? 1 _c - _c C@ 0x80 _c AND ;
+: IMMED? 1 - C@ 0x80 AND ;
 
 ( : and ; have to be defined last because it can't be
   executed now also, they can't have their real name
@@ -252,32 +225,31 @@
 )
 
 : X
-    _c (entry)
+    (entry)
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
       issues. Same thing for ",".
       32 == NUMBER 14 == compiledWord )
-    [ 32 H@ _! 2 ALLOT 14 H@ _! 2 ALLOT ] _c ,
+    [ 32 H@ _! 2 ALLOT 14 H@ _! 2 ALLOT ] ,
     BEGIN
-    _c WORD
-    _c (find)
+    WORD
+    (find)
     ( is word )
-    IF _c DUP _c IMMED? IF EXECUTE ELSE _c , THEN
+    IF DUP IMMED? IF EXECUTE ELSE , THEN
     ( maybe number )
-    ELSE _c (parse*) _c @ EXECUTE _c LITN THEN
+    ELSE (parse*) @ EXECUTE LITN THEN
     AGAIN
 ; IMMEDIATE
 
+XCURRENT @      ( to PSP )
+
 : Y
-    ['] EXIT _c ,
-    _c R> _c DROP     ( exit : )
+    ['] EXIT ,
+    R> DROP     ( exit : )
 ; IMMEDIATE
 
 ( Give ":" and ";" their real name )
-':' ' X 4 - _C!
-';' ' Y 4 - _C!
+';' XCURRENT @ 4 - _C!
+':' SWAP ( from PSP ) 4 - _C!
 
-( Add dummy entry. we use CREATE because (entry) is, at this
-  point, broken. Adjust H@ durint port 2 ping. )
-CREATE _
-H@ 2 - 256 /MOD 2 PC! 2 PC!
-
+(xentry) _
+H@ 256 /MOD 2 PC! 2 PC!

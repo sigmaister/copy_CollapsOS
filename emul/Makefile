@@ -63,7 +63,7 @@ emul.o: emul.c
 .PHONY: updatebootstrap
 updatebootstrap: forth/stage2
 	cat ./forth/conf.fs ../forth/boot.fs | ./forth/stage2 | tee forth/boot.bin > /dev/null
-	cat ./forth/conf.fs ../forth/z80c.fs ../forth/icore.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
+	cat ./forth/conf.fs ../forth/xcomp.fs ./forth/xcomp.fs ../forth/z80c.fs ../forth/icore.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
 
 .PHONY: clean
 clean:

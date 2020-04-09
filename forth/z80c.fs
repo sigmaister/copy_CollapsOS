@@ -23,7 +23,7 @@
 )
 
 ( dummy entry for dict hook )
-(entry) _
+(xentry) _
 H@ 256 /MOD 2 PC! 2 PC!
 
 ( a b c -- b c a )
