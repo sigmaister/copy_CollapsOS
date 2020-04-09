@@ -201,12 +201,17 @@
 
 : IMMED? 1 - C@ 0x80 AND ;
 
-( : and ; have to be defined last because it can't be
-  executed now also, they can't have their real name
-  right away.
-)
+( ';' can't have its name right away because, when created, it
+  is not an IMMEDIATE yet and will not be treated properly by
+  xcomp. )
+: _
+    ['] EXIT ,
+    R> DROP     ( exit : )
+; IMMEDIATE
 
-: X
+';' XCURRENT @ 4 - C!
+
+: :
     (entry)
     ( We cannot use LITN as IMMEDIATE because of bootstrapping
       issues. Same thing for ",".
@@ -221,17 +226,6 @@
     ELSE (parse*) @ EXECUTE LITN THEN
     AGAIN
 ;
-
-XCURRENT @      ( to PSP )
-
-: Y
-    ['] EXIT ,
-    R> DROP     ( exit : )
-; IMMEDIATE
-
-( Give ":" and ";" their real name )
-';' XCURRENT @ 4 - C!
-':' SWAP ( from PSP ) 4 - C!
 
 (xentry) _
 H@ 256 /MOD 2 PC! 2 PC!
