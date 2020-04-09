@@ -132,3 +132,7 @@
     LOOP
     2DROP
 ;
+
+: DELW
+    ' 1 - 0 SWAP C!
+;

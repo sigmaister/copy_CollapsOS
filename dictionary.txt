@@ -38,6 +38,8 @@ CREATE x    --              Create cell named x. Doesn't allocate a PF.
                             words are *not* executed.
 COMPILE x   --              Meta compiles. Kind of blows the mind. See below.
 CONSTANT x  n --            Creates cell x that when called pushes its value
+DELW x      --              Delete word x. If it shadows another definition,
+                            that definition is unshadowed.
 DOES>       --              See description at top of file
 IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
