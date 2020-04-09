@@ -14,7 +14,7 @@
   "'" and friends will *not* find words you're about to
   define. Only (xfind) will.
 
-  Words ":", "IMMEDIATE" and ":" are not automatically
+  Words ":", "IMMEDIATE" and "CODE" are not automatically
   shadowed to allow the harmless inclusion of this unit. This
   shadowing has to take place in your xcomp configuration.
 
@@ -29,48 +29,43 @@ VARIABLE XOFF
 
 : (xentry) XCON (entry) XCOFF ;
 
-( Finds in *both* CURRENT and XCURRENT )
-( w -- a f xa xf )
-: (xfind)
-    DUP                     ( w w )
-    ( hardcoded system CURRENT )
-    0x02 RAM+ @ SWAP        ( w cur w )
-    _find                   ( w a f )
-    ROT                     ( a f w )
-    XCURRENT @ SWAP         ( a f xcur w )
-    _find                   ( a f xa xf )
-;
-
 : XCODE XCON CODE XCOFF ;
 
 : XIMM XCON IMMEDIATE XCOFF ;
 
 : X:
-    (xentry)
+    XCON
+    (entry)
     ( 0e == compiledWord )
     [ 0x0e LITN ] ,
     BEGIN
-    WORD
-    (xfind)
-    IF  ( a f xa )
+    ( DUP is because we need a copy in case it's IMMED )
+    WORD DUP
+    (find)      ( w a f )
+    IF
         ( is word )
         DUP IMMED?
-        IF  ( a f xa )
+        IF  ( w a )
             ( When encountering IMMEDIATE, we exec the *host*
               word. )
-            DROP    ( a f )
+            DROP    ( w )
+            ( hardcoded system CURRENT )
+            0x02 RAM+ @ SWAP        ( cur w )
+            _find                   ( a f )
             NOT IF ABORT THEN   ( a )
             EXECUTE
         ELSE
-            ( when compiling, we don't care about the host
-              find. )
+            ( not an immed. drop backup w and write, with
+              offset. )
+            SWAP DROP   ( a )
             DUP 0x100 > IF XOFF @ - THEN
-            , 2DROP
+            ,
         THEN
-    ELSE ( w f xa )
+    ELSE ( w a )
         ( maybe number )
-        2DROP   ( w )
+        DROP   ( w )
         (parse*) @ EXECUTE LITN
     THEN
     AGAIN
+    XCOFF
 ;
