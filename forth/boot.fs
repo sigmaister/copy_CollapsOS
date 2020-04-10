@@ -381,5 +381,4 @@ NOP, NOP, NOP, NOP, NOP,
 '_' A, 'b' A, 'e' A, 'n' A, 'd' A,
 PC L2 @ - A,, ( prev )
 5 A,
-
-H@ 256 /MOD 2 PC! 2 PC!
+H@ XCURRENT !        ( set current tip of dict )

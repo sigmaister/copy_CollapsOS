@@ -15,10 +15,10 @@ $(SLATEST):
 $(BIN2C):
 	$(MAKE) -C ../tools
 
-# z80c.bin and boot.bin are not in the prerequisites because they're bootstrap
-# binaries that should be updated manually through make updatebootstrap.
+# z80c.bin is not in the prerequisites because it's a bootstrap
+# binary that should be updated manually through make updatebootstrap.
 forth/forth0.bin: $(SLATEST)
-	cat forth/boot.bin forth/z80c.bin > $@
+	cp forth/z80c.bin $@
 	$(SLATEST) $@
 	cat forth/emul.fs >> $@
 
@@ -37,7 +37,7 @@ forth/core.bin: $(FORTHSRC_PATHS) forth/stage1
 	cat $(FORTHSRC_PATHS) ./forth/stop.fs | $(STRIPFC) | ./forth/stage1 | tee $@ > /dev/null
 
 forth/forth1.bin: forth/core.bin $(SLATEST)
-	cat forth/boot.bin forth/z80c.bin forth/core.bin > $@
+	cat forth/z80c.bin forth/core.bin > $@
 	$(SLATEST) $@
 
 forth/forth1-bin.h: forth/forth1.bin $(BIN2C)
@@ -60,10 +60,11 @@ emul.o: emul.c
 	$(CC) -c -o emul.o emul.c
 
 
+forth/z80c.bin: forth/stage2
+	cat ./forth/conf.fs ../forth/xcomp.fs ./forth/xcomp.fs ../forth/boot.fs ../forth/z80c.fs ../forth/icore.fs | ./forth/stage2 | tee $@ > /dev/null
+
 .PHONY: updatebootstrap
-updatebootstrap: forth/stage2
-	cat ./forth/conf.fs ../forth/boot.fs | ./forth/stage2 | tee forth/boot.bin > /dev/null
-	cat ./forth/conf.fs ../forth/xcomp.fs ./forth/xcomp.fs ../forth/z80c.fs ../forth/icore.fs | ./forth/stage2 | tee forth/z80c.bin > /dev/null
+updatebootstrap: forth/z80c.bin
 
 .PHONY: clean
 clean:

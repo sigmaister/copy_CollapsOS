@@ -95,9 +95,20 @@ VARIABLE XOFF
             ,
         THEN
     ELSE ( w a )
-        ( maybe number )
-        DROP   ( w )
-        (parse*) @ EXECUTE LITN
+        ( not found? it might be an immediate that isn't yet defined in our
+          cross-compiled dict. It's alright, we can find-and-execute it. )
+        DROP ( w )
+        ( system CURRENT )
+        0x02 RAM+ @ SWAP        ( cur w )
+        _find                   ( a f )
+        IF
+            ( found. It *must* be an IMMED )
+            DUP IMMED? NOT IF ABORT THEN
+            EXECUTE
+        ELSE
+            ( not found. maybe number )
+            (parse*) @ EXECUTE LITN
+        THEN
     THEN
     AGAIN
 ;
