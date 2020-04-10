@@ -86,11 +86,21 @@ RAMSTART   INITIAL_SP
 +0a        PARSEPTR
 +0c        CINPTR
 +0e        WORDBUF
-+2e        SYSVNXT
++2e        BOOT C< PTR
 +4e        INTJUMP
 +51        CURRENTPTR
-+53        RESERVED
-+60        SYSTEM SCRATCHPAD
++53        readln's IN(
++55        readln's IN)
++57        readln's IN>
++59        z80a's ORG
++5b        z80a's L1
++5d        z80a's L2
++5f        z80a's L3
++61        z80a's L4
++63        z80a's L5
++65        z80a's L6
++67        FUTURE USES
++70        DRIVERS
 +80        RAMEND
 
 INITIAL_SP holds the initial Stack Pointer value so that we know where to reset
@@ -110,7 +120,8 @@ CINPTR holds routine address called on C<
 
 WORDBUF is the buffer used by WORD
 
-SYSVNXT is the buffer+tracker used by (sysv)
+BOOT C< PTR is used when Forth boots from in-memory source. See "Initialization
+sequence" below.
 
 INTJUMP All RST offsets (well, not *all* at this moment, I still have to free
 those slots...) in boot binaries are made to jump to this address. If you use
@@ -122,12 +133,12 @@ RAM+2 directly, but rather the value at this address. Most of the time, it
 points to RAM+2, but sometimes, when maintaining alternative dicts (during
 cross compilation for example), it can point elsewhere.
 
-SYSTEM SCRATCHPAD is reserved for temporary system storage or can be reserved
-by low-level drivers. These are the current usages of this space throughout the
-project:
+FUTURE USES section is unused for now.
 
-* 0x60-0x62: (c<) pointer during in-memory initialization (see below)
-* 0x62-0x6a: ACIA buffer pointers in RC2014 recipes.
+DRIVERS section is reserved for recipe-specific drivers. Here is a list of
+known usages:
+
+* 0x70-0x78: ACIA buffer pointers in RC2014 recipes.
 
 *** Initialization sequence
 

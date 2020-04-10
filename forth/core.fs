@@ -103,26 +103,6 @@
     COMPILE R> COMPILE DROP COMPILE R> COMPILE DROP
 ; IMMEDIATE
 
-( WARNING: there are no limit checks. We must be cautious, in
-  core code, not to create more than SYSV_BUFSIZE/2 sys vars.
-  Also: SYSV shouldn't be used during runtime: SYSVNXT won't
-  point at the right place. It should only be used during
-  stage1 compilation. This is why this word is not documented
-  in dictionary.txt )
-
-: (sysv)
-    ( Get new sysv addr )
-    ( RAM+46 (2e) == SYSVNXT )
-    46 RAM+ @
-    CONSTANT
-    ( increase current sysv counter )
-    2 46 RAM+ +!
-;
-
-( Set up initial SYSVNXT value, which is 2 bytes after its
-  own address )
-46 RAM+ DUP 2 + SWAP !
-
 ( a1 a2 u -- )
 : MOVE
     ( u ) 0 DO

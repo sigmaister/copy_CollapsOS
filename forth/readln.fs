@@ -9,11 +9,11 @@
 
 64 CONSTANT INBUFSZ
 ( points to INBUF )
-(sysv) IN(
+: IN( 0x53 RAM+ ;
 ( points to INBUF's end )
-(sysv) IN)
+: IN) 0x55 RAM+ ;
 ( current position in INBUF )
-(sysv) IN>
+: IN> 0x57 RAM+ ;
 
 ( flush input buffer )
 ( set IN> to IN( and set IN> @ to null )

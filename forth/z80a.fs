@@ -9,7 +9,7 @@
 ( H@ offset at which we consider our PC 0. Used to compute
   PC. To have a proper PC, call  "H@ ORG !" at the beginning
   of your assembly process. )
-(sysv) ORG
+: ORG 0x59 RAM+ ;
 : PC H@ ORG @ - ;
 
 ( A, spits an assembled byte, A,, spits an assembled word
@@ -28,12 +28,12 @@
   pre-declare label variables here, which means we have a
   limited number of it. For now, 6 ought to be enough. )
 
-(sysv) L1
-(sysv) L2
-(sysv) L3
-(sysv) L4
-(sysv) L5
-(sysv) L6
+: L1 0x5b RAM+ ;
+: L2 0x5d RAM+ ;
+: L3 0x5f RAM+ ;
+: L4 0x61 RAM+ ;
+: L5 0x63 RAM+ ;
+: L6 0x65 RAM+ ;
 
 ( There are 2 label types: backward and forward. For each
   type, there are two actions: set and write. Setting a label
