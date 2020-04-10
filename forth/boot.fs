@@ -87,6 +87,7 @@ L1 BSET ( CBR )
 'E' A, 'X' A, 'E' A, 'C' A, 'U' A, 'T' A, 'E' A,
 PC L1 @ - A,, ( prev )
 7 A,
+H@ XCURRENT !        ( set current tip of dict )
 L2 BSET ( used frequently below )
     0x17 A,,         ( nativeWord )
     IY POPqq,        ( is a wordref )
@@ -366,19 +367,3 @@ PC ORG @ 0x22 + ! ( litWord )
       want... )
     RAMSTART 0x06 + LD(nn)HL, ( RAMSTART+0x06 == IP )
     JPNEXT,
-
-( filler )
-NOP, NOP, NOP, NOP, NOP,
-
-( DICT HOOK )
-( This dummy dictionary entry serves two purposes:
-  1. Allow binary grafting. Because each binary dict always
-     end with a dummy entry, we always have a predictable
-     prev offset for the grafter's first entry.
-  2. Tell icore's "_c" routine where the boot binary ends.
-     See comment there.
-)
-'_' A, 'b' A, 'e' A, 'n' A, 'd' A,
-PC L2 @ - A,, ( prev )
-5 A,
-H@ XCURRENT !        ( set current tip of dict )
