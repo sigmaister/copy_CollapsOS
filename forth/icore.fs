@@ -231,6 +231,3 @@
     ELSE (parse*) @ EXECUTE LITN THEN
     AGAIN
 ;
-
-(xentry) _
-H@ 256 /MOD 2 PC! 2 PC!
