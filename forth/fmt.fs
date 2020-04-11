@@ -1,4 +1,4 @@
-( requires core, parse )
+( requires core, parse, cmp )
 
 : _
     999 SWAP        ( stop indicator )

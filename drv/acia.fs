@@ -15,6 +15,18 @@ ACIA_MEM: Address in memory that can be used variables shared
 
 0x20 CONSTANT ACIABUFSZ
 
+( Points to ACIA buf )
+: ACIA( [ ACIA_MEM 4 + LITN ] ;
+( Points to ACIA buf end )
+: ACIA) [ ACIA_MEM 6 + LITN ] ;
+( Read buf pointer. Pre-inc )
+: ACIAR> [ ACIA_MEM LITN ] ;
+( Write buf pointer. Post-inc )
+: ACIAW> [ ACIA_MEM 2 + LITN ] ;
+( This means that if W> == R>, buffer is full.
+  If R>+1 == W>, buffer is empty. )
+
+
 : ACIA$
     H@ DUP DUP ACIA( ! ACIAR> !
     1 + ACIAW> ! ( write index starts one position later )
