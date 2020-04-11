@@ -5,9 +5,21 @@
   A typical usage of this unit would be to, right after a
   bootstrap-from-icore-from-source operation, identify the
   root word of the source part, probably "H@", and run
-  " ' thatword COMPACT ". Then, take the resulting relinked
+  " ' thatword RLDICT ". Then, take the resulting relinked
   binary, concatenate it to the boot binary, and write to
   boot media.
+
+  LIMITATIONS
+
+  This unit can't automatically detect all offsets needing
+  relinking. This is a list of situations that aren't handled:
+
+  Cells: It's not possible to know for sure whether a cellWord
+  contains an address or a number. They are therefore not
+  automatically relinked. You have to manually relink each of
+  them with RLCELL. In the case of a DOES> word, PFA+2, which
+  is always an offset, is automatically relinked, but not
+  PFA+0.
 )
 
 ( Skip atom, considering special atom types. )
@@ -78,13 +90,17 @@
 ( ol o a1 a2 -- )
 : RLWORD
     SWAP DUP @              ( ol o a2 a1 n )
-    ( 0e == compiledWord )
-    0x0e = NOT IF
+    ( 0e == compiledWord, 2b == doesWord )
+    DUP <>{ 0x0e &= 0x2b |= <>} NOT IF
         ( unwind all args )
         2DROP 2DROP
         EXIT
     THEN
-    ( we have a compiled word, proceed )
+    ( we have a compiled word or doesWord, proceed )
+    ( doesWord is processed exactly like a compiledWord, but
+      starts 2 bytes further. )
+    ( ol o a2 a1 n )
+    0x2b = IF 2 + THEN
     ( ol o a2 a1 )
     2 +                         ( ol o a2 a1+2 )
     BEGIN                       ( ol o a2 a1 )
@@ -100,6 +116,8 @@
         THEN
     AGAIN
 ;
+
+( TODO implement RLCELL )
 
 ( Get word's prev offset )
 ( a -- a )
@@ -125,7 +143,7 @@
   can use H@+4 to printed addr.
 )
 ( target -- )
-: COMPACT
+: RLDICT
     ( First of all, let's get our offset. It's easy, it's
       target's prev field, which is already an offset, minus
       its name length. We expect, in COMPACT, that a target's
@@ -169,4 +187,10 @@
         ( Are we finished? We're finished if wr-4 <= H@ )
         DUP 4 - H@ <=
     UNTIL
+    H@ .X LF
+;
+
+( Relink a regular Forth full interpreter. )
+: RLCORE
+    LIT< H@ (find) DROP RLDICT
 ;
