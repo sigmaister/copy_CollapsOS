@@ -5,15 +5,15 @@
 ;
 : [ INTERPRET 1 FLAGS ! ; IMMEDIATE
 : ] R> DROP ;
-: LIT 34 , ;
-: LITS LIT SCPY ;
+: LITS 34 , SCPY ;
 : LIT< WORD LITS ; IMMEDIATE
+: LITA 36 , , ;
 : '
     WORD (find) (?br) [ 4 , ] EXIT
     LIT< (wnf) (find) DROP EXECUTE
 ;
-: ['] ' LITN ; IMMEDIATE
-: COMPILE ' LITN ['] , , ; IMMEDIATE
+: ['] ' LITA ; IMMEDIATE
+: COMPILE ' LITA ['] , , ; IMMEDIATE
 : [COMPILE] ' , ; IMMEDIATE
 : BEGIN H@ ; IMMEDIATE
 : AGAIN COMPILE (br) H@ - , ; IMMEDIATE
@@ -27,9 +27,10 @@
   "_": words starting with "_" are meant to be "private",
   that is, only used by their immediate surrondings.
 
-  LIT: 34 == LIT
+  LITS: 34 == litWord
+  LITA: 36 == addrWord
   COMPILE: Tough one. Get addr of caller word (example above
-  (br)) and then call LITN on it. )
+  (br)) and then call LITA on it. )
 
 : +! SWAP OVER @ + SWAP ! ;
 : -^ SWAP - ;

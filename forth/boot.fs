@@ -25,7 +25,7 @@ JP(IY), NOP,      ( 17, nativeWord )
 0 JPnn,           ( 1d, chkPS )
 NOP, NOP,         ( 20, numberWord )
 NOP, NOP,         ( 22, litWord )
-NOP, NOP,         ( 24, unused )
+NOP, NOP,         ( 24, addrWord )
 NOP, NOP,         ( 26, unused )
 0 JPnn,           ( 28, flagsToBC )
 0 JPnn,           ( 2b, doesWord )
@@ -334,7 +334,10 @@ PC ORG @ 0x2c + ! ( doesWord )
     0x0e JPnn, ( 0e == compiledWord )
 
 
+( addrWord is the exact same thing as a numberWord except that
+  it is treated differently by meta-tools. See notes.txt )
 PC ORG @ 0x20 + ! ( numberWord )
+PC ORG @ 0x24 + ! ( addrWord )
 ( This is not a word, but a number literal. This works a bit
   differently than others: PF means nothing and the actual
   number is placed next to the numberWord reference in the

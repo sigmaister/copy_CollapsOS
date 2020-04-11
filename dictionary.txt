@@ -43,6 +43,7 @@ DELW        a --            Delete wordref at a. If it shadows another
 DOES>       --              See description at top of file
 IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
+LITA        n --            Write address n as a literal.
 LITN        n --            Write number n as a literal.
 VARIABLE c  --              Creates cell x with 2 bytes allocation.
 

@@ -14,7 +14,7 @@
 ;
 
 : ."
-    LIT
+    34 ,        ( 34 == litWord )
     BEGIN
         C< DUP          ( c c )
         ( 34 is ASCII for " )
