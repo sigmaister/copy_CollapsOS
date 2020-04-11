@@ -138,15 +138,15 @@
   and offset because otherwise, things get too complicated
   with the PSP.
 
-  This word prints the top copied address, so when comes the
-  time to concat boot binary with this relinked dict, you
-  can use H@+4 to printed addr.
+  The output of this word is 3 numbers: top copied address,
+  top copied CURRENT, and then the beginning of the copied dict
+  at the end to indicate that we're finished processing.
 )
 ( target -- )
 : RLDICT
     ( First of all, let's get our offset. It's easy, it's
       target's prev field, which is already an offset, minus
-      its name length. We expect, in COMPACT, that a target's
+      its name length. We expect, in RLDICT that a target's
       prev word is a "hook word", that is, an empty word. )
     ( H@ == target )
     DUP H@ !
@@ -171,6 +171,7 @@
     DUP H@ +                    ( u we )
     DUP .X LF
     SWAP CURRENT @ +            ( we wr )
+    DUP .X LF
     BEGIN                       ( we wr )
         DUP ROT                 ( wr wr we )
         ( call RLWORD. we need a sig: ol o wr we )
@@ -187,7 +188,7 @@
         ( Are we finished? We're finished if wr-4 <= H@ )
         DUP 4 - H@ <=
     UNTIL
-    H@ .X LF
+    H@ 4 + .X LF
 ;
 
 ( Relink a regular Forth full interpreter. )
