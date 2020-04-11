@@ -214,7 +214,7 @@
     R> DROP     ( exit : )
 ; IMMEDIATE
 
-';' XCURRENT @ 4 - C!
+XCURRENT @ ( to PSP )
 
 : :
     (entry)
@@ -231,3 +231,5 @@
     ELSE (parse*) @ EXECUTE LITN THEN
     AGAIN
 ;
+
+( from PSP ) ';' SWAP 4 - C!

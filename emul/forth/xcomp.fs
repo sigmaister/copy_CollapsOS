@@ -1,13 +1,3 @@
-: _
-    ['] EXIT ,
-    R> DROP     ( exit : )
-    XCOFF
-; IMMEDIATE
-';' CURRENT @ 4 - C!
-
-: (find) (xfind) ;
-: ['] X['] ; IMMEDIATE
-: COMPILE XCOMPILE ; IMMEDIATE
 : CODE XCODE ;
 : IMMEDIATE XIMM ;
 : : [ ' X: , ] ;
