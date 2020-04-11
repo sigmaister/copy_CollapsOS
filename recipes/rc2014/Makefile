@@ -6,7 +6,6 @@ STAGE2 = $(EDIR)/stage2
 EMUL = $(BASEDIR)/emul/hw/rc2014/classic
 PATHS = pre.fs \
 	$(FDIR)/core.fs \
-	$(FDIR)/cmp.fs \
 	$(FDIR)/str.fs \
 	$(FDIR)/parse.fs \
 	$(BASEDIR)/drv/acia.fs \
