@@ -15,7 +15,7 @@
 : ASKIP
     DUP @       ( a n )
     ( ?br or br or NUMBER )
-    DUP <>{ 0x70 &= 0x58 |= 0x20 |= <>}
+    DUP <>{ 0x70 &= 0x58 |= 0x20 |= 0x24 |= <>}
     IF DROP 4 + EXIT THEN
     ( regular word )
     0x22 = NOT IF 2 + EXIT THEN
@@ -45,6 +45,16 @@
 ( a o ol -- a+n )
 : RLATOM
     ROT             ( o ol a )
+    DUP @ 0x24 = IF
+        ( addrWord? we need to offset it )
+        2 +         ( o ol a+2 )
+        ROT OVER    ( ol a o a )
+        @ -^        ( ol a n-o )
+        OVER !      ( ol a )
+        SWAP DROP   ( a )
+        2 +         ( a+2 )
+        EXIT        ( no need for ASKIP )
+    THEN
     DUP @           ( o ol a n )
     ROT             ( o a n ol )
     < IF ( under limit, do nothing )
