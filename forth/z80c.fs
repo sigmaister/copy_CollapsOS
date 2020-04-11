@@ -5,16 +5,8 @@
   This stage is tricky due to the fact that references in
   Forth are all absolute, except for prev word refs. This
   means that there are severe limitations to the kind of code
-  you can put here.
-
-  You shouldn't define any word with reference to other words.
-  This means no regular definition. You can, however, execute
-  any word from our high level Forth, as long as it doesn't
-  spit word references.
-
-  These restrictions are temporary, I'll figure something out
-  so that we can end up fully bootstrap Forth from within
-  itself.
+  you can put here. Those limitations are the same as those
+  described in icore.fs.
 
   Oh, also: KEY and EMIT are not defined here. There're
   expected to be defined in platform-specific code.

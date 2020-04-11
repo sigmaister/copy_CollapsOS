@@ -40,7 +40,7 @@ COMPILE x   --              Meta compiles. Kind of blows the mind. See below.
 CONSTANT x  n --            Creates cell x that when called pushes its value
 DELW        a --            Delete wordref at a. If it shadows another
                             definition, that definition is unshadowed.
-DOES>       --              See description at top of file
+DOES>       --              See description in usage.txt
 IMMED?      a -- f          Checks whether wordref at a is immediate.
 IMMEDIATE   --              Flag the latest defined word as immediate.
 LITA        n --            Write address n as a literal.
